@@ -1,0 +1,85 @@
+@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Pages
+@using LessonFlow.Domain.Curriculum
+    <div class="form-container">
+    <EditForm Model="@State" OnValidSubmit="@HandleSubmit">
+        <div class="form-group">
+            <h3 class="form-title">Select Subjects You Teach</h3>
+            <div class="subjects-grid">
+                @if (Subjects.Any())
+                {
+                    @foreach (var subject in Subjects)
+                    {
+                        <div class="checkbox-container">
+                            <div class="checkbox-wrapper">
+                                <input id="@subject" type="checkbox" @onchange="e => ToggleSubject(subject, e.Value as bool? ?? false)"
+                                       checked="@State.SubjectsTaught.Contains(subject)" class="checkbox-input" />
+                            </div>
+                            <div class="checkbox-label-container">
+                                <label for="@subject" class="checkbox-label">@subject</label>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="loading-message">Loading subjects...</div>
+                }
+            </div>
+        </div>
+
+        <div class="form-buttons-container">
+            <button type="button" @onclick="HandleBack" class="back-button">
+                Back
+            </button>
+            <button type="submit" disabled="@State.IsLoading" class="next-button">
+                @if (State.IsLoading)
+                {
+                    <span class="spinner-container">
+                        <div class="spinner"></div>
+                    </span>
+                }
+                Next
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public List<string> Subjects { get; set; } = [];
+
+    [CascadingParameter]
+    private AccountSetupState State { get; set; }
+
+    private void ToggleSubject(string subject, bool isChecked)
+    {
+        var currentSubjects = new List<string>(State.SubjectsTaught);
+
+        if (isChecked && !currentSubjects.Contains(subject))
+            currentSubjects.Add(subject);
+        else if (!isChecked && currentSubjects.Contains(subject))
+            currentSubjects.Remove(subject);
+
+        State.SetSubjectsTaught(currentSubjects);
+    }
+
+    private void HandleBack()
+    {
+        State.ClearError();
+        State.UpdateStep(AccountSetupStep.BasicInfo, AccountSetup.ChangeDirection.Back);
+    }
+
+    private void HandleSubmit()
+    {
+        State.ClearError();
+
+        if (!State.SubjectsTaught.Any())
+        {
+            State.SetError("Please select at least one subject");
+            return;
+        }
+
+        State.UpdateStep(AccountSetupStep.Timing, AccountSetup.ChangeDirection.Forward);
+    }
+}

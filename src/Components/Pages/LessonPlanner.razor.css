@@ -1,0 +1,106 @@
+﻿.page-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.header {
+  width: calc(100% - 2rem);
+  margin: 1rem;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+
+  .subject-label,
+  .lesson-count-label,
+  .lesson-date-label {
+    margin-right: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  #subject-selector,
+  #lesson-count-selector {
+    padding: 0.625rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    background: inherit;
+    border: 1px solid #e0e0e0;
+    color: inherit;
+    border-radius: 6px;
+    min-width: 120px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    outline: none;
+
+    option {
+      color: black;
+    }
+  }
+
+  #subject-selector:hover,
+  #lesson-count-selector:hover {
+    border-color: #6366f1;
+  }
+
+  #subject-selector:focus,
+  #lesson-count-selector:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  #lesson-date {
+    font-weight: 600;
+  }
+
+  #buttons {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .header:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  width: calc(100% - 2rem);
+  margin: 0 1rem 1rem;
+  gap: 1rem;
+
+  .text-editor {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    width: 75%;
+  }
+
+  .resources {
+    padding: 1rem;
+    width: 25%;
+    overflow-y: auto;
+    height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    background: white;
+  }
+}

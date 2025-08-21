@@ -1,0 +1,107 @@
+@using LessonFlow.Components.AccountSetup.State
+<div class="steps-container">
+    <div class="progress-steps">
+        <div class="step @GetStepClass(AccountSetupStep.BasicInfo)">
+            <div class="step-number">1</div>
+            <div class="step-text">Basic Info</div>
+        </div>
+        <div class="step-connector @GetConnectorClass(AccountSetupStep.BasicInfo, AccountSetupStep.Subjects)"></div>
+        <div class="step @GetStepClass(AccountSetupStep.Subjects)">
+            <div class="step-number">2</div>
+            <div class="step-text">Subjects</div>
+        </div>
+        <div class="step-connector @GetConnectorClass(AccountSetupStep.Subjects, AccountSetupStep.Timing)"></div>
+        <div class="step @GetStepClass(AccountSetupStep.Timing)">
+            <div class="step-number">3</div>
+            <div class="step-text">Schedule Timing</div>
+        </div>
+        <div class="step-connector @GetConnectorClass(AccountSetupStep.Timing, AccountSetupStep.Schedule)"></div>
+        <div class="step @GetStepClass(AccountSetupStep.Schedule)">
+            <div class="step-number">4</div>
+            <div class="step-text">Weekly Schedule</div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private AccountSetupState State { get; set; }
+
+    private string GetStepClass(AccountSetupStep step)
+    {
+        if (State.CurrentStep == step)
+            return "active";
+        else if (State.CompletedSteps.Contains(step))
+            return "completed";
+        else
+            return "";
+    }
+
+    private string GetConnectorClass(AccountSetupStep fromStep, AccountSetupStep toStep)
+    {
+        if (State.CompletedSteps.Contains(fromStep))
+            return "completed";
+        else
+            return "";
+    }
+}
+
+<style>
+    .progress-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 9999px;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+
+    .step-text {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .step-connector {
+        flex-grow: 1;
+        height: 2px;
+        background-color: #e5e7eb;
+        margin: 0 0.5rem;
+    }
+
+    .step.active .step-number {
+        background-color: #3b82f6;
+        color: white;
+    }
+
+    .step.active .step-text {
+        color: #1f2937;
+    }
+
+    .step.completed .step-number {
+        background-color: #10b981;
+        color: white;
+    }
+
+    .step-connector.completed {
+        background-color: #10b981;
+    }
+</style>

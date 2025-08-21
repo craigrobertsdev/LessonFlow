@@ -1,0 +1,137 @@
+@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Pages
+@using LessonFlow.Domain.Enums
+@inject IJSRuntime JsRuntime
+
+<div class="form-container">
+    <div class="form-group">
+        <label for="schoolName" class="form-label">School Name</label>
+        <input type="text" id="schoolName" value="@AccountSetupState.SchoolName"
+               @oninput="e => AccountSetupState.SetSchoolName(e.Value.ToString())"
+               class="form-input" required/>
+    </div>
+
+    <div class="mb-6">
+        <label for="calendarYear" class="form-label">Calendar Year</label>
+        <select id="calendarYear" value="@AccountSetupState.CalendarYear"
+                @onchange="e => AccountSetupState.SetCalendarYear(int.Parse(e.Value.ToString()))"
+                class="form-select">
+            @for (int year = DateTime.Now.Year - 1; year <= DateTime.Now.Year + 3; year++)
+            {
+                <option value="@year">@year</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-6">
+        <span class="form-section-title">Year Levels Taught</span>
+        <div class="checkbox-grid">
+            @foreach (var yearLevel in AppConstants.YearLevels)
+            {
+                <div class="checkbox-container">
+                    <div class="checkbox-wrapper">
+                        <input id="@yearLevel" type="checkbox" @onchange="e => ToggleYearLevel(yearLevel)"
+                               checked="@AccountSetupState.YearLevelsTaught.Contains(yearLevel)"
+                               class="checkbox-input"/>
+                    </div>
+                    <div class="checkbox-label-container">
+                        <label for="@yearLevel" class="checkbox-label">@yearLevel</label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mb-6">
+        <span class="form-section-title">Working Days</span>
+        <div class="days-grid">
+            @foreach (var day in AppConstants.WeekDays)
+            {
+                <div class="checkbox-container">
+                    <div class="checkbox-wrapper">
+                        <input id="@day" type="checkbox" @onchange="e => ToggleWorkingDay(day)"
+                               checked="@AccountSetupState.WorkingDays.Contains(day)"
+                               class="checkbox-input"/>
+                    </div>
+                    <div class="checkbox-label-container">
+                        <label for="@day" class="checkbox-label">@day</label>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="form-submit-container">
+        <div class="error-message">
+            @if (AccountSetupState.Error is not null)
+            {
+                <p>@AccountSetupState.Error</p>
+            }
+        </div>
+        <button @onclick="HandleSubmit" disabled="@AccountSetupState.IsLoading" class="submit-button">
+            @if (AccountSetupState.IsLoading)
+            {
+                <span class="spinner-container">
+                    <div class="spinner"></div>
+                </span>
+            }
+            Next
+        </button>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private AccountSetupState AccountSetupState { get; set; } = null!;
+
+    private void ToggleYearLevel(YearLevelValue level)
+    {
+        if (AccountSetupState.YearLevelsTaught.Contains(level))
+        {
+            AccountSetupState.YearLevelsTaught.Remove(level);
+        }
+        else
+        {
+            AccountSetupState.YearLevelsTaught.Add(level);
+        }
+    }
+
+    private void ToggleWorkingDay(DayOfWeek day)
+    {
+        if (AccountSetupState.WorkingDays.Contains(day))
+        {
+            AccountSetupState.WorkingDays.Remove(day);
+        }
+        else
+        {
+            AccountSetupState.WorkingDays.Add(day);
+        }
+    }
+
+    private void HandleSubmit()
+    {
+        JsRuntime.InvokeVoidAsync("console.log", "updating step");
+        AccountSetupState.ClearError();
+
+        if (string.IsNullOrWhiteSpace(AccountSetupState.SchoolName))
+        {
+            AccountSetupState.SetError("Please enter your school name");
+            return;
+        }
+
+        if (!AccountSetupState.YearLevelsTaught.Any())
+        {
+            AccountSetupState.SetError("Please select at least one year level");
+            return;
+        }
+
+        if (!AccountSetupState.WorkingDays.Any())
+        {
+            AccountSetupState.SetError("Please select at least one working day");
+            return;
+        }
+
+        AccountSetupState.UpdateStep(AccountSetupStep.Subjects, AccountSetup.ChangeDirection.Forward);
+        StateHasChanged();
+    }
+}

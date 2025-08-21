@@ -1,0 +1,222 @@
+@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Pages
+@using LessonFlow.Domain.Enums
+
+<div class="form-container">
+    <div class="form-section">
+        <h3 class="form-title">Define Your Daily Schedule</h3>
+        <p class="form-description">Configure the time slots for your school day. Add and arrange lessons and
+            breaks.</p>
+
+        <div class="time-inputs-container">
+            <div class="time-inputs-grid">
+                <div class="time-input-group">
+                    <label for="startTime" class="form-label">School Day Start Time</label>
+                    <input type="time" id="startTime" @bind="_startTime" class="form-input"/>
+                </div>
+                <div class="time-input-group">
+                    <label for="endTime" class="form-label">School Day End Time</label>
+                    <input type="time" id="endTime" @bind="_endTime" class="form-input"/>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4 class="section-subtitle">Schedule Slots</h4>
+            <div class="table-container">
+                <table class="schedule-table">
+                    <thead class="table-header">
+                    <tr>
+                        <th scope="col" class="table-header-cell">Name</th>
+                        <th scope="col" class="table-header-cell">Type</th>
+                        <th scope="col" class="table-header-cell">Start Time</th>
+                        <th scope="col" class="table-header-cell">End Time</th>
+                        <th scope="col" class="table-header-cell">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody class="table-body">
+                    @foreach (var slot in _slots)
+                    {
+                        <tr>
+                            <td class="table-cell">
+                                <input type="text" @bind="slot.Name" class="form-input"/>
+                            </td>
+                            <td class="table-cell">
+                                <select @bind="slot.PeriodType" class="form-select">
+                                    <option value="@PeriodType.Lesson">Lesson</option>
+                                    <option value="@PeriodType.Break">Break</option>
+                                </select>
+                            </td>
+                            <td class="table-cell">
+                                <input type="time" @bind="slot.StartTime" @oninput="() => ValidateTimeSlots()"
+                                       class="form-input"/>
+                            </td>
+                            <td class="table-cell">
+                                <input type="time" @bind="slot.EndTime" @oninput="() => ValidateTimeSlots()"
+                                       class="form-input"/>
+                            </td>
+                            <td class="table-cell action-cell">
+                                <button type="button" @onclick="() => RemoveSlot(slot)" class="remove-button">
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="add-button-container">
+                <button type="button" @onclick="AddTimeSlot" class="add-button">
+                    <svg class="add-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                         fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd"
+                              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                              clip-rule="evenodd"/>
+                    </svg>
+                    Add Time Slot
+                </button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_timeError))
+            {
+                <div class="error-message">
+                    <p>@_timeError</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="form-buttons-container">
+        <button type="button" @onclick="HandleBack" class="back-button">
+            Back
+        </button>
+        <button type="button" @onclick="HandleSubmit" disabled="@(State.IsLoading || !string.IsNullOrEmpty(_timeError))"
+                class="next-button">
+            @if (State.IsLoading)
+            {
+                <span class="spinner-container">
+                    <div class="spinner"></div>
+                </span>
+            }
+            Next
+        </button>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private AccountSetupState State { get; set; } = null!;
+
+    private List<ScheduleSlot> _slots = [];
+    private TimeOnly _startTime;
+    private TimeOnly _endTime;
+    private string? _timeError;
+
+    protected override void OnInitialized()
+    {
+        _slots = State.ScheduleConfig.ScheduleSlots.Select(s => new ScheduleSlot
+        {
+            Id = s.Id,
+            PeriodType = s.PeriodType,
+            Name = s.Name,
+            StartTime = s.StartTime,
+            EndTime = s.EndTime
+        }).ToList();
+
+        _startTime = State.ScheduleConfig.StartTime;
+        _endTime = State.ScheduleConfig.EndTime;
+    }
+
+    private void AddTimeSlot()
+    {
+        // Find the highest existing ID and increment by 1
+        int highestId = 0;
+        foreach (var slot in _slots)
+        {
+            if (slot.Id > highestId)
+                highestId = slot.Id;
+        }
+
+        // Add a new slot with default values
+        _slots.Add(new ScheduleSlot
+        {
+            Id = (highestId + 1),
+            Name = $"New Slot {highestId + 1}",
+            PeriodType = PeriodType.Lesson,
+            StartTime = _slots.LastOrDefault()?.EndTime ?? _startTime,
+            EndTime = _endTime
+        });
+
+        ValidateTimeSlots();
+    }
+
+    private void RemoveSlot(ScheduleSlot slot)
+    {
+        _slots.Remove(slot);
+        ValidateTimeSlots();
+    }
+
+    private void ValidateTimeSlots()
+    {
+        _timeError = null;
+
+        if (_slots.Count == 0)
+        {
+            _timeError = "You must have at least one time slot";
+            return;
+        }
+
+        // Check for overlapping time slots
+        var sortedSlots = _slots.OrderBy(s => s.StartTime).ToList();
+        for (int i = 0; i < sortedSlots.Count - 1; i++)
+        {
+            if (sortedSlots[i].EndTime > sortedSlots[i + 1].StartTime)
+            {
+                _timeError = $"Time slots '{sortedSlots[i].Name}' and '{sortedSlots[i + 1].Name}' overlap";
+                return;
+            }
+        }
+
+        // Check for time slots outside school day
+        foreach (var slot in _slots)
+        {
+            if (slot.StartTime < _startTime)
+            {
+                _timeError = $"Time slot '{slot.Name}' starts before school day";
+                return;
+            }
+
+            if (slot.EndTime > _endTime)
+            {
+                _timeError = $"Time slot '{slot.Name}' ends after school day";
+                return;
+            }
+        }
+    }
+
+    private void HandleBack()
+    {
+        State.ClearError();
+        State.UpdateStep(AccountSetupStep.Subjects, AccountSetup.ChangeDirection.Back);
+    }
+
+    private void HandleSubmit()
+    {
+        if (!string.IsNullOrEmpty(_timeError))
+            return;
+
+        var config = new ScheduleConfig
+        {
+            StartTime = _startTime,
+            EndTime = _endTime,
+            NumberOfLessons = _slots.Count(s => s.PeriodType == PeriodType.Lesson),
+            NumberOfBreaks = _slots.Count(s => s.PeriodType == PeriodType.Break),
+            ScheduleSlots = _slots
+        };
+
+        State.SetScheduleConfig(config);
+        State.UpdateStep(AccountSetupStep.Schedule, AccountSetup.ChangeDirection.Forward);
+    }
+}
+

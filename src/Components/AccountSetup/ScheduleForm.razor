@@ -1,0 +1,187 @@
+@using LessonFlow.Components.AccountSetup.State
+
+@inject NavigationManager NavigationManager
+
+@* <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6"> *@
+@*     <div class="mb-6"> *@
+@*         <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Set Your Weekly Schedule</h3> *@
+@*         <p class="text-sm text-gray-500 mb-4">Assign subjects to your schedule. This will be used to generate your weekly plans.</p> *@
+@* *@
+@*         <div class="overflow-x-auto border rounded-md"> *@
+@*             <table class="min-w-full divide-y divide-gray-200"> *@
+@*                 <thead class="bg-gray-50"> *@
+@*                     <tr> *@
+@*                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Slot</th> *@
+@*                         @foreach (var dayColumn in _scheduleGrid) *@
+@*                         { *@
+@*                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> *@
+@*                                 @dayColumn.DayOfWeek *@
+@*                             </th> *@
+@*                         } *@
+@*                     </tr> *@
+@*                 </thead> *@
+@*                 <tbody class="bg-white divide-y divide-gray-200"> *@
+@*                     @for (int slotIndex = 0; slotIndex < State.ScheduleConfig.Slots.Count; slotIndex++) *@
+@*                     { *@
+@*                         var slot = State.ScheduleConfig.Slots[slotIndex]; *@
+@*                         <tr class="@(slot.IsBreak ? "bg-gray-50" : "")"> *@
+@*                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900"> *@
+@*                                 <div class="font-medium">@slot.Name</div> *@
+@*                                 <div class="text-gray-500 text-xs">@slot.StartTime - @slot.EndTime</div> *@
+@*                             </td> *@
+@* *@
+@*                             @foreach (var dayColumn in _scheduleGrid) *@
+@*                             { *@
+@*                                 <td class="px-4 py-3 whitespace-nowrap text-sm"> *@
+@*                                     @if (!dayColumn.IsWorkingDay) *@
+@*                                     { *@
+@*                                         <div class="text-gray-400 italic">Not working</div> *@
+@*                                     } *@
+@*                                     else if (slot.IsBreak) *@
+@*                                     { *@
+@*                                         <div class="text-gray-500">Break</div> *@
+@*                                     } *@
+@*                                     else *@
+@*                                     { *@
+@*                                         <select @bind="dayColumn.TimeSlots[slotIndex].Subject" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"> *@
+@*                                             <option value="">Select subject</option> *@
+@*                                             @foreach (var subject in State.SubjectsTaught) *@
+@*                                             { *@
+@*                                                 <option value="@subject">@subject</option> *@
+@*                                             } *@
+@*                                         </select> *@
+@*                                     } *@
+@*                                 </td> *@
+@*                             } *@
+@*                         </tr> *@
+@*                     } *@
+@*                 </tbody> *@
+@*             </table> *@
+@*         </div> *@
+@*     </div> *@
+@* *@
+@*     <div class="flex justify-between"> *@
+@*         <button type="button" @onclick="HandleBack" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> *@
+@*             Back *@
+@*         </button> *@
+@*         <button type="button" @onclick="HandleSubmit" disabled="@State.IsLoading" class="@(State.IsLoading ? "opacity-70 cursor-not-allowed" : "") inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> *@
+@*             @if (State.IsLoading) *@
+@*             { *@
+@*                 <span class="inline-block mr-2"> *@
+@*                     <div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> *@
+@*                 </span> *@
+@*             } *@
+@*             Complete Setup *@
+@*         </button> *@
+@*     </div> *@
+@* </div> *@
+@* *@
+@* @code { *@
+@*     [CascadingParameter] *@
+@*     private AccountSetupState State { get; set; } *@
+@* *@
+@*     private List<DayColumn> _scheduleGrid = new List<DayColumn>(); *@
+@* *@
+@*     protected override void OnInitialized() *@
+@*     { *@
+@*         InitializeScheduleGrid(); *@
+@*     } *@
+@* *@
+@*     private void InitializeScheduleGrid() *@
+@*     { *@
+@*         // If we have saved state, use it *@
+@*         if (State.ScheduleGrid != null && State.ScheduleGrid.Any()) *@
+@*         { *@
+@*             _scheduleGrid = State.ScheduleGrid; *@
+@*             return; *@
+@*         } *@
+@* *@
+@*         // Otherwise create a new schedule grid *@
+@*         _scheduleGrid = new List<DayColumn>(); *@
+@* *@
+@*         foreach (var day in AppConstants.WeekDays) *@
+@*         { *@
+@*             var scheduleSlots = new List<ScheduleSlot>(); *@
+@*             var isWorkingDay = State.WorkingDays.Contains(day); *@
+@* *@
+@*             foreach (var slot in State.ScheduleConfig.ScheduleSlots) *@
+@*             { *@
+@*                 scheduleSlots.Add(new ScheduleSlot() *@
+@*                 { *@
+@*                     PeriodType = slot.PeriodType, *@
+@*                     StartTime = slot.StartTime, *@
+@*                     EndTime = slot.EndTime, *@
+@*                     Subject = null  *@
+@*                 }); *@
+@*             } *@
+@* *@
+@*             _scheduleGrid.Add(new DayColumn *@
+@*             { *@
+@*                 DayOfWeek = day, *@
+@*                 IsWorkingDay = isWorkingDay, *@
+@*                 ScheduleSlots = scheduleSlots *@
+@*             }); *@
+@*         } *@
+@* *@
+@*         State.SetScheduleGrid(_scheduleGrid); *@
+@*     } *@
+@* *@
+@*     private int CalculateDuration(string startTime, string endTime) *@
+@*     { *@
+@*         if (TimeSpan.TryParse(startTime, out TimeSpan start) && TimeSpan.TryParse(endTime, out TimeSpan end)) *@
+@*         { *@
+@*             return (int)(end - start).TotalMinutes; *@
+@*         } *@
+@*         return 0; *@
+@*     } *@
+@* *@
+@*     private void HandleBack() *@
+@*     { *@
+@*         State.ClearError(); *@
+@*         State.SetCurrentStep(AccountSetupStep.Timing); *@
+@*     } *@
+@* *@
+@*     private async Task HandleSubmit() *@
+@*     { *@
+@*         try *@
+@*         { *@
+@*             State.SetLoading(true); *@
+@*             State.ClearError(); *@
+@* *@
+@*             // Save current state *@
+@*             State.SetScheduleGrid(_scheduleGrid); *@
+@* *@
+@*             // Create the week planner template *@
+@*             var weekPlannerTemplate = new WeekPlannerTemplate *@
+@*             { *@
+@*                 Days = _scheduleGrid *@
+@*             }; *@
+@* *@
+@*             // Create setup request *@
+@*             var setupData = new AccountSetupRequest *@
+@*             { *@
+@*                 SchoolName = State.SchoolName.Trim(), *@
+@*                 SubjectsTaught = State.SubjectsTaught, *@
+@*                 WeekPlannerTemplate = weekPlannerTemplate, *@
+@*                 YearLevelsTaught = State.ConvertYearLevelsTaughtToApiFormat(), *@
+@*                 CalendarYear = State.CalendarYear, *@
+@*                 WorkingDays = State.WorkingDays *@
+@*             }; *@
+@* *@
+@*             // Send setup data to API *@
+@*             var response = await ApiClient.CompleteSetup(setupData); *@
+@* *@
+@*             // Navigate to week planner *@
+@*             NavigationManager.NavigateTo($"/app/week-planner/{DateTime.Now.Year}/{response.CurrentTerm}/{response.CurrentWeek}"); *@
+@*         } *@
+@*         catch (Exception ex) *@
+@*         { *@
+@*             State.SetError(ex.Message); *@
+@*             Console.Error.WriteLine($"Error during setup: {ex}"); *@
+@*         } *@
+@*         finally *@
+@*         { *@
+@*             State.SetLoading(false); *@
+@*         } *@
+@*     } *@
+@* } *@

@@ -1,0 +1,83 @@
+﻿@rendermode InteractiveServer
+@page "/LessonPlanner"
+@inject ILessonPlanRepository LessonPlanRepository
+@using LessonFlow.Interfaces.Persistence
+@using LessonFlow.Shared
+
+<div class="page-container">
+  <div class="header @SelectedSubject">
+    <div>
+      <label for="subject-selector" class="subject-label">Subject:</label>
+      <select @bind="@SelectedSubject" id="subject-selector" class="subject-selector">
+        <option value="math-subject">Mathematics</option>
+        <option value="science-subject">Science</option>
+        <option value="history-subject">History</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="lesson-count-selector" class="lesson-count-label">Number of Lessons:</label>
+      <select id="lesson-count-selector" class="lesson-count-selector">
+        @foreach (var count in AvailableLessonSlots)
+        {
+          <option value="@count">@count</option>
+        }
+      </select>
+    </div>
+
+    <div>
+      <span for="lesson-date" class="lesson-date-label">Date:</span>
+      <span id="lesson-date">@DateTime.Now.ToShortDateString()</span>
+    </div>
+
+    <span id="buttons">
+      <button class="button save-button" @onclick="PrintLessonText">Save</button>
+      <button class="button cancel-button">Cancel</button>
+    </span>
+  </div>
+
+  <div class="content">
+    <div class="text-editor">
+      <TextEditor OnLessonTextChange="@LessonTextChanged" LessonText="@LessonText" />
+    </div>
+    <div class="resources">
+      Resources  
+    </div>
+  </div>
+</div>
+
+@code {
+  [CascadingParameter]
+  public AppState AppState { get; set; } = default!;
+
+  List<int> AvailableLessonSlots = new List<int> { 1, 2, 3, 4, 5 };
+  public string? SelectedSubject { get; set; }
+  public string? LessonText { get; set; }
+
+  protected override async Task OnInitializedAsync()
+  {
+    var lessonData = await LessonPlanRepository.GetByDate(AppState.YearData.Id, new DateOnly(2025, 7, 29), CancellationToken.None);
+
+    foreach (var lesson in lessonData)
+    {
+      Console.WriteLine(lessonData);
+    }
+  }
+  protected override void OnInitialized()
+  {
+    SelectedSubject = "math-subject";
+
+    LessonText =
+    @"rthsieanrtsheanrths<div>nrt</div><div>seanrt</div><div>seiarnht</div><div>seia</div><div>nreaih</div><div><br></div>";
+  }
+
+  void LessonTextChanged(string? text)
+  {
+    LessonText = text;
+  }
+
+  void PrintLessonText()
+  {
+    Console.WriteLine($"Lesson Text: {LessonText}");
+  }
+}

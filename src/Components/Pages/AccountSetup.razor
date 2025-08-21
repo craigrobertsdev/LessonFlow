@@ -1,0 +1,179 @@
+@page "/AccountSetup"
+@page "/AccountSetup/{Step}"
+@attribute [Authorize]
+
+@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.AccountSetup
+@using LessonFlow.Interfaces.Services
+@using LessonFlow.Shared
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager NavigationManager
+@inject ITermDatesService TermDatesService
+@inject ICurriculumService CurriculumService
+
+@implements IDisposable
+
+@if (AccountSetupState.IsLoading && _initialLoading)
+{
+    <div class="loading-container">
+        <LoadingSpinner/>
+    </div>
+}
+else if (_redirectToLogin)
+{
+    <div class="loading-container">
+        <p>Redirecting to login...</p>
+    </div>
+}
+else if (_redirectToWeekPlanner)
+{
+    <div class="loading-container">
+        <p>Redirecting to week planner...</p>
+    </div>
+}
+else
+{
+    <CascadingValue Value="AccountSetupState">
+        <title>LessonFlow - Account Setup</title>
+        <div class="setup-container">
+            <div class="content-container">
+                <div class="header-container">
+                    <h2 class="main-title">Welcome to LessonFlow</h2>
+                    <p class="subtitle">Let's get your account set up so you can start planning your lessons.</p>
+
+                    @if (!string.IsNullOrEmpty(AccountSetupState.Error))
+                    {
+                        <div class="error-message" role="alert">
+                            @AccountSetupState.Error
+                        </div>
+                    }
+
+                    <div class="progress-container">
+                        <ProgressSteps/>
+                    </div>
+                </div>
+
+                <div
+                    class="@(AccountSetupState.CurrentStep == AccountSetupStep.Schedule ? "schedule-container" : "form-container")">
+                    @switch (_accountSetupStep)
+                    {
+                        case AccountSetupStep.BasicInfo:
+                            <BasicInfoForm/>
+                            break;
+                        case AccountSetupStep.Subjects:
+                            <SubjectsForm Subjects="_subjectNames"/>
+                            break;
+                        case AccountSetupStep.Timing:
+                            <TimingForm/>
+                            break;
+                        case AccountSetupStep.Schedule:
+                            <ScheduleForm/>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </CascadingValue>
+}
+
+@code {
+    [CascadingParameter] public AppState AppState { get; set; } = null!;
+    [Inject] UserState UserState { get; set; } = null!;
+    [Parameter] public string? Step { get; set; }
+
+    private AccountSetupState AccountSetupState { get; } = new();
+    private AccountSetupStep _accountSetupStep = AccountSetupStep.BasicInfo;
+    private List<string> _subjectNames = [];
+    private bool _initialLoading = true;
+    private bool _redirectToLogin = false;
+    private bool _redirectToWeekPlanner = false;
+
+    protected override void OnInitialized()
+    {
+        AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // State.OnChange += StateHasChanged;
+        await CheckUser();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(Step) && Enum.TryParse<AccountSetupStep>(Step, out var step))
+        {
+            if (AccountSetupState.CompletedSteps.Contains(step) || AccountSetupState.IsNextStep(step) || step == AccountSetupStep.BasicInfo)
+            {
+                AccountSetupState.SetCurrentStep(step);
+            }
+            else
+            {
+                NavigationManager.NavigateTo($"/AccountSetup/{AccountSetupState.GetLastCompletedStep()}");
+            }
+        }
+        else if (string.IsNullOrEmpty(Step))
+        {
+            NavigationManager.NavigateTo($"/AccountSetup/{AccountSetupState.GetLastCompletedStep()}");
+        }
+    }
+
+    public enum ChangeDirection
+    {
+        Back,
+        Forward
+    }
+
+    private void ChangeAccountSetupStep(ChangeDirection direction)
+    {
+        var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
+        if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
+        {
+            return;
+        }
+        
+        _accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
+        StateHasChanged();
+    }
+
+    private async Task CheckUser()
+    {
+        try
+        {
+            AccountSetupState.SetLoading(true);
+            await UserState.EnsureUserLoaded();
+            if (UserState.User.AccountSetupComplete)
+            {
+                _redirectToWeekPlanner = true;
+                var currentTerm = TermDatesService.GetTermNumber(DateTime.Now);
+                var currentWeek = TermDatesService.GetWeekNumber(DateTime.Now);
+                NavigationManager.NavigateTo($"/app/week-planner/{DateTime.Now.Year}/{currentTerm}/{currentWeek}");
+                return;
+            }
+
+            _subjectNames = CurriculumService.GetSubjectNames();
+        }
+        catch (Exception ex)
+        {
+            AccountSetupState.SetError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            AccountSetupState.SetLoading(false);
+            _initialLoading = false;
+        }
+    }
+
+
+    private void Logout()
+    {
+        // In a real application, this would call your auth service logout method
+        NavigationManager.NavigateTo("/auth/login");
+    }
+
+    public void Dispose()
+    {
+        AccountSetupState.OnDirectionChange -= ChangeAccountSetupStep;
+    }
+}
