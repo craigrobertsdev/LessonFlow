@@ -62,6 +62,10 @@ public class AppState(AuthenticationStateProvider authStateProvider, IUserReposi
                         ?? throw new YearDataNotFoundException();
                     YearData = yearData;
                 }
+                else
+                {
+                    user.AccountSetupState?.SortWeekPlannerTemplateLessons();
+                }
             }
             catch (Exception)
             {

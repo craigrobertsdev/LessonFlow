@@ -3,6 +3,7 @@
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Domain.Users
+@using LessonFlow.Domain.ValueObjects
 @using LessonFlow.Interfaces.Persistence
 
 @inject IUserRepository UserRepository
@@ -81,12 +82,20 @@
 							{
 								var dayIndex = j;
 								var dayTemplate = _dayTemplates[dayIndex];
-								var period = dayTemplate.Periods![slotIndex];
 								if (!ShouldRenderCell(dayIndex, slotIndex))
 								{
 									continue; // covered by a row-spanned cell above
 								}
 
+								if (!dayTemplate.IsWorkingDay)
+								{
+									<td class="px-0 py-0">
+										<div class="h-10 bg-gray-200"></div>
+									</td>
+									continue;
+								}
+
+								var period = dayTemplate.Periods![slotIndex];
 								// Styling for break rows as separators
 								if (isBreakRow)
 								{
@@ -105,20 +114,13 @@
 								<td class="px-2 py-2 whitespace-nowrap text-sm text-center align-middle @(css) @(isSelectedStart ? "ring-2 ring-[rgb(var(--primary-rgb))]" : "")"
 										@onclick="(() => OnCellClicked(period, dayIndex, slotIndex))"
 										rowspan="@rowSpan">
-									@if (!dayTemplate.IsWorkingDay)
+									@if (!string.IsNullOrWhiteSpace(subject))
 									{
-										<div class="h-10 bg-gray-200"></div>
+										<div class="font-medium">@subject</div>
 									}
 									else
 									{
-										@if (!string.IsNullOrWhiteSpace(subject))
-										{
-											<div class="font-medium">@subject</div>
-										}
-										else
-										{
-											<div class="h-10"></div>
-										}
+										<div class="h-10"></div>
 									}
 								</td>
 							}
@@ -165,19 +167,34 @@
 
 	protected override void OnInitialized()
 	{
-	}
+		if (WeekPlannerTemplate.DayTemplates.Count != 0) return;
 
-	protected override void OnParametersSet()
-	{
-		// Ensure grid always matches current timing config on re-renders
-		if (_dayTemplates.Any())
+		List<DayTemplate> templates = [];
+		DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+		foreach (var day in weekDays)
 		{
-			var expected = WeekPlannerTemplate.Periods.Count;
-			if (_dayTemplates.Any(d => d.Periods is null || d.Periods.Count != expected))
+			var isWorkingDay = State.WorkingDays.Contains(day);
+			if (!isWorkingDay)
 			{
-				State.SetDayTemplates(_dayTemplates);
+				templates.Add(new DayTemplate([], day, DayType.Nwd));
+				continue;
 			}
+
+			int periodCount = 1;
+			var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
+			{
+				return p.PeriodType switch
+				{
+					PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
+					PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
+					_ => throw new ArgumentOutOfRangeException()
+				};
+			}).ToList();
+
+			templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
 		}
+
+		State.WeekPlannerTemplate.SetDayTemplates(templates);
 	}
 
 	private string? GetSubject(DayTemplate day, int slotIndex)

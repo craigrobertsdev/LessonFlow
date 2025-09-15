@@ -19,7 +19,6 @@ public class AccountSetupState
     ];
 
     public List<AccountSetupStep> CompletedSteps { get; private set; } = [];
-
     public string SchoolName { get; private set; } = string.Empty;
     public int CalendarYear { get; private set; } = DateTime.Now.Year;
     public List<YearLevelValue> YearLevelsTaught { get; private set; } = [];
@@ -35,67 +34,13 @@ public class AccountSetupState
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
     public WeekPlannerTemplate WeekPlannerTemplate { get; set; }
-
-    public AccountSetupState(Guid userId)
-    {
-        List<TemplatePeriod> periods = [
-
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 1",
-                new TimeOnly(09, 10, 0),
-                new TimeOnly(10, 00, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 2",
-                new TimeOnly(10, 00, 0),
-                new TimeOnly(10, 50, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Break, "Recess",
-                new TimeOnly(10, 50, 0),
-                new TimeOnly(11, 20, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 3",
-                new TimeOnly(11, 20, 0),
-                new TimeOnly(12, 10, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 4",
-                new TimeOnly(12, 10, 0),
-                new TimeOnly(13, 00, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Break, "Lunch",
-                new TimeOnly(13, 0, 0),
-                new TimeOnly(13, 30, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 5",
-                new TimeOnly(13, 30, 0),
-                new TimeOnly(14, 20, 0)
-            ),
-            new TemplatePeriod
-            (
-                PeriodType.Lesson, "Lesson 6",
-                new TimeOnly(14, 20, 0),
-                new TimeOnly(15, 10, 0)
-            )
-            ];
-
-        WeekPlannerTemplate = new WeekPlannerTemplate(periods, userId);
-    }
-
-
     public string? Error { get; private set; }
     public bool IsLoading { get; private set; }
+
+    public void SortWeekPlannerTemplateLessons()
+    {
+        WeekPlannerTemplate.Periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
+    }
 
     public void SetCurrentStep(AccountSetupStep step)
     {
@@ -191,32 +136,63 @@ public class AccountSetupState
     private void NotifyStateChanged() => OnChange?.Invoke();
     private void NotifyStateChanged(ChangeDirection direction) => OnDirectionChange?.Invoke(direction);
 
+    public AccountSetupState(Guid userId)
+    {
+        List<TemplatePeriod> periods = [
+
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 1",
+                new TimeOnly(09, 10, 0),
+                new TimeOnly(10, 00, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 2",
+                new TimeOnly(10, 00, 0),
+                new TimeOnly(10, 50, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Break, "Recess",
+                new TimeOnly(10, 50, 0),
+                new TimeOnly(11, 20, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 3",
+                new TimeOnly(11, 20, 0),
+                new TimeOnly(12, 10, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 4",
+                new TimeOnly(12, 10, 0),
+                new TimeOnly(13, 00, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Break, "Lunch",
+                new TimeOnly(13, 0, 0),
+                new TimeOnly(13, 30, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 5",
+                new TimeOnly(13, 30, 0),
+                new TimeOnly(14, 20, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 6",
+                new TimeOnly(14, 20, 0),
+                new TimeOnly(15, 10, 0)
+            )
+            ];
+
+        WeekPlannerTemplate = new WeekPlannerTemplate(periods, userId);
+    }
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private AccountSetupState() { }
 }
-
-
-
-//[Owned]
-//public class ScheduleSlot
-//{
-//    public int Id { get; init; }
-//    public PeriodType PeriodType { get; set; }
-//    public string Name { get; set; } = string.Empty;
-//    public TimeOnly StartTime { get; set; }
-//    public TimeOnly EndTime { get; set; }
-//    public TimeSpan Duration => EndTime - StartTime;
-//    [MaxLength(50)]
-//    public string? Subject { get; set; }
-//    public int NumberOfPeriods { get; set; }
-//    public bool IsFirstPeriodOfBlock { get; set; }
-//}
-
-//[Owned]
-//public class DayColumn
-//{
-
-//    public DayOfWeek DayOfWeek { get; init; }
-//    public bool IsWorkingDay { get; set; }
-//    public List<ScheduleSlot> ScheduleSlots { get; set; } = [];
-//}
