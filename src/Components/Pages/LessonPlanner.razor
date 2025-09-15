@@ -4,44 +4,53 @@
 @using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Shared
 
-<div class="page-container">
-  <div class="header @SelectedSubject">
-    <div>
-      <label for="subject-selector" class="subject-label">Subject:</label>
-      <select @bind="@SelectedSubject" id="subject-selector" class="subject-selector">
-        <option value="math-subject">Mathematics</option>
-        <option value="science-subject">Science</option>
-        <option value="history-subject">History</option>
-      </select>
-    </div>
+<div class="mx-auto max-w-7xl p-4 space-y-6">
+  <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div class="flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between">
+      <div class="flex items-center gap-2">
+        <label for="subject-selector" class="text-sm font-medium text-gray-700">Subject</label>
+        <select @bind="@SelectedSubject" id="subject-selector" class="block w-48 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          <option value="math-subject">Mathematics</option>
+          <option value="science-subject">Science</option>
+          <option value="history-subject">History</option>
+        </select>
+      </div>
 
-    <div>
-      <label for="lesson-count-selector" class="lesson-count-label">Number of Lessons:</label>
-      <select id="lesson-count-selector" class="lesson-count-selector">
-        @foreach (var count in AvailableLessonSlots)
-        {
-          <option value="@count">@count</option>
-        }
-      </select>
-    </div>
+      <div class="flex items-center gap-2">
+        <label for="lesson-count-selector" class="text-sm font-medium text-gray-700">Number of Lessons</label>
+        <select id="lesson-count-selector" class="block w-28 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+          @foreach (var count in AvailableLessonSlots)
+          {
+            <option value="@count">@count</option>
+          }
+        </select>
+      </div>
 
-    <div>
-      <span for="lesson-date" class="lesson-date-label">Date:</span>
-      <span id="lesson-date">@DateTime.Now.ToShortDateString()</span>
-    </div>
+      <div class="flex items-center gap-2 text-sm text-gray-600">
+        <span id="lesson-date-label" class="font-medium">Date</span>
+        <span id="lesson-date">@DateTime.Now.ToShortDateString()</span>
+      </div>
 
-    <span id="buttons">
-      <button class="button save-button" @onclick="PrintLessonText">Save</button>
-      <button class="button cancel-button">Cancel</button>
-    </span>
+      <div class="flex items-center gap-2">
+        <button class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                @onclick="PrintLessonText">Save</button>
+        <button class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">Cancel</button>
+      </div>
+    </div>
   </div>
 
-  <div class="content">
-    <div class="text-editor">
-      <TextEditor OnLessonTextChange="@LessonTextChanged" LessonText="@LessonText" />
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div class="lg:col-span-2">
+      <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="p-4">
+          <TextEditor OnLessonTextChange="@LessonTextChanged" LessonText="@LessonText" />
+        </div>
+      </div>
     </div>
-    <div class="resources">
-      Resources  
+
+    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <h3 class="mb-2 text-sm font-semibold text-gray-800">Resources</h3>
+      <div class="text-sm text-gray-600">Resources</div>
     </div>
   </div>
 </div>

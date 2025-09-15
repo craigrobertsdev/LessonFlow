@@ -1,222 +1,210 @@
 @using LessonFlow.Components.AccountSetup.State
 @using LessonFlow.Components.Pages
 @using LessonFlow.Domain.Enums
+@using LessonFlow.Domain.ValueObjects
 
-<div class="form-container">
-    <div class="form-section">
-        <h3 class="form-title">Define Your Daily Schedule</h3>
-        <p class="form-description">Configure the time slots for your school day. Add and arrange lessons and
-            breaks.</p>
+<PageTitle>Account Setup - Day Structure</PageTitle>
 
-        <div class="time-inputs-container">
-            <div class="time-inputs-grid">
-                <div class="time-input-group">
-                    <label for="startTime" class="form-label">School Day Start Time</label>
-                    <input type="time" id="startTime" @bind="_startTime" class="form-input"/>
-                </div>
-                <div class="time-input-group">
-                    <label for="endTime" class="form-label">School Day End Time</label>
-                    <input type="time" id="endTime" @bind="_endTime" class="form-input"/>
-                </div>
-            </div>
-        </div>
+<div class="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow">
+	<div class="mb-8">
+		<h3 class="text-xl font-semibold mb-2">Define Your Daily Schedule</h3>
+		<p class="text-sm text-gray-600 mb-6">Configure the time slots for your school day. Add and arrange lessons and breaks.</p>
 
-        <div class="form-section">
-            <h4 class="section-subtitle">Schedule Slots</h4>
-            <div class="table-container">
-                <table class="schedule-table">
-                    <thead class="table-header">
-                    <tr>
-                        <th scope="col" class="table-header-cell">Name</th>
-                        <th scope="col" class="table-header-cell">Type</th>
-                        <th scope="col" class="table-header-cell">Start Time</th>
-                        <th scope="col" class="table-header-cell">End Time</th>
-                        <th scope="col" class="table-header-cell">Actions</th>
-                    </tr>
-                    </thead>
-                    <tbody class="table-body">
-                    @foreach (var slot in _slots)
-                    {
-                        <tr>
-                            <td class="table-cell">
-                                <input type="text" @bind="slot.Name" class="form-input"/>
-                            </td>
-                            <td class="table-cell">
-                                <select @bind="slot.PeriodType" class="form-select">
-                                    <option value="@PeriodType.Lesson">Lesson</option>
-                                    <option value="@PeriodType.Break">Break</option>
-                                </select>
-                            </td>
-                            <td class="table-cell">
-                                <input type="time" @bind="slot.StartTime" @oninput="() => ValidateTimeSlots()"
-                                       class="form-input"/>
-                            </td>
-                            <td class="table-cell">
-                                <input type="time" @bind="slot.EndTime" @oninput="() => ValidateTimeSlots()"
-                                       class="form-input"/>
-                            </td>
-                            <td class="table-cell action-cell">
-                                <button type="button" @onclick="() => RemoveSlot(slot)" class="remove-button">
-                                    Remove
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
+		<div class="mb-8">
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+				<div>
+					<label for="startTime" class="block text-sm font-medium text-gray-700 mb-1">School Day Start Time</label>
+					<input type="time" id="startTime" @bind="_startTime"
+								 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label for="endTime" class="block text-sm font-medium text-gray-700 mb-1">School Day End Time</label>
+					<input type="time" id="endTime" @bind="_endTime"
+								 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+			</div>
+		</div>
 
-            <div class="add-button-container">
-                <button type="button" @onclick="AddTimeSlot" class="add-button">
-                    <svg class="add-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                         fill="currentColor" aria-hidden="true">
-                        <path fill-rule="evenodd"
-                              d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                              clip-rule="evenodd"/>
-                    </svg>
-                    Add Time Slot
-                </button>
-            </div>
+		<div class="mb-8">
+			<h4 class="text-lg font-semibold mb-3">Schedule Slots</h4>
+			<div class="overflow-x-auto rounded-md border border-gray-200">
+				<table class="min-w-full divide-y divide-gray-200">
+					<thead class="bg-gray-50">
+						<tr>
+							<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+							<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+							<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+							<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
+							<th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-gray-100">
+						@foreach (var slot in _periods)
+						{
+							<tr>
+								<td class="px-4 py-3 whitespace-nowrap">
+									<input type="text" @bind="slot.Name"
+												 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+								</td>
+								<td class="px-4 py-3 whitespace-nowrap">
+									<select @bind="slot.PeriodType"
+													class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+										<option value="@PeriodType.Lesson">Lesson</option>
+										<option value="@PeriodType.Break">Break</option>
+									</select>
+								</td>
+								<td class="px-4 py-3 whitespace-nowrap">
+									<input type="time" @bind="slot.StartTime" @oninput="() => ValidateTimeSlots()"
+												 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+								</td>
+								<td class="px-4 py-3 whitespace-nowrap">
+									<input type="time" @bind="slot.EndTime" @oninput="() => ValidateTimeSlots()"
+												 class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+								</td>
+								<td class="px-4 py-3 whitespace-nowrap text-right">
+									<button type="button" @onclick="() => RemoveSlot(slot)"
+													class="text-sm font-medium text-red-600 hover:text-red-700">
+										Remove
+									</button>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
 
-            @if (!string.IsNullOrEmpty(_timeError))
-            {
-                <div class="error-message">
-                    <p>@_timeError</p>
-                </div>
-            }
-        </div>
-    </div>
+			<div class="mt-4">
+				<button type="button" @onclick="AddTimeSlot"
+								class="inline-flex items-center px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-700">
+					<svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+							 fill="currentColor" aria-hidden="true">
+						<path fill-rule="evenodd"
+									d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+									clip-rule="evenodd" />
+					</svg>
+					Add Time Slot
+				</button>
+			</div>
 
-    <div class="form-buttons-container">
-        <button type="button" @onclick="HandleBack" class="back-button">
-            Back
-        </button>
-        <button type="button" @onclick="HandleSubmit" disabled="@(State.IsLoading || !string.IsNullOrEmpty(_timeError))"
-                class="next-button">
-            @if (State.IsLoading)
-            {
-                <span class="spinner-container">
-                    <div class="spinner"></div>
-                </span>
-            }
-            Next
-        </button>
-    </div>
+			@if (!string.IsNullOrEmpty(_timeError))
+			{
+				<div class="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+					<p>@_timeError</p>
+				</div>
+			}
+		</div>
+	</div>
+
+	<div class="mt-8 flex items-center justify-between">
+		<button type="button" @onclick="HandleBack"
+						class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+			Back
+		</button>
+		<button type="button" @onclick="HandleSubmit" disabled="@(State.IsLoading || !string.IsNullOrEmpty(_timeError))"
+						class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+			@if (State.IsLoading)
+			{
+				<span class="mr-2 inline-flex">
+					<span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white"></span>
+				</span>
+			}
+			Next
+		</button>
+	</div>
 </div>
 
 @code {
-    [CascadingParameter]
-    private AccountSetupState State { get; set; } = null!;
+	[CascadingParameter]
+	private AccountSetupState State { get; set; } = null!;
 
-    private List<ScheduleSlot> _slots = [];
-    private TimeOnly _startTime;
-    private TimeOnly _endTime;
-    private string? _timeError;
+	private List<TemplatePeriod> _periods = [];
+	private TimeOnly _startTime;
+	private TimeOnly _endTime;
+	private string? _timeError;
 
-    protected override void OnInitialized()
-    {
-        _slots = State.ScheduleConfig.ScheduleSlots.Select(s => new ScheduleSlot
-        {
-            Id = s.Id,
-            PeriodType = s.PeriodType,
-            Name = s.Name,
-            StartTime = s.StartTime,
-            EndTime = s.EndTime
-        }).ToList();
+	protected override void OnInitialized()
+	{
+		_periods = State.WeekPlannerTemplate.Periods.Select(s => new TemplatePeriod(
+						s.PeriodType,
+						s.Name,
+						s.StartTime,
+						s.EndTime
+				)).ToList();
 
-        _startTime = State.ScheduleConfig.StartTime;
-        _endTime = State.ScheduleConfig.EndTime;
-    }
+		_periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
 
-    private void AddTimeSlot()
-    {
-        // Find the highest existing ID and increment by 1
-        int highestId = 0;
-        foreach (var slot in _slots)
-        {
-            if (slot.Id > highestId)
-                highestId = slot.Id;
-        }
+		_startTime = State.StartTime;
+		_endTime = State.EndTime;
+	}
 
-        // Add a new slot with default values
-        _slots.Add(new ScheduleSlot
-        {
-            Id = (highestId + 1),
-            Name = $"New Slot {highestId + 1}",
-            PeriodType = PeriodType.Lesson,
-            StartTime = _slots.LastOrDefault()?.EndTime ?? _startTime,
-            EndTime = _endTime
-        });
+	private void AddTimeSlot()
+	{
+		_periods.Add(new TemplatePeriod(
+			PeriodType.Lesson,
+			$"New Slot {_periods.Count}",
+			_periods.LastOrDefault()?.EndTime ?? _startTime,
+			_endTime
+		));
 
-        ValidateTimeSlots();
-    }
+		ValidateTimeSlots();
+	}
 
-    private void RemoveSlot(ScheduleSlot slot)
-    {
-        _slots.Remove(slot);
-        ValidateTimeSlots();
-    }
+	private void RemoveSlot(TemplatePeriod period)
+	{
+		_periods.Remove(period);
+		ValidateTimeSlots();
+	}
 
-    private void ValidateTimeSlots()
-    {
-        _timeError = null;
+	private void ValidateTimeSlots()
+	{
+		_timeError = null;
 
-        if (_slots.Count == 0)
-        {
-            _timeError = "You must have at least one time slot";
-            return;
-        }
+		if (_periods.Count == 0)
+		{
+			_timeError = "You must have at least one time slot";
+			return;
+		}
 
-        // Check for overlapping time slots
-        var sortedSlots = _slots.OrderBy(s => s.StartTime).ToList();
-        for (int i = 0; i < sortedSlots.Count - 1; i++)
-        {
-            if (sortedSlots[i].EndTime > sortedSlots[i + 1].StartTime)
-            {
-                _timeError = $"Time slots '{sortedSlots[i].Name}' and '{sortedSlots[i + 1].Name}' overlap";
-                return;
-            }
-        }
+		// Check for overlapping time slots
+		var sortedSlots = _periods.OrderBy(s => s.StartTime).ToList();
+		for (int i = 0; i < sortedSlots.Count - 1; i++)
+		{
+			if (sortedSlots[i].EndTime > sortedSlots[i + 1].StartTime)
+			{
+				_timeError = $"Time slots '{sortedSlots[i].Name}' and '{sortedSlots[i + 1].Name}' overlap";
+				return;
+			}
+		}
 
-        // Check for time slots outside school day
-        foreach (var slot in _slots)
-        {
-            if (slot.StartTime < _startTime)
-            {
-                _timeError = $"Time slot '{slot.Name}' starts before school day";
-                return;
-            }
+		// Check for time slots outside school day
+		foreach (var slot in _periods)
+		{
+			if (slot.StartTime < _startTime)
+			{
+				_timeError = $"Time slot '{slot.Name}' starts before school day";
+				return;
+			}
 
-            if (slot.EndTime > _endTime)
-            {
-                _timeError = $"Time slot '{slot.Name}' ends after school day";
-                return;
-            }
-        }
-    }
+			if (slot.EndTime > _endTime)
+			{
+				_timeError = $"Time slot '{slot.Name}' ends after school day";
+				return;
+			}
+		}
+	}
 
-    private void HandleBack()
-    {
-        State.ClearError();
-        State.UpdateStep(AccountSetupStep.Subjects, AccountSetup.ChangeDirection.Back);
-    }
+	private void HandleBack()
+	{
+		State.ClearError();
+		State.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Back);
+	}
 
-    private void HandleSubmit()
-    {
-        if (!string.IsNullOrEmpty(_timeError))
-            return;
+	private void HandleSubmit()
+	{
+		if (!string.IsNullOrEmpty(_timeError)) return;
 
-        var config = new ScheduleConfig
-        {
-            StartTime = _startTime,
-            EndTime = _endTime,
-            NumberOfLessons = _slots.Count(s => s.PeriodType == PeriodType.Lesson),
-            NumberOfBreaks = _slots.Count(s => s.PeriodType == PeriodType.Break),
-            ScheduleSlots = _slots
-        };
-
-        State.SetScheduleConfig(config);
-        State.UpdateStep(AccountSetupStep.Schedule, AccountSetup.ChangeDirection.Forward);
-    }
+		State.UpdateTiming(_startTime, _endTime, _periods);
+		State.UpdateStep(AccountSetupStep.Schedule, ChangeDirection.Forward);
+	}
 }
 

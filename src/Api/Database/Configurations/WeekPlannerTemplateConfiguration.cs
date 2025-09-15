@@ -1,4 +1,5 @@
 using System.Text.Json;
+using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
@@ -15,6 +16,9 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
         builder.HasKey(dp => dp.Id);
         builder.Property(dp => dp.Id)
             .HasConversion(new WeekPlannerTemplateId.StronglyTypedIdEfValueConverter());
+
+        // Add shadow property for the foreign key to AccountSetupState
+        builder.Property<Guid?>("AccountSetupStateId");
 
         builder.HasOne<User>()
             .WithMany()
@@ -47,6 +51,9 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
                     p => Serialize(p),
                     p => ConvertFromDtos(p));
         });
+
+        builder.Navigation(wp => wp.Periods).AutoInclude();
+        builder.Navigation(wp => wp.DayTemplates).AutoInclude();
     }
 
     private static string Serialize(IEnumerable<PeriodBase> periods)
@@ -79,7 +86,7 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
     {
         return period switch
         {
-            LessonStructure lesson => new PeriodDto
+            LessonPeriod lesson => new PeriodDto
             {
                 Type = PeriodType.Lesson,
                 StartPeriod = lesson.StartPeriod,
@@ -107,7 +114,7 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
     {
         return periodDto.Type switch
         {
-            PeriodType.Lesson => new LessonStructure(periodDto.SubjectName!, periodDto.StartPeriod,
+            PeriodType.Lesson => new LessonPeriod(periodDto.SubjectName!, periodDto.StartPeriod,
                 periodDto.NumberOfPeriods),
             PeriodType.Break => new BreakPeriod(periodDto.BreakDuty, periodDto.StartPeriod, periodDto.NumberOfPeriods),
             PeriodType.Nit => new NitPeriod(periodDto.StartPeriod, periodDto.NumberOfPeriods),

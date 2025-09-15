@@ -3,46 +3,63 @@
 
 @inject NavigationManager NavigationManager
 
-<nav class="nav">
-  <div class="nav-item px-3">
-    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-      Home
-    </NavLink>
+<nav class="w-full bg-white border-b border-gray-200">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-14 items-center justify-between">
+      <div class="flex items-center gap-x-2">
+        <div class="hidden sm:block">
+          <NavLink class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded"
+                   ActiveClass="text-blue-600 font-semibold bg-blue-50"
+                   href="" Match="NavLinkMatch.All">
+            Home
+          </NavLink>
+        </div>
+
+        <AuthorizeView>
+          <Authorized>
+            @if (AppState.User is not null && AppState.User.AccountSetupComplete)
+            {
+              <div class="hidden sm:block">
+                <NavLink class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded"
+                         ActiveClass="text-blue-600 font-semibold bg-blue-50"
+                         href="/LessonPlanner">
+                  Lesson Planner
+                </NavLink>
+              </div>
+            }
+          </Authorized>
+          <NotAuthorized>
+            <div class="hidden sm:flex items-center gap-x-1">
+              <NavLink class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded"
+                       ActiveClass="text-blue-600 font-semibold bg-blue-50"
+                       href="/Account/Register">
+                Register
+              </NavLink>
+              <NavLink class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded"
+                       ActiveClass="text-blue-600 font-semibold bg-blue-50"
+                       href="/Account/Login">
+                Login
+              </NavLink>
+            </div>
+          </NotAuthorized>
+        </AuthorizeView>
+      </div>
+
+      <AuthorizeView>
+        <Authorized>
+          <form action="/Account/Logout" method="post" class="m-0">
+            <AntiforgeryToken />
+            <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+            <button type="submit"
+                    class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded inline-flex items-center gap-x-2">
+              <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span>
+              Logout
+            </button>
+          </form>
+        </Authorized>
+      </AuthorizeView>
+    </div>
   </div>
-
-  <AuthorizeView>
-    <Authorized>
-      @if (AppState.User is not null && AppState.User.AccountSetupComplete) {
-      <div>
-        <NavLink href="lessonplanner">
-          Lesson Planner
-        </NavLink>
-      </div>
-      }
-
-      <form action="Account/Logout" method="post">
-        <AntiforgeryToken/>
-        <input type="hidden" name="ReturnUrl" value="@_currentUrl"/>
-        <button type="submit" class="nav-link">
-          <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-        </button>
-      </form>
-    </Authorized>
-
-    <NotAuthorized>
-      <div class="nav-item px-3">
-        <NavLink href="/Account/Register">
-          Register
-        </NavLink>
-      </div>
-
-      <div class="nav-item px-3">
-        <NavLink href="/Account/Login">
-          Login
-        </NavLink>
-      </div>
-    </NotAuthorized>
-  </AuthorizeView>
 </nav>
 
 @code {

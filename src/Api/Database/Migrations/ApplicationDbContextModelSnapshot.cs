@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LessonFlow.src.Database.Migrations
+namespace LessonFlow.Api.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -51,6 +51,66 @@ namespace LessonFlow.src.Database.Migrations
                     b.HasIndex("SchoolEventsId");
 
                     b.ToTable("DayPlanSchoolEvent", (string)null);
+                });
+
+            modelBuilder.Entity("LessonFlow.Components.AccountSetup.State.AccountSetupState", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CalendarYear")
+                        .HasColumnType("integer");
+
+                    b.PrimitiveCollection<int[]>("CompletedSteps")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
+
+                    b.Property<int>("CurrentStep")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("Error")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsLoading")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("NumberOfBreaks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("NumberOfLessons")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SchoolName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time without time zone");
+
+                    b.Property<string>("SubjectsTaught")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("SubjectsTaught");
+
+                    b.Property<string>("WorkingDays")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("WorkingDays");
+
+                    b.Property<string>("YearLevelsTaught")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("YearLevelsTaught");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AccountSetupState", (string)null);
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Assessments.Assessment", b =>
@@ -219,6 +279,9 @@ namespace LessonFlow.src.Database.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("AccountSetupStateId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -226,6 +289,9 @@ namespace LessonFlow.src.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AccountSetupStateId")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -841,6 +907,15 @@ namespace LessonFlow.src.Database.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LessonFlow.Components.AccountSetup.State.AccountSetupState", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Users.User", null)
+                        .WithOne("AccountSetupState")
+                        .HasForeignKey("LessonFlow.Components.AccountSetup.State.AccountSetupState", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Assessments.Assessment", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Students.Student", "Student")
@@ -1134,6 +1209,10 @@ namespace LessonFlow.src.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", b =>
                 {
+                    b.HasOne("LessonFlow.Components.AccountSetup.State.AccountSetupState", null)
+                        .WithOne("WeekPlannerTemplate")
+                        .HasForeignKey("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "AccountSetupStateId");
+
                     b.HasOne("LessonFlow.Domain.Users.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1144,7 +1223,7 @@ namespace LessonFlow.src.Database.Migrations
                         .WithOne("WeekPlannerTemplate")
                         .HasForeignKey("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "YearDataId");
 
-                    b.OwnsMany("LessonFlow.Domain.PlannerTemplates.DayStructure", "DayTemplates", b1 =>
+                    b.OwnsMany("LessonFlow.Domain.PlannerTemplates.DayTemplate", "DayTemplates", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
@@ -1457,6 +1536,12 @@ namespace LessonFlow.src.Database.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LessonFlow.Components.AccountSetup.State.AccountSetupState", b =>
+                {
+                    b.Navigation("WeekPlannerTemplate")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Subject", b =>
                 {
                     b.Navigation("YearLevels");
@@ -1476,6 +1561,8 @@ namespace LessonFlow.src.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.Users.User", b =>
                 {
+                    b.Navigation("AccountSetupState");
+
                     b.Navigation("Resources");
 
                     b.Navigation("YearDataHistory");

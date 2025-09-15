@@ -24,7 +24,7 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
     {
         return await context.Users
             .Where(u => u.Email == email)
-            // .Include(u => u.AccountSetupState)
+            .Include(u => u.AccountSetupState)
             .Include(u => u.Resources)
             .Include(u => u.YearDataHistory)
             .SingleOrDefaultAsync(cancellationToken);
@@ -33,29 +33,44 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
     public async Task<AccountSetupState?> GetAccountSetupState(Guid userId,
         CancellationToken cancellationToken)
     {
-        return new AccountSetupState();
-        // var user = await context.Users
-        //     .Where(u => u.Id == userId)
-        //     .Select(u => new
-        //     {
-        //         u.AccountSetupState
-        //     })
-        //     .FirstOrDefaultAsync(cancellationToken);
-        //
-        // if (user is null)
-        // {
-        //     throw new UnauthorizedAccessException("User not found");
-        // }
-        //
-        // return user.AccountSetupState ?? null;
+        var user = await context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new
+            {
+                u.AccountSetupState
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (user is null)
+        {
+            throw new UnauthorizedAccessException("User not found");
+        }
+
+        return user.AccountSetupState ?? null;
+    }
+
+    public async Task UpdateAccountSetupState(Guid userId, AccountSetupState accountSetupState)
+    {
+        var user = await context.Users
+            .Where(u => u.Id == userId)
+            .FirstOrDefaultAsync();
+
+        if (user is null)
+        {
+            throw new Exception("User not found");
+        }
+
+        user.AccountSetupState = accountSetupState;
+        await context.SaveChangesAsync();
     }
 
     public async Task<User?> GetById(Guid userId, CancellationToken cancellationToken)
     {
         return await context.Users
             .Where(u => u.Id == userId)
-            .Include(t => t.YearDataHistory)
-            .AsSplitQuery()
+            .Include(u => u.AccountSetupState)
+            .Include(u => u.Resources)
+            .Include(u => u.YearDataHistory)
             .FirstOrDefaultAsync(cancellationToken);
     }
 

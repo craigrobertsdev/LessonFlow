@@ -1,6 +1,4 @@
 using LessonFlow.Components.AccountSetup.State;
-using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;
 using Microsoft.AspNetCore.Identity;
 
@@ -11,7 +9,7 @@ public class User : IdentityUser<Guid>
     private readonly List<YearData> _yearDataHistory = [];
     private readonly List<Resource> _resources = [];
     public bool AccountSetupComplete { get; set; }
-    // public AccountSetupState? AccountSetupState { get; set; }
+    public AccountSetupState? AccountSetupState { get; set; }
     public int LastSelectedYear { get; set; }
     public DateOnly LastSelectedWeekStart { get; set; }
     public List<YearData> YearDataHistory => _yearDataHistory;

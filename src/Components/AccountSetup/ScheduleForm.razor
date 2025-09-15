@@ -1,187 +1,466 @@
+@using LessonFlow.Api.Contracts.Users.AccountSetup
 @using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Domain.Enums
+@using LessonFlow.Domain.PlannerTemplates
+@using LessonFlow.Domain.Users
+@using LessonFlow.Interfaces.Persistence
 
+@inject IUserRepository UserRepository
 @inject NavigationManager NavigationManager
+@inject ILogger<ScheduleForm> Logger
 
-@* <div class="bg-white shadow overflow-hidden sm:rounded-lg p-6"> *@
-@*     <div class="mb-6"> *@
-@*         <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Set Your Weekly Schedule</h3> *@
-@*         <p class="text-sm text-gray-500 mb-4">Assign subjects to your schedule. This will be used to generate your weekly plans.</p> *@
-@* *@
-@*         <div class="overflow-x-auto border rounded-md"> *@
-@*             <table class="min-w-full divide-y divide-gray-200"> *@
-@*                 <thead class="bg-gray-50"> *@
-@*                     <tr> *@
-@*                         <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Slot</th> *@
-@*                         @foreach (var dayColumn in _scheduleGrid) *@
-@*                         { *@
-@*                             <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"> *@
-@*                                 @dayColumn.DayOfWeek *@
-@*                             </th> *@
-@*                         } *@
-@*                     </tr> *@
-@*                 </thead> *@
-@*                 <tbody class="bg-white divide-y divide-gray-200"> *@
-@*                     @for (int slotIndex = 0; slotIndex < State.ScheduleConfig.Slots.Count; slotIndex++) *@
-@*                     { *@
-@*                         var slot = State.ScheduleConfig.Slots[slotIndex]; *@
-@*                         <tr class="@(slot.IsBreak ? "bg-gray-50" : "")"> *@
-@*                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900"> *@
-@*                                 <div class="font-medium">@slot.Name</div> *@
-@*                                 <div class="text-gray-500 text-xs">@slot.StartTime - @slot.EndTime</div> *@
-@*                             </td> *@
-@* *@
-@*                             @foreach (var dayColumn in _scheduleGrid) *@
-@*                             { *@
-@*                                 <td class="px-4 py-3 whitespace-nowrap text-sm"> *@
-@*                                     @if (!dayColumn.IsWorkingDay) *@
-@*                                     { *@
-@*                                         <div class="text-gray-400 italic">Not working</div> *@
-@*                                     } *@
-@*                                     else if (slot.IsBreak) *@
-@*                                     { *@
-@*                                         <div class="text-gray-500">Break</div> *@
-@*                                     } *@
-@*                                     else *@
-@*                                     { *@
-@*                                         <select @bind="dayColumn.TimeSlots[slotIndex].Subject" class="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 rounded-md"> *@
-@*                                             <option value="">Select subject</option> *@
-@*                                             @foreach (var subject in State.SubjectsTaught) *@
-@*                                             { *@
-@*                                                 <option value="@subject">@subject</option> *@
-@*                                             } *@
-@*                                         </select> *@
-@*                                     } *@
-@*                                 </td> *@
-@*                             } *@
-@*                         </tr> *@
-@*                     } *@
-@*                 </tbody> *@
-@*             </table> *@
-@*         </div> *@
-@*     </div> *@
-@* *@
-@*     <div class="flex justify-between"> *@
-@*         <button type="button" @onclick="HandleBack" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> *@
-@*             Back *@
-@*         </button> *@
-@*         <button type="button" @onclick="HandleSubmit" disabled="@State.IsLoading" class="@(State.IsLoading ? "opacity-70 cursor-not-allowed" : "") inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"> *@
-@*             @if (State.IsLoading) *@
-@*             { *@
-@*                 <span class="inline-block mr-2"> *@
-@*                     <div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div> *@
-@*                 </span> *@
-@*             } *@
-@*             Complete Setup *@
-@*         </button> *@
-@*     </div> *@
-@* </div> *@
-@* *@
-@* @code { *@
-@*     [CascadingParameter] *@
-@*     private AccountSetupState State { get; set; } *@
-@* *@
-@*     private List<DayColumn> _scheduleGrid = new List<DayColumn>(); *@
-@* *@
-@*     protected override void OnInitialized() *@
-@*     { *@
-@*         InitializeScheduleGrid(); *@
-@*     } *@
-@* *@
-@*     private void InitializeScheduleGrid() *@
-@*     { *@
-@*         // If we have saved state, use it *@
-@*         if (State.ScheduleGrid != null && State.ScheduleGrid.Any()) *@
-@*         { *@
-@*             _scheduleGrid = State.ScheduleGrid; *@
-@*             return; *@
-@*         } *@
-@* *@
-@*         // Otherwise create a new schedule grid *@
-@*         _scheduleGrid = new List<DayColumn>(); *@
-@* *@
-@*         foreach (var day in AppConstants.WeekDays) *@
-@*         { *@
-@*             var scheduleSlots = new List<ScheduleSlot>(); *@
-@*             var isWorkingDay = State.WorkingDays.Contains(day); *@
-@* *@
-@*             foreach (var slot in State.ScheduleConfig.ScheduleSlots) *@
-@*             { *@
-@*                 scheduleSlots.Add(new ScheduleSlot() *@
-@*                 { *@
-@*                     PeriodType = slot.PeriodType, *@
-@*                     StartTime = slot.StartTime, *@
-@*                     EndTime = slot.EndTime, *@
-@*                     Subject = null  *@
-@*                 }); *@
-@*             } *@
-@* *@
-@*             _scheduleGrid.Add(new DayColumn *@
-@*             { *@
-@*                 DayOfWeek = day, *@
-@*                 IsWorkingDay = isWorkingDay, *@
-@*                 ScheduleSlots = scheduleSlots *@
-@*             }); *@
-@*         } *@
-@* *@
-@*         State.SetScheduleGrid(_scheduleGrid); *@
-@*     } *@
-@* *@
-@*     private int CalculateDuration(string startTime, string endTime) *@
-@*     { *@
-@*         if (TimeSpan.TryParse(startTime, out TimeSpan start) && TimeSpan.TryParse(endTime, out TimeSpan end)) *@
-@*         { *@
-@*             return (int)(end - start).TotalMinutes; *@
-@*         } *@
-@*         return 0; *@
-@*     } *@
-@* *@
-@*     private void HandleBack() *@
-@*     { *@
-@*         State.ClearError(); *@
-@*         State.SetCurrentStep(AccountSetupStep.Timing); *@
-@*     } *@
-@* *@
-@*     private async Task HandleSubmit() *@
-@*     { *@
-@*         try *@
-@*         { *@
-@*             State.SetLoading(true); *@
-@*             State.ClearError(); *@
-@* *@
-@*             // Save current state *@
-@*             State.SetScheduleGrid(_scheduleGrid); *@
-@* *@
-@*             // Create the week planner template *@
-@*             var weekPlannerTemplate = new WeekPlannerTemplate *@
-@*             { *@
-@*                 Days = _scheduleGrid *@
-@*             }; *@
-@* *@
-@*             // Create setup request *@
-@*             var setupData = new AccountSetupRequest *@
-@*             { *@
-@*                 SchoolName = State.SchoolName.Trim(), *@
-@*                 SubjectsTaught = State.SubjectsTaught, *@
-@*                 WeekPlannerTemplate = weekPlannerTemplate, *@
-@*                 YearLevelsTaught = State.ConvertYearLevelsTaughtToApiFormat(), *@
-@*                 CalendarYear = State.CalendarYear, *@
-@*                 WorkingDays = State.WorkingDays *@
-@*             }; *@
-@* *@
-@*             // Send setup data to API *@
-@*             var response = await ApiClient.CompleteSetup(setupData); *@
-@* *@
-@*             // Navigate to week planner *@
-@*             NavigationManager.NavigateTo($"/app/week-planner/{DateTime.Now.Year}/{response.CurrentTerm}/{response.CurrentWeek}"); *@
-@*         } *@
-@*         catch (Exception ex) *@
-@*         { *@
-@*             State.SetError(ex.Message); *@
-@*             Console.Error.WriteLine($"Error during setup: {ex}"); *@
-@*         } *@
-@*         finally *@
-@*         { *@
-@*             State.SetLoading(false); *@
-@*         } *@
-@*     } *@
-@* } *@
+<PageTitle>Account Setup - Lesson Structure</PageTitle>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg p-6">
+	<div class="mb-6">
+		<h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Set Your Weekly Schedule</h3>
+		<p class="text-sm text-gray-500 mb-4">Select the slot on the week planner, then choose the number of lessons and subject.</p>
+
+		<div class="mb-4 grid grid-cols-2 gap-4">
+			<div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(_selectedCell is null ? "bg-gray-200" : "")">
+				<div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
+				<select class="px-3 flex-grow text-sm focus:outline-none"
+								disabled="@(_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break)"
+								value="@(_selectedPeriod is not null ? _selectedPeriod.NumberOfPeriods : 1)"
+								@onchange="OnDurationChanged">
+					@foreach (var n in GetDurationOptions())
+					{
+						<option value="@n" selected="@(_selectedPeriod?.NumberOfPeriods == n)">@n</option>
+					}
+				</select>
+			</div>
+
+			<div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(_selectedCell is null ? "bg-gray-200" : "")">
+				<div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Subject</div>
+				<select class="px-3 mr-1 flex-grow text-sm focus:outline-none"
+								disabled="@(_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break)"
+								value="@(_selectedPeriod is not null ? ((LessonPeriod)_selectedPeriod).SubjectName : null)"
+								@onchange="OnSubjectSelected">
+					<option value="">Select subject</option>
+					@foreach (var subject in State.SubjectsTaught)
+					{
+						<option value="@subject">@subject</option>
+					}
+					<option value="NIT">NIT</option>
+				</select>
+			</div>
+		</div>
+
+		<div class="overflow-x-auto border rounded-md">
+			<table class="min-w-full table-fixed divide-y divide-gray-200">
+				<colgroup>
+					<col class="w-32" />
+					<col span="5" />
+				</colgroup>
+				<thead class="bg-gray-50">
+					<tr>
+						<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Slot</th>
+						@for (int i = 0; i < _dayTemplates.Count; i++)
+						{
+							var dayColumn = _dayTemplates[i];
+
+							<th scope="col" class="px-4 py-3 @(i == _dayTemplates.Count - 1 ? "" : "border-r") text-xs font-medium uppercase tracking-wider @(dayColumn.IsWorkingDay ? "bg-rose-100 text-gray-700" : "bg-gray-200 text-gray-500")">
+								@dayColumn.DayOfWeek
+							</th>
+						}
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-gray-300">
+					@for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
+					{
+						var slotIndex = i;
+						var slot = WeekPlannerTemplate.Periods[slotIndex];
+						var isBreakRow = slot.PeriodType == PeriodType.Break;
+						<tr class="@(isBreakRow ? "bg-gray-100" : string.Empty)">
+							<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 align-middle @(isBreakRow ? "bg-gray-200" : string.Empty)">
+								<div class="font-medium">@slot.Name</div>
+								<div class="text-gray-500 text-xs">@slot.StartTime - @slot.EndTime</div>
+							</td>
+
+							@for (int j = 0; j < _dayTemplates.Count; j++)
+							{
+								var dayIndex = j;
+								var dayTemplate = _dayTemplates[dayIndex];
+								var period = dayTemplate.Periods![slotIndex];
+								if (!ShouldRenderCell(dayIndex, slotIndex))
+								{
+									continue; // covered by a row-spanned cell above
+								}
+
+								// Styling for break rows as separators
+								if (isBreakRow)
+								{
+									<td class="px-0 py-0">
+										<input class="h-3 w-full bg-gray-300" @bind="@((period as BreakPeriod)!.BreakDuty)" />
+									</td>
+									continue;
+								}
+
+								var subject = GetSubject(dayTemplate, slotIndex);
+								var isSelectedStart = _selectedCell.HasValue && _selectedCell.Value.dayIndex == dayIndex && _selectedCell.Value.slotIndex == slotIndex;
+								var rowSpan = GetVisualSegmentCount(dayIndex, slotIndex);
+
+								var clickable = dayTemplate.IsWorkingDay && !isBreakRow;
+								var css = GetCellCss(dayTemplate, slotIndex, subject, false);
+								<td class="px-2 py-2 whitespace-nowrap text-sm text-center align-middle @(css) @(isSelectedStart ? "ring-2 ring-[rgb(var(--primary-rgb))]" : "")"
+										@onclick="(() => OnCellClicked(period, dayIndex, slotIndex))"
+										rowspan="@rowSpan">
+									@if (!dayTemplate.IsWorkingDay)
+									{
+										<div class="h-10 bg-gray-200"></div>
+									}
+									else
+									{
+										@if (!string.IsNullOrWhiteSpace(subject))
+										{
+											<div class="font-medium">@subject</div>
+										}
+										else
+										{
+											<div class="h-10"></div>
+										}
+									}
+								</td>
+							}
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="mt-3 flex items-center gap-2">
+			<button type="button"
+							disabled="@(!_selectedCell.HasValue)"
+							@onclick="ClearSelectionBlock"
+							class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+				Clear block
+			</button>
+		</div>
+	</div>
+
+	<div class="flex justify-between">
+		<button type="button" @onclick="HandleBack" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+			Back
+		</button>
+		<button type="button" @onclick="HandleSubmit" disabled="@State.IsLoading" class="@(State.IsLoading ? "opacity-70 cursor-not-allowed" : "") inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+			@if (State.IsLoading)
+			{
+				<span class="inline-block mr-2">
+					<div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+				</span>
+			}
+			Complete Setup
+		</button>
+	</div>
+</div>
+
+@code {
+	[CascadingParameter] private AccountSetupState State { get; set; } = null!;
+	[CascadingParameter] public User? User { get; set; }
+	private (int dayIndex, int slotIndex)? _selectedCell;
+	private PeriodBase? _selectedPeriod;
+
+	private WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
+	private List<DayTemplate> _dayTemplates => WeekPlannerTemplate.DayTemplates;
+
+	protected override void OnInitialized()
+	{
+	}
+
+	protected override void OnParametersSet()
+	{
+		// Ensure grid always matches current timing config on re-renders
+		if (_dayTemplates.Any())
+		{
+			var expected = WeekPlannerTemplate.Periods.Count;
+			if (_dayTemplates.Any(d => d.Periods is null || d.Periods.Count != expected))
+			{
+				State.SetDayTemplates(_dayTemplates);
+			}
+		}
+	}
+
+	private string? GetSubject(DayTemplate day, int slotIndex)
+	{
+		if (day.Periods is null) return null;
+
+		var slot = day.Periods[slotIndex];
+		return slot is LessonPeriod lesson
+				? lesson.SubjectName
+				: null;
+	}
+
+	private void OnCellClicked(PeriodBase period, int dayIndex, int slotIndex)
+	{
+		if (_selectedPeriod == period)
+		{
+			_selectedCell = null;
+			_selectedPeriod = null;
+			return;
+		}
+
+		var day = _dayTemplates[dayIndex];
+		if (!day.IsWorkingDay) return;
+
+		// If clicking inside an existing visual segment, move selection to the start of that segment
+		var segmentStart = GetVisualSegmentStart(dayIndex, slotIndex);
+		_selectedCell = (dayIndex, segmentStart);
+
+		StateHasChanged();
+	}
+
+	private void OnDurationChanged(ChangeEventArgs e)
+	{
+		if (_selectedPeriod is null) return;
+		if (int.TryParse(e.Value?.ToString(), out var val))
+		{
+			if (_selectedPeriod.PeriodType == PeriodType.Break)
+			{
+				_selectedPeriod.SetNumberOfPeriods(1);
+			}
+			else
+			{
+				_selectedPeriod.SetNumberOfPeriods(val);
+			}
+
+			StateHasChanged();
+		}
+	}
+
+	private IEnumerable<int> GetDurationOptions()
+	{
+		// If a cell is selected, allow 1..max from that cell; otherwise allow 1..total lesson periods in the day
+		if (_selectedCell.HasValue)
+		{
+			var max = CalculateMaxAvailablePeriods(_selectedCell.Value.dayIndex, _selectedCell.Value.slotIndex);
+			if (max <= 0) max = 1;
+			for (int i = 1; i <= max; i++) yield return i;
+			yield break;
+		}
+
+		var totalLessons = WeekPlannerTemplate.Periods.Count(s => s.PeriodType == PeriodType.Lesson);
+		totalLessons = Math.Max(1, totalLessons);
+		for (int i = 1; i <= totalLessons; i++) yield return i;
+	}
+
+	// private int GetLessonDuration()
+	// {
+	// 	if (!_selectedCell.HasValue) return 1;
+	// 	var (dayIndex, slotIndex) = _selectedCell.Value;
+	// 	var subject = GetSubject(_dayTemplates[dayIndex], slotIndex);
+	// 	if (subject is null) return 1;
+
+	// 	var initialSelection = _dayTemplates[dayIndex].Periods[slotIndex];
+	// 	while (slotIndex > 0 && !initialSelection.)
+	// 	{
+	// 		initialSelection = _dayTemplates[dayIndex].Periods[--slotIndex];
+	// 	}
+
+	// 	var duration = 0;
+	// 	for (int i = slotIndex; i < WeekPlannerTemplate.Periods.Count; i++)
+	// 	{
+	// 		var slot = _dayTemplates[dayIndex].Periods[i];
+	// 		if (slot.Subject == subject)
+	// 		{
+	// 			duration++;
+	// 		}
+	// 		else if (slot.PeriodType == PeriodType.Break)
+	// 		{
+	// 			continue; // skip breaks
+	// 		}
+	// 		else
+	// 		{
+	// 			break;
+	// 		}
+	// 	}
+
+	// 	return duration;
+	// }
+
+	private void OnSubjectSelected(ChangeEventArgs e)
+	{
+		if (_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break) return;
+		((LessonPeriod)_selectedPeriod).SetSubjectName(e.Value?.ToString() ?? string.Empty);
+
+	}
+
+	private void ClearSelectionBlock()
+	{
+		if (!_selectedCell.HasValue) return;
+		if (_selectedPeriod is null) return;
+
+		_selectedPeriod.SetNumberOfPeriods(1);
+		if (_selectedPeriod.PeriodType == PeriodType.Lesson)
+		{
+			((LessonPeriod)_selectedPeriod).SetSubjectName(string.Empty);
+		}
+		// var (dayIndex, start) = _selectedCell.Value;
+		// if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return;
+		// var day = _dayTemplates[dayIndex];
+		// if (day.Periods is null) return;
+
+		// var count = GetVisualSegmentCount(dayIndex, start);
+		// if (count <= 0) return;
+
+		// int cleared = 0;
+		// int idx = start;
+		// while (idx < day.Periods.Count && cleared < count)
+		// {
+		// 	if (idx < 0 || idx >= WeekPlannerTemplate.Periods.Count) break;
+		// 	var cfg = WeekPlannerTemplate.Periods[idx];
+		// 	if (cfg.PeriodType == PeriodType.Break) { idx++; continue; }
+		// 	day.Periods[idx].Subject = null;
+		// 	cleared++;
+		// 	idx++;
+		// }
+
+		// State.SetScheduleGrid(_dayTemplates);
+		StateHasChanged();
+	}
+
+	private bool ShouldRenderCell(int dayIndex, int slotIndex)
+	{
+		if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return true;
+		var day = _dayTemplates[dayIndex];
+		if (slotIndex < 0 || slotIndex >= WeekPlannerTemplate.Periods.Count) return true;
+		var cfgSlot = WeekPlannerTemplate.Periods[slotIndex];
+		if (!day.IsWorkingDay) return true; // render each row for non-working day
+		if (cfgSlot.PeriodType == PeriodType.Break) return true; // always render breaks
+
+		var subject = GetSubject(day, slotIndex);
+		if (string.IsNullOrWhiteSpace(subject)) return true; // empty lesson cell renders
+
+		// render only at the start of a visual contiguous segment
+		var start = GetVisualSegmentStart(dayIndex, slotIndex);
+		return slotIndex == start;
+	}
+
+	private int GetVisualSegmentStart(int dayIndex, int slotIndex)
+	{
+		var day = _dayTemplates[dayIndex];
+		var subject = GetSubject(day, slotIndex);
+		if (string.IsNullOrWhiteSpace(subject)) return slotIndex;
+
+		int start = slotIndex;
+		for (int i = slotIndex - 1; i >= 0; i--)
+		{
+			var cfg = WeekPlannerTemplate.Periods[i];
+			if (cfg.PeriodType == PeriodType.Break) break; // visual segment stops at breaks
+			if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
+			start = i;
+		}
+		return start;
+	}
+
+	private int GetVisualSegmentCount(int dayIndex, int slotIndex)
+	{
+		var day = _dayTemplates[dayIndex];
+		var cfgSlot = WeekPlannerTemplate.Periods[slotIndex];
+		if (!day.IsWorkingDay || cfgSlot.PeriodType == PeriodType.Break) return 1;
+		var subject = GetSubject(day, slotIndex);
+		if (string.IsNullOrWhiteSpace(subject)) return 1;
+
+		int count = 0;
+		int start = GetVisualSegmentStart(dayIndex, slotIndex);
+		for (int i = start; i < day.Periods.Count; i++)
+		{
+			var cfg = WeekPlannerTemplate.Periods[i];
+			if (cfg.PeriodType == PeriodType.Break) break;
+			if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
+			count++;
+		}
+		return Math.Max(1, count);
+	}
+
+	private int CalculateMaxAvailablePeriods(int dayIndex, int startSlotIndex)
+	{
+		if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return 0;
+		var day = _dayTemplates[dayIndex];
+		if (!day.IsWorkingDay) return 0;
+
+		int available = 0;
+		for (int i = startSlotIndex; i < day.Periods.Count; i++)
+		{
+			if (i < 0 || i >= WeekPlannerTemplate.Periods.Count) break;
+			var cfg = WeekPlannerTemplate.Periods[i];
+			if (cfg.PeriodType == PeriodType.Break) continue; // skip breaks when counting periods
+
+			var subj = GetSubject(day, i);
+			if (!string.IsNullOrWhiteSpace(subj) && i != startSlotIndex)
+			{
+				break; // occupied by other subject beyond start
+			}
+
+			available++;
+		}
+		return available;
+	}
+
+	private string GetCellCss(DayTemplate day, int slotIndex, string? subject, bool isBreak)
+	{
+		if (!day.IsWorkingDay) return "bg-gray-100 text-gray-400";
+		if (isBreak) return "bg-gray-200 text-gray-600";
+		if (!string.IsNullOrWhiteSpace(subject))
+		{
+			return GetSubjectCss(subject);
+		}
+		return "cursor-pointer hover:bg-gray-50";
+	}
+
+	private string GetSubjectCss(string subject)
+	{
+		// Map common subjects to global color classes. Fallback to neutral.
+		return subject.ToLowerInvariant() switch
+		{
+			"english" => "bg-blue-500 text-white",
+			"mathematics" or "math" or "maths" => "math-subject text-white",
+			"science" => "science-subject text-white",
+			"history" => "history-subject text-white",
+			"nit" => "nit-subject text-black",
+			_ => "bg-[#EEF2F3]"
+		};
+	}
+
+	private void HandleBack()
+	{
+		State.ClearError();
+		State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Back);
+	}
+
+	private async Task HandleSubmit()
+	{
+		try
+		{
+			State.SetLoading(true);
+			State.ClearError();
+
+			// Basic validation: ensure grid shape matches config (no forced subject assignment)
+			for (int slotIndex = 0; slotIndex < WeekPlannerTemplate.Periods.Count; slotIndex++)
+			{
+				foreach (var day in _dayTemplates.Where(d => d.IsWorkingDay))
+				{
+					if (day.Periods is null || day.Periods.Count <= slotIndex)
+					{
+						State.SetError("Schedule configuration mismatch. Please revisit the Timing step.");
+						return;
+					}
+				}
+			}
+
+			// Save current state
+			await UserRepository.UpdateAccountSetupState(User.Id, State);
+
+			// Navigate to week planner (final step)
+			NavigationManager.NavigateTo("/WeekPlanner");
+		}
+		catch (Exception ex)
+		{
+			State.SetError(ex.Message);
+			Console.Error.WriteLine($"Error during setup: {ex}");
+		}
+		finally
+		{
+			State.SetLoading(false);
+		}
+	}
+}

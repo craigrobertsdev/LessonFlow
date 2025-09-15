@@ -11,6 +11,13 @@
   --color-nit: #eed9c4;
 
   --color-light-text: #dddddd;
+
+  /* Global theme variables used by components */
+  --primary-color: #2563eb; /* blue-600 */
+  --primary-dark-color: #1d4ed8; /* blue-700 */
+  --primary-color-rgb: 37, 99, 235;
+  /* Some component css uses this legacy name */
+  --primary-rgb: 37, 99, 235;
 }
 
 * {
@@ -47,34 +54,34 @@
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
 
-  &:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-  }
+.save-button:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
 
-  &:active {
-    background: linear-gradient(135deg, #047857 0%, #065f46 100%);
-    transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
-  }
+.save-button:active {
+  background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
 .cancel-button {
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
 
-  &:hover {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-  }
+.cancel-button:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
 
-  &:active {
-    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-    transform: translateY(0) scale(0.98);
-    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
-  }
+.cancel-button:active {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
 }
 
 html,

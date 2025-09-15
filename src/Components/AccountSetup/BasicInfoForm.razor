@@ -3,135 +3,133 @@
 @using LessonFlow.Domain.Enums
 @inject IJSRuntime JsRuntime
 
-<div class="form-container">
-    <div class="form-group">
-        <label for="schoolName" class="form-label">School Name</label>
-        <input type="text" id="schoolName" value="@AccountSetupState.SchoolName"
-               @oninput="e => AccountSetupState.SetSchoolName(e.Value.ToString())"
-               class="form-input" required/>
+<PageTitle>Account Setup - Basic Info</PageTitle>
+
+<div class="max-w-4xl mx-auto p-6 bg-white rounded-lg">
+
+  <h2 class="text-xl font-semibold text-gray-900 text-center">Welcome to LessonFlow</h2>
+  <p class="mt-1 text-sm text-gray-600 text-center mb-2">Let's get your account set up so you can start planning your lessons.</p>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div class="mb-6">
+      <label for="schoolName" class="block text-sm font-medium text-gray-700 mb-1">School Name</label>
+      <input type="text" id="schoolName" value="@AccountSetupState.SchoolName"
+             @oninput="e => AccountSetupState.SetSchoolName(e.Value?.ToString() ?? string.Empty)"
+             class="block py-1 px-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+             required />
     </div>
 
     <div class="mb-6">
-        <label for="calendarYear" class="form-label">Calendar Year</label>
-        <select id="calendarYear" value="@AccountSetupState.CalendarYear"
-                @onchange="e => AccountSetupState.SetCalendarYear(int.Parse(e.Value.ToString()))"
-                class="form-select">
-            @for (int year = DateTime.Now.Year - 1; year <= DateTime.Now.Year + 3; year++)
-            {
-                <option value="@year">@year</option>
-            }
-        </select>
+      <label for="calendarYear" class="block text-sm font-medium text-gray-700 mb-1">Calendar Year</label>
+      <select id="calendarYear" value="@AccountSetupState.CalendarYear"
+              @onchange="@(e => AccountSetupState.SetCalendarYear(int.Parse(e.Value?.ToString() ?? $"{DateTime.Now.Year}")))"
+              class="block py-1 px-2 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        @for (int year = DateTime.Now.Year; year <= DateTime.Now.Year + 1; year++)
+        {
+          <option value="@year">@year</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <span class="block text-sm font-semibold text-gray-800">Year Levels Taught</span>
+    <div class="mt-3 grid grid-cols-3 md:grid-cols-4 gap-3">
+      @foreach (var yearLevel in AppConstants.YearLevels)
+      {
+        <label for="@yearLevel" class="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2 cursor-pointer hover:border-blue-400">
+          <input id="@yearLevel" type="checkbox"
+                 @onchange="e => ToggleYearLevel(yearLevel)"
+                 checked="@AccountSetupState.YearLevelsTaught.Contains(yearLevel)"
+                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+          <span class="text-sm text-gray-800">@yearLevel.ToDisplayString()</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="mb-6">
+    <span class="block text-sm font-semibold text-gray-800">Working Days</span>
+    <div class="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+      @foreach (var day in AppConstants.WeekDays)
+      {
+        <label for="@day" class="flex items-center gap-3 rounded-md border border-gray-200 px-3 py-2 cursor-pointer hover:border-blue-400">
+          <input id="@day" type="checkbox"
+                 @onchange="e => ToggleWorkingDay(day)"
+                 checked="@AccountSetupState.WorkingDays.Contains(day)"
+                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+          <span class="text-sm text-gray-800">@day</span>
+        </label>
+      }
+    </div>
+  </div>
+
+  <div class="mt-8 flex items-center justify-between">
+    <div class="text-sm">
+      @if (AccountSetupState.Error is not null)
+      {
+        <div class="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-red-700">
+          <p>@AccountSetupState.Error</p>
+        </div>
+      }
     </div>
 
-    <div class="mb-6">
-        <span class="form-section-title">Year Levels Taught</span>
-        <div class="checkbox-grid">
-            @foreach (var yearLevel in AppConstants.YearLevels)
-            {
-                <div class="checkbox-container">
-                    <div class="checkbox-wrapper">
-                        <input id="@yearLevel" type="checkbox" @onchange="e => ToggleYearLevel(yearLevel)"
-                               checked="@AccountSetupState.YearLevelsTaught.Contains(yearLevel)"
-                               class="checkbox-input"/>
-                    </div>
-                    <div class="checkbox-label-container">
-                        <label for="@yearLevel" class="checkbox-label">@yearLevel</label>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="mb-6">
-        <span class="form-section-title">Working Days</span>
-        <div class="days-grid">
-            @foreach (var day in AppConstants.WeekDays)
-            {
-                <div class="checkbox-container">
-                    <div class="checkbox-wrapper">
-                        <input id="@day" type="checkbox" @onchange="e => ToggleWorkingDay(day)"
-                               checked="@AccountSetupState.WorkingDays.Contains(day)"
-                               class="checkbox-input"/>
-                    </div>
-                    <div class="checkbox-label-container">
-                        <label for="@day" class="checkbox-label">@day</label>
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-
-    <div class="form-submit-container">
-        <div class="error-message">
-            @if (AccountSetupState.Error is not null)
-            {
-                <p>@AccountSetupState.Error</p>
-            }
-        </div>
-        <button @onclick="HandleSubmit" disabled="@AccountSetupState.IsLoading" class="submit-button">
-            @if (AccountSetupState.IsLoading)
-            {
-                <span class="spinner-container">
-                    <div class="spinner"></div>
-                </span>
-            }
-            Next
-        </button>
-    </div>
+    <button @onclick="HandleSubmit" disabled="@AccountSetupState.IsLoading"
+            class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+      @if (AccountSetupState.IsLoading)
+      {
+        <span class="mr-2 inline-flex">
+          <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white"></span>
+        </span>
+      }
+      Next
+    </button>
+  </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    private AccountSetupState AccountSetupState { get; set; } = null!;
+  [CascadingParameter]
+  private AccountSetupState AccountSetupState { get; set; } = null!;
 
-    private void ToggleYearLevel(YearLevelValue level)
+  private void ToggleYearLevel(YearLevelValue level)
+  {
+    if (AccountSetupState.YearLevelsTaught.Contains(level))
+      AccountSetupState.YearLevelsTaught.Remove(level);
+    else
+      AccountSetupState.YearLevelsTaught.Add(level);
+  }
+
+  private void ToggleWorkingDay(DayOfWeek day)
+  {
+    if (AccountSetupState.WorkingDays.Contains(day))
+      AccountSetupState.WorkingDays.Remove(day);
+    else
+      AccountSetupState.WorkingDays.Add(day);
+  }
+
+  private void HandleSubmit()
+  {
+    AccountSetupState.ClearError();
+
+    if (string.IsNullOrWhiteSpace(AccountSetupState.SchoolName))
     {
-        if (AccountSetupState.YearLevelsTaught.Contains(level))
-        {
-            AccountSetupState.YearLevelsTaught.Remove(level);
-        }
-        else
-        {
-            AccountSetupState.YearLevelsTaught.Add(level);
-        }
+      AccountSetupState.SetError("Please enter your school name");
+      return;
     }
 
-    private void ToggleWorkingDay(DayOfWeek day)
+    if (!AccountSetupState.YearLevelsTaught.Any())
     {
-        if (AccountSetupState.WorkingDays.Contains(day))
-        {
-            AccountSetupState.WorkingDays.Remove(day);
-        }
-        else
-        {
-            AccountSetupState.WorkingDays.Add(day);
-        }
+      AccountSetupState.SetError("Please select at least one year level");
+      return;
     }
 
-    private void HandleSubmit()
+    if (!AccountSetupState.WorkingDays.Any())
     {
-        JsRuntime.InvokeVoidAsync("console.log", "updating step");
-        AccountSetupState.ClearError();
-
-        if (string.IsNullOrWhiteSpace(AccountSetupState.SchoolName))
-        {
-            AccountSetupState.SetError("Please enter your school name");
-            return;
-        }
-
-        if (!AccountSetupState.YearLevelsTaught.Any())
-        {
-            AccountSetupState.SetError("Please select at least one year level");
-            return;
-        }
-
-        if (!AccountSetupState.WorkingDays.Any())
-        {
-            AccountSetupState.SetError("Please select at least one working day");
-            return;
-        }
-
-        AccountSetupState.UpdateStep(AccountSetupStep.Subjects, AccountSetup.ChangeDirection.Forward);
-        StateHasChanged();
+      AccountSetupState.SetError("Please select at least one working day");
+      return;
     }
+
+    AccountSetupState.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Forward);
+    StateHasChanged();
+  }
 }

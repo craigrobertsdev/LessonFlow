@@ -1,6 +1,6 @@
-using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
-using Microsoft.EntityFrameworkCore;
+using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.ValueObjects;
 
 namespace LessonFlow.Components.AccountSetup.State;
 
@@ -8,7 +8,7 @@ public class AccountSetupState
 {
     public Guid Id { get; init; }
     public event Action? OnChange;
-    public event Action<Pages.AccountSetup.ChangeDirection>? OnDirectionChange;
+    public event Action<ChangeDirection>? OnDirectionChange;
 
     public AccountSetupStep CurrentStep { get; private set; } = AccountSetupStep.BasicInfo;
 
@@ -18,7 +18,7 @@ public class AccountSetupState
         AccountSetupStep.Schedule
     ];
 
-    public HashSet<AccountSetupStep> CompletedSteps { get; private set; } = [];
+    public List<AccountSetupStep> CompletedSteps { get; private set; } = [];
 
     public string SchoolName { get; private set; } = string.Empty;
     public int CalendarYear { get; private set; } = DateTime.Now.Year;
@@ -29,65 +29,70 @@ public class AccountSetupState
         DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
         DayOfWeek.Friday
     ];
-    public List<DayColumn> ScheduleGrid { get; private set; } = [];
-    public ScheduleConfig ScheduleConfig { get; private set; } = new()
+
+    public int NumberOfLessons { get; set; }
+    public int NumberOfBreaks { get; set; }
+    public TimeOnly StartTime { get; set; }
+    public TimeOnly EndTime { get; set; }
+    public WeekPlannerTemplate WeekPlannerTemplate { get; set; }
+
+    public AccountSetupState(Guid userId)
     {
-        NumberOfLessons = 6,
-        NumberOfBreaks = 2,
-        StartTime = new TimeOnly(9, 10, 0),
-        EndTime = new TimeOnly(15, 10, 0),
-        ScheduleSlots =
-        [
-            new ScheduleSlot
-            {
-                Id = 1, PeriodType = PeriodType.Lesson, Name = "Lesson 1",
-                StartTime = new TimeOnly(09, 10, 0),
-                EndTime = new TimeOnly(10, 00, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 2, PeriodType = PeriodType.Lesson, Name = "Lesson 2",
-                StartTime = new TimeOnly(10, 00, 0),
-                EndTime = new TimeOnly(10, 50, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 3, PeriodType = PeriodType.Break, Name = "Recess",
-                StartTime = new TimeOnly(10, 50, 0),
-                EndTime = new TimeOnly(11, 20, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 4, PeriodType = PeriodType.Lesson, Name = "Lesson 3",
-                StartTime = new TimeOnly(11, 20, 0),
-                EndTime = new TimeOnly(12, 10, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 5, PeriodType = PeriodType.Lesson, Name = "Lesson 4",
-                StartTime = new TimeOnly(12, 10, 0),
-                EndTime = new TimeOnly(13, 00, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 6, PeriodType = PeriodType.Break, Name = "Lunch",
-                StartTime = new TimeOnly(13, 0, 0),
-                EndTime = new TimeOnly(13, 30, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 7, PeriodType = PeriodType.Lesson, Name = "Lesson 5",
-                StartTime = new TimeOnly(13, 30, 0),
-                EndTime = new TimeOnly(14, 20, 0)
-            },
-            new ScheduleSlot
-            {
-                Id = 8, PeriodType = PeriodType.Lesson, Name = "Lesson 6",
-                StartTime = new TimeOnly(14, 20, 0),
-                EndTime = new TimeOnly(15, 10, 0)
-            }
-        ]
-    };
+        List<TemplatePeriod> periods = [
+
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 1",
+                new TimeOnly(09, 10, 0),
+                new TimeOnly(10, 00, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 2",
+                new TimeOnly(10, 00, 0),
+                new TimeOnly(10, 50, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Break, "Recess",
+                new TimeOnly(10, 50, 0),
+                new TimeOnly(11, 20, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 3",
+                new TimeOnly(11, 20, 0),
+                new TimeOnly(12, 10, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 4",
+                new TimeOnly(12, 10, 0),
+                new TimeOnly(13, 00, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Break, "Lunch",
+                new TimeOnly(13, 0, 0),
+                new TimeOnly(13, 30, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 5",
+                new TimeOnly(13, 30, 0),
+                new TimeOnly(14, 20, 0)
+            ),
+            new TemplatePeriod
+            (
+                PeriodType.Lesson, "Lesson 6",
+                new TimeOnly(14, 20, 0),
+                new TimeOnly(15, 10, 0)
+            )
+            ];
+
+        WeekPlannerTemplate = new WeekPlannerTemplate(periods, userId);
+    }
+
 
     public string? Error { get; private set; }
     public bool IsLoading { get; private set; }
@@ -98,9 +103,13 @@ public class AccountSetupState
         NotifyStateChanged();
     }
 
-    public void UpdateStep(AccountSetupStep step, Pages.AccountSetup.ChangeDirection direction)
+    public void UpdateStep(AccountSetupStep step, ChangeDirection direction)
     {
-        CompletedSteps.Add(step);
+        if (CurrentStep == step) return;
+        if (!CompletedSteps.Contains(step))
+        {
+            CompletedSteps.Add(step);
+        }
         CurrentStep = step;
         NotifyStateChanged(direction);
     }
@@ -141,15 +150,23 @@ public class AccountSetupState
         NotifyStateChanged();
     }
 
-    public void SetScheduleGrid(List<DayColumn> grid)
+    public void UpdateTiming(TimeOnly startTime, TimeOnly endTime, List<TemplatePeriod> periods)
     {
-        ScheduleGrid = grid;
+        StartTime = startTime;
+        EndTime = endTime;
+        WeekPlannerTemplate.SetPeriods(periods);
         NotifyStateChanged();
     }
 
-    public void SetScheduleConfig(ScheduleConfig config)
+    public void SetDayTemplates(List<DayTemplate> periods)
     {
-        ScheduleConfig = config;
+        WeekPlannerTemplate.SetDayTemplates(periods);
+        NotifyStateChanged();
+    }
+
+    public void SetWeekPlannerTemplate(WeekPlannerTemplate template)
+    {
+        WeekPlannerTemplate = template;
         NotifyStateChanged();
     }
 
@@ -172,36 +189,34 @@ public class AccountSetupState
     }
 
     private void NotifyStateChanged() => OnChange?.Invoke();
-    private void NotifyStateChanged(Pages.AccountSetup.ChangeDirection direction) => OnDirectionChange?.Invoke(direction);
+    private void NotifyStateChanged(ChangeDirection direction) => OnDirectionChange?.Invoke(direction);
+
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+    private AccountSetupState() { }
 }
 
-[Owned]
-public class ScheduleConfig
-{
-    public int NumberOfLessons { get; set; }
-    public int NumberOfBreaks { get; set; }
-    public TimeOnly StartTime { get; set; }
-    public TimeOnly EndTime { get; set; }
-    public List<ScheduleSlot> ScheduleSlots { get; set; } = [];
-}
 
-[Owned]
-public class ScheduleSlot
-{
-    public int Id { get; init; }
-    public PeriodType PeriodType { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public TimeOnly StartTime { get; set; }
-    public TimeOnly EndTime { get; set; }
-    public TimeSpan Duration => EndTime - StartTime;
-    public Subject? Subject { get; set; }
-}
 
-[Owned]
-public class DayColumn
-{
+//[Owned]
+//public class ScheduleSlot
+//{
+//    public int Id { get; init; }
+//    public PeriodType PeriodType { get; set; }
+//    public string Name { get; set; } = string.Empty;
+//    public TimeOnly StartTime { get; set; }
+//    public TimeOnly EndTime { get; set; }
+//    public TimeSpan Duration => EndTime - StartTime;
+//    [MaxLength(50)]
+//    public string? Subject { get; set; }
+//    public int NumberOfPeriods { get; set; }
+//    public bool IsFirstPeriodOfBlock { get; set; }
+//}
 
-    public DayOfWeek DayOfWeek { get; init; }
-    public bool IsWorkingDay { get; set; }
-    public List<ScheduleSlot> ScheduleSlots { get; set; } = [];
-}
+//[Owned]
+//public class DayColumn
+//{
+
+//    public DayOfWeek DayOfWeek { get; init; }
+//    public bool IsWorkingDay { get; set; }
+//    public List<ScheduleSlot> ScheduleSlots { get; set; } = [];
+//}

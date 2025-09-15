@@ -1,10 +1,18 @@
-﻿@inject NavigationManager NavigationManager
+﻿@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
 
 @code {
-
-    protected override void OnInitialized()
+    protected override void OnAfterRender(bool firstRender)
     {
-        NavigationManager.NavigateTo($"Account/Login?returnUrl={Uri.EscapeDataString(NavigationManager.Uri)}", forceLoad: true);
-    }
+        if (!firstRender) return;
 
+        var relative = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+
+        // Don’t stack returnUrl if we’re already on the login page
+        if (!relative.StartsWith("Account/Login", StringComparison.OrdinalIgnoreCase))
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            NavigationManager.NavigateTo($"Account/Login?returnUrl={returnUrl}", forceLoad: false);
+        }
+    }
 }

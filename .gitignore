@@ -1,3 +1,13 @@
 appsettings.*
 obj
 bin
+.vs
+*.user
+*.suo
+*.log
+*.cache
+*.pdb
+*.db
+*.db-shm
+*.db-wal
+*.DS_Store

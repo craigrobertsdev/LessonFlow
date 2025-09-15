@@ -99,4 +99,8 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Api\Database\Migrations\" />
+    </ItemGroup>
+
 </Project>

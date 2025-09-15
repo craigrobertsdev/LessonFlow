@@ -9,8 +9,8 @@ public class SACurriculumParser : ICurriculumParser
     {
         var curriculum = new List<Subject>();
 
-        // var subjectDirectory = @"C:\Users\craig\source\repos\LessonFlow.Api\src\LessonFlow.Api\CurriculumFiles";
-        var subjectDirectory = @"/home/craig/repos/LessonFlow/src/LessonFlow.Api/CurriculumFiles";
+        var subjectDirectory = @"C:\Users\craig\source\repos\LessonFlow\src\LessonFlow.Api\CurriculumFiles";
+        //var subjectDirectory = @"/home/craig/repos/LessonFlow/src/LessonFlow.Api/CurriculumFiles";
         var files = Directory.GetFiles(subjectDirectory, "*.pdf");
 
         List<Task<Subject>> tasks = [];

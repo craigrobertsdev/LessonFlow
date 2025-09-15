@@ -19,6 +19,11 @@ public abstract class PeriodBase
     protected PeriodBase()
     {
     }
+
+    public void SetNumberOfPeriods(int numberOfPeriods)
+    {
+        NumberOfPeriods = numberOfPeriods;
+    }
 }
 
 public static class PeriodExtensions
@@ -30,7 +35,7 @@ public static class PeriodExtensions
                 return ls.PeriodType switch
                 {
                     PeriodType.Lesson => new LessonTemplateDto(PeriodType.Lesson, ls.NumberOfPeriods, ls.StartPeriod,
-                        ((LessonStructure)ls).SubjectName,
+                        ((LessonPeriod)ls).SubjectName,
                         null),
                     PeriodType.Break => new LessonTemplateDto(PeriodType.Break, ls.NumberOfPeriods, ls.StartPeriod,
                         null, ((BreakPeriod)ls).BreakDuty),

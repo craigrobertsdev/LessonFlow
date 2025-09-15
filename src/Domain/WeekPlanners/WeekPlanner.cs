@@ -83,9 +83,9 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 
 public static class WeekPlannerExtensions
 {
-    public static List<DayStructure> FromDtos(this IEnumerable<DayTemplateDto> dayTemplates)
+    public static List<DayTemplate> FromDtos(this IEnumerable<DayTemplateDto> dayTemplates)
     {
-        return dayTemplates.Select(d => new DayStructure(d.Templates.FromDtos(), d.DayOfWeek, d.Type)).ToList();
+        return dayTemplates.Select(d => new DayTemplate(d.Templates.FromDtos(), d.DayOfWeek, d.Type)).ToList();
     }
 
     public static List<PeriodBase> FromDtos(this IEnumerable<LessonTemplateDto> lessonTemplates)
@@ -95,7 +95,7 @@ public static class WeekPlannerExtensions
                 {
                     PeriodType.Lesson => l.SubjectName is null
                         ? throw new ArgumentException("Lesson template does not have a SubjectName")
-                        : new LessonStructure(l.SubjectName, l.StartPeriod, l.NumberOfPeriods),
+                        : new LessonPeriod(l.SubjectName, l.StartPeriod, l.NumberOfPeriods),
                     PeriodType.Break => new BreakPeriod(l.BreakDuty, l.StartPeriod, l.NumberOfPeriods),
                     PeriodType.Nit => new NitPeriod(l.StartPeriod, l.NumberOfPeriods),
                     _ => throw new Exception($"Unknown period type: {l.PeriodType}")

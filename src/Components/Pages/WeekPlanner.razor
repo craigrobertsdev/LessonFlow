@@ -1,6 +1,24 @@
+@rendermode InteractiveServer
+@attribute [Authorize]
+
 @page "/WeekPlanner"
+@using LessonFlow.Shared
+@using Microsoft.AspNetCore.Authorization
+@inject NavigationManager NavigationManager
+@inject ILogger<WeekPlanner> Logger
+
 <h3>WeekPlanner</h3>
 
 @code {
-    
+  [Inject] private AppState AppState { get; set; } = default!;
+
+  protected override async Task OnInitializedAsync()
+  {
+    Logger.LogWarning($"WeekPlanner {AppState.GetHashCode()}");
+    await AppState.InitialiseAsync();
+    if (!AppState.User.AccountSetupComplete)
+    {
+      NavigationManager.NavigateTo("/AccountSetup");
+    }
+  }
 }

@@ -27,12 +27,10 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
         : base(options)
     {
         _publisher = publisher;
-        // base.Database.EnsureCreated();
     }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
-        // base.Database.EnsureCreated();
     }
 
     public DbSet<Subject> CurriculumSubjects { get; set; } = null!;

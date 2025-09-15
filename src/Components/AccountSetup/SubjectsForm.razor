@@ -1,85 +1,97 @@
 @using LessonFlow.Components.AccountSetup.State
 @using LessonFlow.Components.Pages
 @using LessonFlow.Domain.Curriculum
-    <div class="form-container">
-    <EditForm Model="@State" OnValidSubmit="@HandleSubmit">
-        <div class="form-group">
-            <h3 class="form-title">Select Subjects You Teach</h3>
-            <div class="subjects-grid">
-                @if (Subjects.Any())
-                {
-                    @foreach (var subject in Subjects)
-                    {
-                        <div class="checkbox-container">
-                            <div class="checkbox-wrapper">
-                                <input id="@subject" type="checkbox" @onchange="e => ToggleSubject(subject, e.Value as bool? ?? false)"
-                                       checked="@State.SubjectsTaught.Contains(subject)" class="checkbox-input" />
-                            </div>
-                            <div class="checkbox-label-container">
-                                <label for="@subject" class="checkbox-label">@subject</label>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="loading-message">Loading subjects...</div>
-                }
-            </div>
-        </div>
 
-        <div class="form-buttons-container">
-            <button type="button" @onclick="HandleBack" class="back-button">
-                Back
-            </button>
-            <button type="submit" disabled="@State.IsLoading" class="next-button">
-                @if (State.IsLoading)
-                {
-                    <span class="spinner-container">
-                        <div class="spinner"></div>
-                    </span>
-                }
-                Next
-            </button>
-        </div>
-    </EditForm>
+@inject ILogger<SubjectsForm> Logger
+
+<PageTitle>Account Setup - Subjects</PageTitle>
+
+<div class="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow">
+  <EditForm Model="@State" OnValidSubmit="@HandleSubmit">
+    <div class="mb-6">
+      <h3 class="text-xl font-semibold mb-4">Select Subjects You Teach</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        @if (Subjects.Any())
+        {
+          @foreach (var subject in Subjects)
+          {
+            <label for="@subject" class="flex items-center gap-3 rounded-md border border-gray-200 px-4 py-3 cursor-pointer hover:border-blue-400">
+              <input id="@subject" type="checkbox"
+                     @onchange="e => ToggleSubject(subject, e.Value as bool? ?? false)"
+                     checked="@State.SubjectsTaught.Contains(subject)"
+                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+              <span class="text-sm text-gray-800">@subject</span>
+            </label>
+          }
+        }
+        else
+        {
+          <div class="text-sm text-gray-500">Loading subjects...</div>
+        }
+      </div>
+    </div>
+
+    <div class="mt-8 flex items-center justify-between">
+      <button type="button" @onclick="HandleBack"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+        Back
+      </button>
+
+      <button type="submit" disabled="@State.IsLoading"
+              class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        @if (State.IsLoading)
+        {
+          <span class="mr-2 inline-flex">
+            <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white"></span>
+          </span>
+        }
+        Next
+      </button>
+    </div>
+  </EditForm>
 </div>
 
 @code {
-    [Parameter]
-    public List<string> Subjects { get; set; } = [];
+  [Parameter]
+  public List<string> Subjects { get; set; } = [];
 
-    [CascadingParameter]
-    private AccountSetupState State { get; set; }
+  [CascadingParameter]
+  private AccountSetupState State { get; set; }
 
-    private void ToggleSubject(string subject, bool isChecked)
+  private void ToggleSubject(string subject, bool isChecked)
+  {
+    var currentSubjects = new List<string>(State.SubjectsTaught);
+
+    if (isChecked && !currentSubjects.Contains(subject))
+      currentSubjects.Add(subject);
+    else if (!isChecked && currentSubjects.Contains(subject))
+      currentSubjects.Remove(subject);
+
+    State.SetSubjectsTaught(currentSubjects);
+  }
+
+  private void HandleBack()
+  {
+    State.ClearError();
+    State.UpdateStep(AccountSetupStep.BasicInfo, ChangeDirection.Back);
+  }
+
+  private void HandleSubmit()
+  {
+    State.ClearError();
+
+    if (!State.SubjectsTaught.Any())
     {
-        var currentSubjects = new List<string>(State.SubjectsTaught);
-
-        if (isChecked && !currentSubjects.Contains(subject))
-            currentSubjects.Add(subject);
-        else if (!isChecked && currentSubjects.Contains(subject))
-            currentSubjects.Remove(subject);
-
-        State.SetSubjectsTaught(currentSubjects);
+      State.SetError("Please select at least one subject");
+      return;
     }
 
-    private void HandleBack()
+    foreach (var subject in State.SubjectsTaught)
     {
-        State.ClearError();
-        State.UpdateStep(AccountSetupStep.BasicInfo, AccountSetup.ChangeDirection.Back);
+      Logger.LogWarning(subject);
     }
 
-    private void HandleSubmit()
-    {
-        State.ClearError();
-
-        if (!State.SubjectsTaught.Any())
-        {
-            State.SetError("Please select at least one subject");
-            return;
-        }
-
-        State.UpdateStep(AccountSetupStep.Timing, AccountSetup.ChangeDirection.Forward);
-    }
+    State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Forward);
+  }
 }

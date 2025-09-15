@@ -1,9 +1,13 @@
+@rendermode InteractiveServer
 @page "/AccountSetup"
-@page "/AccountSetup/{Step}"
 @attribute [Authorize]
 
+@using LessonFlow.Api.Database.Repositories
 @using LessonFlow.Components.AccountSetup.State
 @using LessonFlow.Components.AccountSetup
+@using LessonFlow.Domain.Users
+@using LessonFlow.Exceptions
+@using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Interfaces.Services
 @using LessonFlow.Shared
 @using Microsoft.AspNetCore.Authorization
@@ -11,169 +15,179 @@
 @inject NavigationManager NavigationManager
 @inject ITermDatesService TermDatesService
 @inject ICurriculumService CurriculumService
+@inject IUserRepository UserRepository
+@inject IUnitOfWork UnitOfWork
+@inject IJSRuntime JSRuntime
+@inject ILogger<AccountSetup> Logger
 
 @implements IDisposable
 
-@if (AccountSetupState.IsLoading && _initialLoading)
+<PageTitle>Account Setup</PageTitle>
+
+@if (User is null || _initialLoading)
 {
-    <div class="loading-container">
-        <LoadingSpinner/>
-    </div>
+	<div class="flex min-h-[40vh] items-center justify-center">
+		<div class="text-center">
+			<div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
+			<p class="text-sm text-gray-600">Loading your account...</p>
+		</div>
+	</div>
 }
 else if (_redirectToLogin)
 {
-    <div class="loading-container">
-        <p>Redirecting to login...</p>
-    </div>
+	<div class="flex min-h-[40vh] items-center justify-center">
+		<p class="text-sm text-gray-600">Redirecting to login...</p>
+	</div>
 }
 else if (_redirectToWeekPlanner)
 {
-    <div class="loading-container">
-        <p>Redirecting to week planner...</p>
-    </div>
+	<div class="flex min-h-[40vh] items-center justify-center">
+		<p class="text-sm text-gray-600">Redirecting to week planner...</p>
+	</div>
+}
+else if (AccountSetupState is not null)
+{
+	<CascadingValue Value="AccountSetupState">
+		<CascadingValue Value="User">
+			<title>LessonFlow - Account Setup</title>
+			<div class="mx-auto max-w-5xl p-6">
+				<div class="space-y-3">
+					<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+						@if (!string.IsNullOrEmpty(AccountSetupState.Error))
+						{
+							<div class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+								@AccountSetupState.Error
+							</div>
+						}
+
+						<ProgressSteps />
+					</div>
+
+					<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+						@switch (_accountSetupStep)
+						{
+							case AccountSetupStep.BasicInfo:
+								<BasicInfoForm />
+								break;
+							case AccountSetupStep.Subjects:
+								<SubjectsForm Subjects="_subjectNames" />
+								break;
+							case AccountSetupStep.Timing:
+								<TimingForm />
+								break;
+							case AccountSetupStep.Schedule:
+								<ScheduleForm />
+								break;
+						}
+					</div>
+				</div>
+			</div>
+		</CascadingValue>
+	</CascadingValue>
 }
 else
 {
-    <CascadingValue Value="AccountSetupState">
-        <title>LessonFlow - Account Setup</title>
-        <div class="setup-container">
-            <div class="content-container">
-                <div class="header-container">
-                    <h2 class="main-title">Welcome to LessonFlow</h2>
-                    <p class="subtitle">Let's get your account set up so you can start planning your lessons.</p>
-
-                    @if (!string.IsNullOrEmpty(AccountSetupState.Error))
-                    {
-                        <div class="error-message" role="alert">
-                            @AccountSetupState.Error
-                        </div>
-                    }
-
-                    <div class="progress-container">
-                        <ProgressSteps/>
-                    </div>
-                </div>
-
-                <div
-                    class="@(AccountSetupState.CurrentStep == AccountSetupStep.Schedule ? "schedule-container" : "form-container")">
-                    @switch (_accountSetupStep)
-                    {
-                        case AccountSetupStep.BasicInfo:
-                            <BasicInfoForm/>
-                            break;
-                        case AccountSetupStep.Subjects:
-                            <SubjectsForm Subjects="_subjectNames"/>
-                            break;
-                        case AccountSetupStep.Timing:
-                            <TimingForm/>
-                            break;
-                        case AccountSetupStep.Schedule:
-                            <ScheduleForm/>
-                            break;
-                    }
-                </div>
-            </div>
-        </div>
-    </CascadingValue>
+	<div class="flex min-h-[40vh] items-center justify-center">
+		<p class="text-sm text-gray-600">Setting up your account...</p>
+	</div>
 }
 
 @code {
-    [CascadingParameter] public AppState AppState { get; set; } = null!;
-    [Inject] UserState UserState { get; set; } = null!;
-    [Parameter] public string? Step { get; set; }
+	[Parameter] public string? Step { get; set; }
+	[Inject] public AppState AppState { get; set; } = null!;
 
-    private AccountSetupState AccountSetupState { get; } = new();
-    private AccountSetupStep _accountSetupStep = AccountSetupStep.BasicInfo;
-    private List<string> _subjectNames = [];
-    private bool _initialLoading = true;
-    private bool _redirectToLogin = false;
-    private bool _redirectToWeekPlanner = false;
+	public AccountSetupState AccountSetupState { get; set; } = null!;
+	private AccountSetupStep _accountSetupStep { get; set; } = default!;
+	private List<string> _subjectNames = [];
+	private bool _initialLoading = true;
+	private bool _redirectToLogin = false;
+	private bool _redirectToWeekPlanner = false;
+	private bool _hasInitialized = false;
 
-    protected override void OnInitialized()
-    {
-        AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
-    }
+	private User? User => AppState.User;
 
-    protected override async Task OnInitializedAsync()
-    {
-        // State.OnChange += StateHasChanged;
-        await CheckUser();
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			Logger.LogWarning($"AccountSetup {AppState.GetHashCode()}");
+			await AppState.InitialiseAsync();
 
-    protected override async Task OnParametersSetAsync()
-    {
-        if (!string.IsNullOrEmpty(Step) && Enum.TryParse<AccountSetupStep>(Step, out var step))
-        {
-            if (AccountSetupState.CompletedSteps.Contains(step) || AccountSetupState.IsNextStep(step) || step == AccountSetupStep.BasicInfo)
-            {
-                AccountSetupState.SetCurrentStep(step);
-            }
-            else
-            {
-                NavigationManager.NavigateTo($"/AccountSetup/{AccountSetupState.GetLastCompletedStep()}");
-            }
-        }
-        else if (string.IsNullOrEmpty(Step))
-        {
-            NavigationManager.NavigateTo($"/AccountSetup/{AccountSetupState.GetLastCompletedStep()}");
-        }
-    }
+		}
+		catch (UserNotFoundException)
+		{
+			NavigationManager.NavigateTo("/Account/Login", true);
+		}
 
-    public enum ChangeDirection
-    {
-        Back,
-        Forward
-    }
+		if (User!.AccountSetupState is null)
+		{
+			User.AccountSetupState = new(User.Id);
+		}
 
-    private void ChangeAccountSetupStep(ChangeDirection direction)
-    {
-        var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
-        if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
-        {
-            return;
-        }
-        
-        _accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
-        StateHasChanged();
-    }
+		AccountSetupState = User.AccountSetupState;
+		AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
 
-    private async Task CheckUser()
-    {
-        try
-        {
-            AccountSetupState.SetLoading(true);
-            await UserState.EnsureUserLoaded();
-            if (UserState.User.AccountSetupComplete)
-            {
-                _redirectToWeekPlanner = true;
-                var currentTerm = TermDatesService.GetTermNumber(DateTime.Now);
-                var currentWeek = TermDatesService.GetWeekNumber(DateTime.Now);
-                NavigationManager.NavigateTo($"/app/week-planner/{DateTime.Now.Year}/{currentTerm}/{currentWeek}");
-                return;
-            }
+		_accountSetupStep = User.AccountSetupState.CurrentStep;
 
-            _subjectNames = CurriculumService.GetSubjectNames();
-        }
-        catch (Exception ex)
-        {
-            AccountSetupState.SetError($"Error: {ex.Message}");
-        }
-        finally
-        {
-            AccountSetupState.SetLoading(false);
-            _initialLoading = false;
-        }
-    }
+		try
+		{
+			AccountSetupState.SetLoading(true);
+			_subjectNames = CurriculumService.GetSubjectNames();
+		}
+		catch (Exception ex)
+		{
+			AccountSetupState.SetError($"Error loading subjects: {ex.Message}");
+		}
+		finally
+		{
+			AccountSetupState.SetLoading(false);
+			_initialLoading = false;
+		}
+	}
+
+	protected override void OnInitialized()
+	{
+		if (_hasInitialized || User is null)
+		{
+			return;
+		}
+
+		_hasInitialized = true;
+
+	}
 
 
-    private void Logout()
-    {
-        // In a real application, this would call your auth service logout method
-        NavigationManager.NavigateTo("/auth/login");
-    }
+	private async void ChangeAccountSetupStep(ChangeDirection direction)
+	{
+		var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
+		if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
+		{
+			return;
+		}
 
-    public void Dispose()
-    {
-        AccountSetupState.OnDirectionChange -= ChangeAccountSetupStep;
-    }
+		_accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
+
+		await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
+
+		StateHasChanged();
+	}
+
+	private void Logout()
+	{
+
+		NavigationManager.NavigateTo("/auth/login");
+	}
+
+	public void GoToWeekPlanner()
+	{
+		NavigationManager.NavigateTo("/WeekPlanner");
+	}
+
+	public void Dispose()
+	{
+		if (AccountSetupState is not null)
+		{
+			AccountSetupState.OnDirectionChange -= ChangeAccountSetupStep;
+		}
+	}
 }
