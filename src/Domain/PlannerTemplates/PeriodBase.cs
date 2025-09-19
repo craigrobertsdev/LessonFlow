@@ -6,8 +6,8 @@ namespace LessonFlow.Domain.PlannerTemplates;
 public abstract class PeriodBase
 {
     public PeriodType PeriodType { get; private set; }
-    public int StartPeriod { get; private set; }
-    public int NumberOfPeriods { get; private set; }
+    public int StartPeriod { get; set; }
+    public int NumberOfPeriods { get; set; }
 
     protected PeriodBase(PeriodType periodType, int startPeriod, int numberOfPeriods)
     {

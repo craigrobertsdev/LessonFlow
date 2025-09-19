@@ -1,0 +1,108 @@
+﻿@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Domain.Enums
+@using LessonFlow.Domain.PlannerTemplates
+@using LessonFlow.Domain.ValueObjects
+
+<div class="mb-4 grid grid-cols-2 gap-4 ">
+  <div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(SelectedCell is null ? "bg-gray-200" : "")">
+      <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
+    @if (SelectedCell is null)
+    {
+      <select disabled class="px-3 flex-grow text-sm focus:outline-none">
+        <option value="1">1</option>
+      </select>
+    }
+    else
+    {
+      <select class="px-3 flex-grow text-sm focus:outline-none"
+              disabled="@(SelectedCell is null || SelectedCell.Period.PeriodType == PeriodType.Break)"
+              @onchange="HandleLessonDurationChange">
+        @foreach (var n in GetDurationOptions())
+        {
+          <option value="@n" selected="@(SelectedCell!.Period.NumberOfPeriods == n)">@n</option>
+        }
+      </select>
+
+    }
+  </div>
+
+  <div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(SelectedCell is null ? "bg-gray-200" : "")">
+    <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none ">Subject</div>
+    @if (SelectedCell is null || SelectedCell.Period.PeriodType == PeriodType.Break)
+    {
+
+      <select disabled class="px-3 flex-grow text-sm focus:outline-none">
+        <option value="">Select subject</option>
+      </select>
+    }
+    else
+    {
+      <select class="px-3 mr-1 flex-grow text-sm focus:outline-none"
+              @bind="@(((LessonPeriod)SelectedCell!.Period).SubjectName)">
+        <option value="">Select subject</option>
+        @foreach (var subject in State.SubjectsTaught)
+        {
+          <option value="@subject">@subject</option>
+        }
+        <option value="NIT">NIT</option>
+      </select>
+    }
+  </div>
+</div>
+
+<div style="grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="grid">
+  <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
+
+  @* Lesson and break headers *@
+  @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
+  {
+    var period = WeekPlannerTemplate.Periods[i];
+    <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
+      @period.Name
+    </div>
+  }
+
+  @* Weekday headers *@
+  @for (int i = 0; i < weekDays.Length; i++)
+  {
+    <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
+  }
+
+  @* Grid cells *@
+  @foreach (var col in GridCols)
+  {
+    if (col.IsWorkingDay)
+    {
+        for (int i = 0; i < col.Cells.Count; i++)
+      {
+        var cell = col.Cells[i];
+        if (cell is null) continue;
+
+        int row = i;
+        <CascadingValue Value="this">
+          <PeriodCell Cell="cell" SelectedCell="SelectedCell" EndRow="GetEndRow(col, cell, row)" /> @* +2 for header offset *@
+        </CascadingValue>
+      }
+    }
+    else
+    {
+      <div style="grid-column:@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2)" class="p-2 border-gray-100 bg-red-500 p-2"></div>
+    }
+  }
+
+</div>
+
+<div class="flex justify-between">
+  <button type="button" @onclick="HandleBack" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    Back
+  </button>
+  <button type="button" @onclick="HandleSubmit" disabled="@State.IsLoading" class="@(State.IsLoading ? "opacity-70 cursor-not-allowed" : "") inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    @if (State.IsLoading)
+    {
+      <span class="inline-block mr-2">
+        <div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full "></div>
+      </span>
+    }
+    Complete Setup
+  </button>
+</div>

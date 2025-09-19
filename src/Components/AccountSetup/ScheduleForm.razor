@@ -20,15 +20,23 @@
 		<div class="mb-4 grid grid-cols-2 gap-4">
 			<div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(_selectedCell is null ? "bg-gray-200" : "")">
 				<div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
-				<select class="px-3 flex-grow text-sm focus:outline-none"
-								disabled="@(_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break)"
-								value="@(_selectedPeriod is not null ? _selectedPeriod.NumberOfPeriods : 1)"
-								@onchange="OnDurationChanged">
-					@foreach (var n in GetDurationOptions())
-					{
-						<option value="@n" selected="@(_selectedPeriod?.NumberOfPeriods == n)">@n</option>
-					}
-				</select>
+				@if (_selectedPeriod is null)
+				{
+					<select class="px-3 flex-grow text-sm focus:outline-none">
+						<option value="1">1</option>
+					</select>
+				}
+				else
+				{
+					<select class="px-3 flex-grow text-sm focus:outline-none"
+									disabled="@(_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break)"
+									@bind="_selectedPeriod!.NumberOfPeriods">
+						@foreach (var n in GetDurationOptions())
+						{
+							<option value="@n" selected="@(_selectedPeriod?.NumberOfPeriods == n)">@n</option>
+						}
+					</select>
+				}
 			</div>
 
 			<div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(_selectedCell is null ? "bg-gray-200" : "")">
@@ -157,237 +165,237 @@
 </div>
 
 @code {
-	[CascadingParameter] private AccountSetupState State { get; set; } = null!;
-	[CascadingParameter] public User? User { get; set; }
-	private (int dayIndex, int slotIndex)? _selectedCell;
-	private PeriodBase? _selectedPeriod;
+  [CascadingParameter] private AccountSetupState State { get; set; } = null!;
+  [CascadingParameter] public User? User { get; set; }
+  private (int dayIndex, int slotIndex)? _selectedCell;
+  private PeriodBase? _selectedPeriod;
 
-	private WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
-	private List<DayTemplate> _dayTemplates => WeekPlannerTemplate.DayTemplates;
+  private WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
+  private List<DayTemplate> _dayTemplates => WeekPlannerTemplate.DayTemplates;
 
-	protected override void OnInitialized()
-	{
-		if (WeekPlannerTemplate.DayTemplates.Count != 0) return;
+  protected override void OnInitialized()
+  {
+    if (WeekPlannerTemplate.DayTemplates.Count != 0) return;
 
-		List<DayTemplate> templates = [];
-		DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
-		foreach (var day in weekDays)
-		{
-			var isWorkingDay = State.WorkingDays.Contains(day);
-			if (!isWorkingDay)
-			{
-				templates.Add(new DayTemplate([], day, DayType.Nwd));
-				continue;
-			}
+    List<DayTemplate> templates = [];
+    DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+    foreach (var day in weekDays)
+    {
+      var isWorkingDay = State.WorkingDays.Contains(day);
+      if (!isWorkingDay)
+      {
+        templates.Add(new DayTemplate([], day, DayType.Nwd));
+        continue;
+      }
 
-			int periodCount = 1;
-			var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
-			{
-				return p.PeriodType switch
-				{
-					PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
-					PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
-					_ => throw new ArgumentOutOfRangeException()
-				};
-			}).ToList();
+      int periodCount = 1;
+      var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
+      {
+        return p.PeriodType switch
+        {
+          PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
+          PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
+          _ => throw new ArgumentOutOfRangeException()
+        };
+      }).ToList();
 
-			templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
-		}
+      templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
+    }
 
-		State.WeekPlannerTemplate.SetDayTemplates(templates);
-	}
+    State.WeekPlannerTemplate.SetDayTemplates(templates);
+  }
 
-	private string? GetSubject(DayTemplate day, int slotIndex)
-	{
-		if (day.Periods is null) return null;
+  private string? GetSubject(DayTemplate day, int slotIndex)
+  {
+    if (day.Periods is null) return null;
 
-		var slot = day.Periods[slotIndex];
-		return slot is LessonPeriod lesson
-				? lesson.SubjectName
-				: null;
-	}
+    var slot = day.Periods[slotIndex];
+    return slot is LessonPeriod lesson
+        ? lesson.SubjectName
+        : null;
+  }
 
-	private void OnCellClicked(PeriodBase period, int dayIndex, int slotIndex)
-	{
-		if (_selectedPeriod == period)
-		{
-			_selectedCell = null;
-			_selectedPeriod = null;
-			return;
-		}
+  private void OnCellClicked(PeriodBase period, int dayIndex, int slotIndex)
+  {
+    if (_selectedPeriod == period)
+    {
+      _selectedCell = null;
+      _selectedPeriod = null;
+      return;
+    }
 
-		var day = _dayTemplates[dayIndex];
-		if (!day.IsWorkingDay) return;
+    var day = _dayTemplates[dayIndex];
+    if (!day.IsWorkingDay) return;
 
-		// If clicking inside an existing visual segment, move selection to the start of that segment
-		var segmentStart = GetVisualSegmentStart(dayIndex, slotIndex);
-		_selectedCell = (dayIndex, segmentStart);
+    // If clicking inside an existing visual segment, move selection to the start of that segment
+    var segmentStart = GetVisualSegmentStart(dayIndex, slotIndex);
+    _selectedCell = (dayIndex, segmentStart);
+    _selectedPeriod = period;
 
-		StateHasChanged();
-	}
+    StateHasChanged();
+  }
 
-	private void OnDurationChanged(ChangeEventArgs e)
-	{
-		if (_selectedPeriod is null) return;
-		if (int.TryParse(e.Value?.ToString(), out var val))
-		{
-			if (_selectedPeriod.PeriodType == PeriodType.Break)
-			{
-				_selectedPeriod.SetNumberOfPeriods(1);
-			}
-			else
-			{
-				_selectedPeriod.SetNumberOfPeriods(val);
-			}
+  private void OnDurationChanged(ChangeEventArgs e)
+  {
+    if (_selectedPeriod is null) return;
+    if (int.TryParse(e.Value?.ToString(), out var val))
+    {
+      if (_selectedPeriod.PeriodType == PeriodType.Break)
+      {
+        _selectedPeriod.SetNumberOfPeriods(1);
+      }
+      else
+      {
+        _selectedPeriod.SetNumberOfPeriods(val);
+      }
 
-			StateHasChanged();
-		}
-	}
+      StateHasChanged();
+    }
+  }
 
-	private IEnumerable<int> GetDurationOptions()
-	{
-		// If a cell is selected, allow 1..max from that cell; otherwise allow 1..total lesson periods in the day
-		if (_selectedCell.HasValue)
-		{
-			var max = CalculateMaxAvailablePeriods(_selectedCell.Value.dayIndex, _selectedCell.Value.slotIndex);
-			if (max <= 0) max = 1;
-			for (int i = 1; i <= max; i++) yield return i;
-			yield break;
-		}
+  private IEnumerable<int> GetDurationOptions()
+  {
+    // If a cell is selected, allow 1..max from that cell; otherwise allow 1..total lesson periods in the day
+    if (_selectedCell.HasValue)
+    {
+      var max = CalculateMaxAvailablePeriods(_selectedCell.Value.dayIndex, _selectedCell.Value.slotIndex);
+      if (max <= 0) max = 1;
+      for (int i = 1; i <= max; i++) yield return i;
+      yield break;
+    }
 
-		var totalLessons = WeekPlannerTemplate.Periods.Count(s => s.PeriodType == PeriodType.Lesson);
-		totalLessons = Math.Max(1, totalLessons);
-		for (int i = 1; i <= totalLessons; i++) yield return i;
-	}
+    var totalLessons = WeekPlannerTemplate.Periods.Count(s => s.PeriodType == PeriodType.Lesson);
+    totalLessons = Math.Max(1, totalLessons);
+    for (int i = 1; i <= totalLessons; i++) yield return i;
+  }
 
-	// private int GetLessonDuration()
-	// {
-	// 	if (!_selectedCell.HasValue) return 1;
-	// 	var (dayIndex, slotIndex) = _selectedCell.Value;
-	// 	var subject = GetSubject(_dayTemplates[dayIndex], slotIndex);
-	// 	if (subject is null) return 1;
+  private void OnSubjectSelected(ChangeEventArgs e)
+  {
+    if (_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break) return;
+    ((LessonPeriod)_selectedPeriod).SetSubjectName(e.Value?.ToString() ?? string.Empty);
+  }
 
-	// 	var initialSelection = _dayTemplates[dayIndex].Periods[slotIndex];
-	// 	while (slotIndex > 0 && !initialSelection.)
-	// 	{
-	// 		initialSelection = _dayTemplates[dayIndex].Periods[--slotIndex];
-	// 	}
+  private void ClearSelectionBlock()
+  {
+    if (!_selectedCell.HasValue) return;
+    if (_selectedPeriod is null) return;
 
-	// 	var duration = 0;
-	// 	for (int i = slotIndex; i < WeekPlannerTemplate.Periods.Count; i++)
-	// 	{
-	// 		var slot = _dayTemplates[dayIndex].Periods[i];
-	// 		if (slot.Subject == subject)
-	// 		{
-	// 			duration++;
-	// 		}
-	// 		else if (slot.PeriodType == PeriodType.Break)
-	// 		{
-	// 			continue; // skip breaks
-	// 		}
-	// 		else
-	// 		{
-	// 			break;
-	// 		}
-	// 	}
+    _selectedPeriod.SetNumberOfPeriods(1);
+    if (_selectedPeriod.PeriodType == PeriodType.Lesson)
+    {
+      ((LessonPeriod)_selectedPeriod).SetSubjectName(string.Empty);
+    }
+    // var (dayIndex, start) = _selectedCell.Value;
+    // if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return;
+    // var day = _dayTemplates[dayIndex];
+    // if (day.Periods is null) return;
 
-	// 	return duration;
-	// }
+    // var count = GetVisualSegmentCount(dayIndex, start);WeekPlannerTemplate
+    // if (count <= 0) return;
 
-	private void OnSubjectSelected(ChangeEventArgs e)
-	{
-		if (_selectedPeriod is null || _selectedPeriod.PeriodType == PeriodType.Break) return;
-		((LessonPeriod)_selectedPeriod).SetSubjectName(e.Value?.ToString() ?? string.Empty);
+    // int cleared = 0;
+    // int idx = start;
+    // while (idx < day.Periods.Count && cleared < count)
+    // {
+    // 	if (idx < 0 || idx >= WeekPlannerTemplate.Periods.Count) break;
+    // 	var cfg = WeekPlannerTemplate.Periods[idx];
+    // 	if (cfg.PeriodType == PeriodType.Break) { idx++; continue; }
+    // 	day.Periods[idx].Subject = null;
+    // 	cleared++;
+    // 	idx++;
+    // }
 
-	}
+    // State.SetScheduleGrid(_dayTemplates);
+    StateHasChanged();
+  }
 
-	private void ClearSelectionBlock()
-	{
-		if (!_selectedCell.HasValue) return;
-		if (_selectedPeriod is null) return;
+  private bool ShouldRenderCell(int dayIndex, int slotIndex)
+  {
+    /* 
+    * Should render cell if:
+       * - Cell is a break - done
+       * - Cell is the first in a visual segment (including single cells)
+       * - Cell is part of a not yet complete visual segment (i.e. covered by rowspan above)
+       * - Cell is not covered by a rowspan above
+       * 
+     * Should NOT render cell if:
+       * - Day is a non-working day - done
+       * - Cell is covered by a rowspan above
+       */
 
-		_selectedPeriod.SetNumberOfPeriods(1);
-		if (_selectedPeriod.PeriodType == PeriodType.Lesson)
-		{
-			((LessonPeriod)_selectedPeriod).SetSubjectName(string.Empty);
-		}
-		// var (dayIndex, start) = _selectedCell.Value;
-		// if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return;
-		// var day = _dayTemplates[dayIndex];
-		// if (day.Periods is null) return;
+  if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return false;
 
-		// var count = GetVisualSegmentCount(dayIndex, start);
-		// if (count <= 0) return;
+    var day = _dayTemplates[dayIndex];
+    if (slotIndex < 0 || slotIndex >= day.Periods.Count) return false;
 
-		// int cleared = 0;
-		// int idx = start;
-		// while (idx < day.Periods.Count && cleared < count)
+    var slot = day.Periods[slotIndex];
+    if (!day.IsWorkingDay) return false; // render each row for non-working day
+
+    if (slot.PeriodType == PeriodType.Break) return true; // always render breaks
+
+    // render only at the start of a visual contiguous segment
+    var start = GetVisualSegmentStart(dayIndex, slotIndex);
+    var end = GetVisualSegmentEnd(dayIndex, slotIndex);
+    return slotIndex == start || (slotIndex > start && slotIndex <= end);
+  }
+
+  private int GetVisualSegmentStart(int dayIndex, int slotIndex)
+  {
+    var day = _dayTemplates[dayIndex];
+    var subject = GetSubject(day, slotIndex);
+    if (string.IsNullOrWhiteSpace(subject)) return slotIndex;
+
+    int start = slotIndex;
+    for (int i = slotIndex - 1; i >= 0; i--)
+    {
+      var cfg = WeekPlannerTemplate.Periods[i];
+      if (cfg.PeriodType == PeriodType.Break) break; // visual segment stops at breaks
+      if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
+      start = i;
+    }
+    return start;
+  }
+
+  private int GetVisualSegmentEnd(int dayIndex, int slotIndex)
+  {
+    var day = _dayTemplates[dayIndex];
+    var slot = day.Periods[slotIndex];
+    if (slot.NumberOfPeriods == 1) return slotIndex;
+
+    var numBreaks = 0;
+    for (int i = slot.StartPeriod; i < slot.StartPeriod + slot.NumberOfPeriods - 1; i++) 
+    {
+      if (day.Periods[i].PeriodType == PeriodType.Break)
+      {
+        numBreaks++;
+        continue;
+      }
+    }
+
+    return slot.StartPeriod + slot.NumberOfPeriods + numBreaks - 1;
+  }
+
+  private int GetVisualSegmentCount(int dayIndex, int slotIndex)
+  {
+    var day = _dayTemplates[dayIndex];
+    var slot = day.Periods[slotIndex];
+    var end = GetVisualSegmentEnd(dayIndex, slotIndex);
+    var start = GetVisualSegmentStart(dayIndex, slotIndex);
+    return end - start;
+    // if (slot.NumberOfPeriods == 1 || !day.IsWorkingDay || slot.PeriodType == PeriodType.Break) return 1;
+		// var subject = GetSubject(day, slotIndex);
+
+		// int count = 0;
+		// int start = GetVisualSegmentStart(dayIndex, slotIndex);
+		// for (int i = start; i < day.Periods.Count; i++)
 		// {
-		// 	if (idx < 0 || idx >= WeekPlannerTemplate.Periods.Count) break;
-		// 	var cfg = WeekPlannerTemplate.Periods[idx];
-		// 	if (cfg.PeriodType == PeriodType.Break) { idx++; continue; }
-		// 	day.Periods[idx].Subject = null;
-		// 	cleared++;
-		// 	idx++;
+		// 	var cfg = WeekPlannerTemplate.Periods[i];
+		// 	if (cfg.PeriodType == PeriodType.Break) break;
+		// 	if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
+		// 	count++;
 		// }
-
-		// State.SetScheduleGrid(_dayTemplates);
-		StateHasChanged();
-	}
-
-	private bool ShouldRenderCell(int dayIndex, int slotIndex)
-	{
-		if (dayIndex < 0 || dayIndex >= _dayTemplates.Count) return true;
-		var day = _dayTemplates[dayIndex];
-		if (slotIndex < 0 || slotIndex >= WeekPlannerTemplate.Periods.Count) return true;
-		var cfgSlot = WeekPlannerTemplate.Periods[slotIndex];
-		if (!day.IsWorkingDay) return true; // render each row for non-working day
-		if (cfgSlot.PeriodType == PeriodType.Break) return true; // always render breaks
-
-		var subject = GetSubject(day, slotIndex);
-		if (string.IsNullOrWhiteSpace(subject)) return true; // empty lesson cell renders
-
-		// render only at the start of a visual contiguous segment
-		var start = GetVisualSegmentStart(dayIndex, slotIndex);
-		return slotIndex == start;
-	}
-
-	private int GetVisualSegmentStart(int dayIndex, int slotIndex)
-	{
-		var day = _dayTemplates[dayIndex];
-		var subject = GetSubject(day, slotIndex);
-		if (string.IsNullOrWhiteSpace(subject)) return slotIndex;
-
-		int start = slotIndex;
-		for (int i = slotIndex - 1; i >= 0; i--)
-		{
-			var cfg = WeekPlannerTemplate.Periods[i];
-			if (cfg.PeriodType == PeriodType.Break) break; // visual segment stops at breaks
-			if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
-			start = i;
-		}
-		return start;
-	}
-
-	private int GetVisualSegmentCount(int dayIndex, int slotIndex)
-	{
-		var day = _dayTemplates[dayIndex];
-		var cfgSlot = WeekPlannerTemplate.Periods[slotIndex];
-		if (!day.IsWorkingDay || cfgSlot.PeriodType == PeriodType.Break) return 1;
-		var subject = GetSubject(day, slotIndex);
-		if (string.IsNullOrWhiteSpace(subject)) return 1;
-
-		int count = 0;
-		int start = GetVisualSegmentStart(dayIndex, slotIndex);
-		for (int i = start; i < day.Periods.Count; i++)
-		{
-			var cfg = WeekPlannerTemplate.Periods[i];
-			if (cfg.PeriodType == PeriodType.Break) break;
-			if (!string.Equals(GetSubject(day, i), subject, StringComparison.Ordinal)) break;
-			count++;
-		}
-		return Math.Max(1, count);
-	}
+		// return Math.Max(1, count);
+     	}
 
 	private int CalculateMaxAvailablePeriods(int dayIndex, int startSlotIndex)
 	{

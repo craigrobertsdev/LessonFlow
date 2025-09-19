@@ -76,7 +76,8 @@ else if (AccountSetupState is not null)
 								<TimingForm />
 								break;
 							case AccountSetupStep.Schedule:
-								<ScheduleForm />
+								@* <ScheduleForm /> *@
+                <ScheduleFormNew />
 								break;
 						}
 					</div>

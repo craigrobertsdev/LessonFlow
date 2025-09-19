@@ -13,7 +13,7 @@ public class LessonPeriod : PeriodBase
         SubjectName = subjectName;
     }
 
-    public string SubjectName { get; private set; }
+    public string SubjectName { get; set; }
 
     public void SetSubjectName(string subjectName)
     {
