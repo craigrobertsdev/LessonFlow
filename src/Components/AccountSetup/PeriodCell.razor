@@ -2,6 +2,10 @@
 @using LessonFlow.Domain.PlannerTemplates
 @using static LessonFlow.Components.AccountSetup.ScheduleFormNew
 
+@* TODO
+Why does the Number of Lessons select field sometimes not update when changing between cells?
+Add support for lessons that span more than 2 periods. They will need to have their backgrounds changed and borders to match. *@
+
 <div class="border border-gray-300 text-center @(IsSelected ? "outline outline-3 outline black" : "") @(IsSelected && !Cell.IsFirstCellInBlock ? "border-t-0" : "")"
      style="grid-column:@Cell.Column.Col; grid-row-start:@Cell.Row; grid-row-end:@EndRow"
      @onclick="HandleCellClick">
@@ -37,6 +41,7 @@
     else
     {
       Parent.SelectedCell = Cell;
+      StateHasChanged();
     }
   }
 }
