@@ -6,13 +6,12 @@ using Microsoft.AspNetCore.Components;
 
 namespace LessonFlow.Components.AccountSetup;
 
-public partial class ScheduleFormNew
-
+public partial class ScheduleForm
 {
     [CascadingParameter] public AccountSetupState State { get; set; } = default!;
     WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
     DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
-    List<GridColumn> GridCols = [];
+    public List<GridColumn> GridCols = [];
     GridCell? _selectedCell;
     public GridCell? SelectedCell
     {
@@ -62,18 +61,18 @@ public partial class ScheduleFormNew
         GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
         {
             var col = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
-                                             // starting at 2 because the first column is for the timeslots
             for (int j = 2; j < day.Periods.Count + 2; j++)
             {
-                var cell = new GridCell(j, day.Periods[j - 2]);
-                cell.Column = col;
-                if (cell.Period.NumberOfPeriods == 1 || cell.Row == cell.Period.StartPeriod - 1) // -1 because the grid starts at 2 and the periods at 1
+                var cell = new GridCell([], day.Periods[j - 2], col);
+                // -1 because the grid starts at 2 and the periods at 1
+                if (cell.Period.NumberOfPeriods == 1 || cell.StartRow == cell.Period.StartPeriod - 1 || cell.Period.PeriodType == PeriodType.Break)
                 {
+                    cell.RowSpans.Add((j, j));
                     cell.IsFirstCellInBlock = true;
                 }
                 else
                 {
-                    cell.IsFirstCellInBlock = false;
+                    cell.SetRowSpans(0, cell.Period.NumberOfPeriods, day.Periods);
                 }
 
                 col.Cells.Add(cell);
@@ -99,7 +98,7 @@ public partial class ScheduleFormNew
         }
     }
 
-    private IEnumerable<int> GetDurationOptions()
+    private List<int> GetDurationOptions()
     {
         if (SelectedCell is null) return [];
 
@@ -129,43 +128,55 @@ public partial class ScheduleFormNew
         SelectedCell.Period.NumberOfPeriods = newDuration;
 
         var cells = SelectedCell.Column.Cells;
-        var idx = SelectedCell.Column.Cells.FindIndex(c => c?.Row == SelectedCell.Row) + 1;
 
         if (newDuration > oldDuration)
         {
-            var cellsRemoved = 0;
-            while (cellsRemoved < newDuration - oldDuration)
+            SelectedCell.SetRowSpans(oldDuration, newDuration, WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods);
+
+            var idx = cells.FindIndex(c => c?.StartRow == SelectedCell.StartRow) + 1;
+            var cellsToRemove = newDuration - oldDuration;
+            List<GridCell> cellsPendingRemoval = [];
+            while (cellsPendingRemoval.Count < cellsToRemove)
             {
-                if (cells[idx]?.Period.PeriodType == PeriodType.Break)
+                if (cells[idx].Period.PeriodType == PeriodType.Break)
                 {
                     idx++;
                     continue;
                 }
-
-                cells[idx] = null;
-                cellsRemoved++;
+                cellsPendingRemoval.Add(cells[idx]);
                 idx++;
+            }
+
+            foreach (var cell in cellsPendingRemoval)
+            {
+                cells.Remove(cell);
             }
         }
         else
         {
+            var idx = cells.IndexOf(SelectedCell) + 1;
+
             var cellsAdded = 0;
             var cellsToAdd = oldDuration - newDuration;
-            while (cellsAdded < cellsToAdd)
+            while (cellsAdded < cellsToAdd && idx < WeekPlannerTemplate.Periods.Count)
             {
-                if (cells[idx]?.Period.PeriodType == PeriodType.Break)
+                if (idx == cells.Count && cells.Count < WeekPlannerTemplate.Periods.Count)
                 {
-                    idx++;
-                    continue;
+                    var newCell = new GridCell([(idx + 2, idx + 3)], new LessonPeriod(string.Empty, idx, 1), SelectedCell.Column);
+                    cells.Add(newCell);
+                    cellsAdded++;
                 }
-                cells[idx] = new GridCell(idx + 2, new LessonPeriod(string.Empty, idx, 1))
+                else if (cells[idx].Period.StartPeriod != WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods[idx].StartPeriod)
                 {
-                    Column = SelectedCell.Column,
-                    IsFirstCellInBlock = true
-                };
-                cellsAdded++;
+                    var newCell = new GridCell([(idx + 2, idx + 3)], new LessonPeriod(string.Empty, idx, 1), SelectedCell.Column);
+                    cells.Insert(idx, newCell);
+                    cellsAdded++;
+                }
+
                 idx++;
             }
+
+            SelectedCell.SetRowSpans(oldDuration, newDuration, WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods);
         }
 
         StateHasChanged();
@@ -223,29 +234,4 @@ public partial class ScheduleFormNew
             State.SetLoading(false);
         }
     }
-
-}
-
-public class GridColumn
-{
-    public GridColumn(int col)
-    {
-        Col = col;
-    }
-    public int Col { get; set; }
-    public List<GridCell?> Cells { get; set; } = [];
-    public bool IsWorkingDay { get; set; }
-}
-
-public record GridCell
-{
-    public GridCell(int row, PeriodBase period)
-    {
-        Period = period;
-        Row = row;
-    }
-    public GridColumn Column { get; set; } = null!;
-    public int Row { get; set; }
-    public bool IsFirstCellInBlock { get; set; }
-    public PeriodBase Period { get; set; }
 }

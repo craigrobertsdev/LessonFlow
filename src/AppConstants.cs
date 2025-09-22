@@ -17,4 +17,13 @@ public static class AppConstants
         YearLevelValue.Year4, YearLevelValue.Year5, YearLevelValue.Year6, YearLevelValue.Year7,
         YearLevelValue.Year8, YearLevelValue.Year9, YearLevelValue.Year10
     ];
+
+    public static Dictionary<string, string> SubjectColours = new() 
+    {
+        { "English", "bg-blue-200" },
+        {"Mathematics", "bg-red-200" },
+        { "Language", "bg-yellow-200" }
+    };
+
+
 }
