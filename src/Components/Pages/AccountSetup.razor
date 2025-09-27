@@ -76,8 +76,7 @@ else if (AccountSetupState is not null)
 								<TimingForm />
 								break;
 							case AccountSetupStep.Schedule:
-								@* <ScheduleForm /> *@
-                <ScheduleForm />
+                <ScheduleForm SaveChanges="SaveAccountSetupState" />
 								break;
 						}
 					</div>
@@ -94,69 +93,83 @@ else
 }
 
 @code {
-	[Parameter] public string? Step { get; set; }
-	[Inject] public AppState AppState { get; set; } = null!;
+  [Parameter] public string? Step { get; set; }
+  [Inject] public AppState AppState { get; set; } = null!;
 
-	public AccountSetupState AccountSetupState { get; set; } = null!;
-	private AccountSetupStep _accountSetupStep { get; set; } = default!;
-	private List<string> _subjectNames = [];
-	private bool _initialLoading = true;
-	private bool _redirectToLogin = false;
-	private bool _redirectToWeekPlanner = false;
-	private bool _hasInitialized = false;
+  public AccountSetupState AccountSetupState { get; set; } = null!;
+  private AccountSetupStep _accountSetupStep { get; set; } = default!;
+  private List<string> _subjectNames = [];
+  private bool _initialLoading = true;
+  private bool _redirectToLogin = false;
+  private bool _redirectToWeekPlanner = false;
+  private bool _hasInitialized = false;
 
-	private User? User => AppState.User;
+  private User? User => AppState.User;
 
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			Logger.LogWarning($"AccountSetup {AppState.GetHashCode()}");
-			await AppState.InitialiseAsync();
+  protected override async Task OnInitializedAsync()
+  {
+    try
+    {
+      Logger.LogWarning($"AccountSetup {AppState.GetHashCode()}");
+      await AppState.InitialiseAsync();
 
-		}
-		catch (UserNotFoundException)
-		{
-			NavigationManager.NavigateTo("/Account/Login", true);
-		}
+    }
+    catch (UserNotFoundException)
+    {
+      NavigationManager.NavigateTo("/Account/Login", true);
+    }
 
-		if (User!.AccountSetupState is null)
-		{
-			User.AccountSetupState = new(User.Id);
-		}
+    if (User!.AccountSetupState is null)
+    {
+      User.AccountSetupState = new(User.Id);
+    }
 
-		AccountSetupState = User.AccountSetupState;
-		AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
+    AccountSetupState = User.AccountSetupState;
+    AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
 
-		_accountSetupStep = User.AccountSetupState.CurrentStep;
+    _accountSetupStep = User.AccountSetupState.CurrentStep;
 
-		try
-		{
-			AccountSetupState.SetLoading(true);
-			_subjectNames = CurriculumService.GetSubjectNames();
-		}
-		catch (Exception ex)
-		{
-			AccountSetupState.SetError($"Error loading subjects: {ex.Message}");
-		}
-		finally
-		{
-			AccountSetupState.SetLoading(false);
-			_initialLoading = false;
-		}
-	}
+    try
+    {
+      AccountSetupState.SetLoading(true);
+      _subjectNames = CurriculumService.GetSubjectNames();
+    }
+    catch (Exception ex)
+    {
+      AccountSetupState.SetError($"Error loading subjects: {ex.Message}");
+    }
+    finally
+    {
+      AccountSetupState.SetLoading(false);
+      _initialLoading = false;
+    }
+  }
 
-	protected override void OnInitialized()
-	{
-		if (_hasInitialized || User is null)
-		{
-			return;
-		}
+  protected override void OnInitialized()
+  {
+    if (_hasInitialized || User is null)
+    {
+      return;
+    }
 
-		_hasInitialized = true;
+    _hasInitialized = true;
 
-	}
+  }
 
+  private async Task SaveAccountSetupState()
+  {
+    try
+    {
+        if (User is null) throw new UserNotFoundException();
+        await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
+        User.AccountSetupState = AccountSetupState;
+    }
+    catch (Exception ex)
+    {
+      Logger.LogError(ex, "Error saving account setup state");
+      AccountSetupState.SetError("An error occurred while saving your account setup. Please try again.");
+    }
+  }
 
 	private async void ChangeAccountSetupStep(ChangeDirection direction)
 	{

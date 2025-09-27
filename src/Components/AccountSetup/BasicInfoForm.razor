@@ -105,6 +105,8 @@
       AccountSetupState.WorkingDays.Remove(day);
     else
       AccountSetupState.WorkingDays.Add(day);
+
+    StateHasChanged();
   }
 
   private void HandleSubmit()

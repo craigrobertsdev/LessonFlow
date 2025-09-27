@@ -1,8 +1,4 @@
-﻿using LessonFlow.Components.AccountSetup;
-using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.PlannerTemplates;
-
-namespace LessonFlow.UnitTests.UI.AccountSetup;
+﻿namespace LessonFlow.UnitTests.UI.AccountSetup;
 public class GridCellTests
 {
     [Fact]
@@ -12,7 +8,7 @@ public class GridCellTests
         var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
         var selectedCell = col.Cells[0];
         selectedCell.Period.NumberOfPeriods = 3;
-        selectedCell.SetRowSpans(1, 3, weekPlannerTemplate.DayTemplates[0].Periods);
+        selectedCell.SetRowSpans(1, 3, weekPlannerTemplate.Periods);
 
         var expected = new List<(int start, int end)>
         {
@@ -31,7 +27,7 @@ public class GridCellTests
         var selectedCell = col.Cells[0];
         selectedCell.Period.NumberOfPeriods = 6;
 
-        selectedCell.SetRowSpans(1, 6, weekPlannerTemplate.DayTemplates[0].Periods);
+        selectedCell.SetRowSpans(1, 6, weekPlannerTemplate.Periods);
 
         var expected = new List<(int start, int end)>
         {
@@ -42,4 +38,21 @@ public class GridCellTests
 
         Assert.Equal(expected, selectedCell.RowSpans);
     }
+
+    [Fact]
+    public void GridCell_SetRowSpans_DecreasesRowsCorrectly_6_1()
+    {
+        var col = Helpers.GenerateGridColumn();
+        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var selectedCell = col.Cells[0];
+        selectedCell.Period.NumberOfPeriods = 6;
+        selectedCell.SetRowSpans(1, 6, weekPlannerTemplate.Periods);
+        selectedCell.Period.NumberOfPeriods = 1;
+        selectedCell.SetRowSpans(6, 1, weekPlannerTemplate.Periods);
+        var expected = new List<(int start, int end)>
+        {
+            (2, 3)
+        };
+        Assert.Equal(expected, selectedCell.RowSpans);
+    } 
 } 

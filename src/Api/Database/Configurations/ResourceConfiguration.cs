@@ -1,8 +1,6 @@
 using System.Text.Json;
 using LessonFlow.Api.Database.Converters;
-using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;

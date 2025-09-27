@@ -1,9 +1,7 @@
 using System.Text.Json;
 using LessonFlow.Api.Database.Converters;
-using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
-using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;

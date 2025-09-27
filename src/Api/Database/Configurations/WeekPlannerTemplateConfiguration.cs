@@ -1,5 +1,3 @@
-using System.Text.Json;
-using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
@@ -39,50 +37,63 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
                 .HasMaxLength(20);
         });
 
-        builder.OwnsMany(ws => ws.DayTemplates, dtb =>
-        {
-            dtb.ToTable("DayTemplates");
-            dtb.Property<Guid>("Id");
-            dtb.HasKey("Id");
-            dtb.WithOwner().HasForeignKey("WeekPlannerTemplateId");
-
-            dtb.Property(d => d.Periods)
-                .HasConversion(
-                    p => Serialize(p),
-                    p => ConvertFromDtos(p));
-        });
+        builder.HasMany(ws => ws.DayTemplates)
+            .WithOne();
 
         builder.Navigation(wp => wp.Periods).AutoInclude();
         builder.Navigation(wp => wp.DayTemplates).AutoInclude();
     }
 
-    private static string Serialize(IEnumerable<PeriodBase> periods)
+}
+
+public class DayTemplateConfiguration : IEntityTypeConfiguration<DayTemplate>
+{
+    public void Configure(EntityTypeBuilder<DayTemplate> builder)
     {
-        var dtos = periods.Select(PeriodToDto).ToList();
-        return JsonSerializer.Serialize(dtos);
-    }
+        builder.ToTable("DayTemplates");
+        builder.Property<Guid>("Id");
+        builder.HasKey("Id");
 
-    private static List<PeriodBase> ConvertFromDtos(string dtos)
+        builder.HasOne<WeekPlannerTemplate>()
+            .WithMany(wp => wp.DayTemplates)
+            .HasForeignKey("WeekPlannerTemplateId")
+            .IsRequired();
+
+        builder.HasMany(dt => dt.Periods)
+            .WithOne()
+            .HasForeignKey("DayTemplateId")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(dt => dt.Periods)
+            .WithOne();
+
+        builder.Navigation(dt => dt.Periods).AutoInclude();
+    }
+}
+
+public class PeriodBaseConfiguration : IEntityTypeConfiguration<PeriodBase>
+{
+    public void Configure(EntityTypeBuilder<PeriodBase> builder)
     {
-        var periods = JsonSerializer.Deserialize<List<PeriodDto>>(dtos);
-        if (periods is null)
-        {
-            throw new Exception($"Could not deserialise: {nameof(periods)}");
-        }
+        builder.UseTpcMappingStrategy();
+        builder.Property<Guid>("Id");
+        builder.HasKey("Id");
 
-        return periods.Select(DtoToPeriod).ToList();
+        builder.HasOne<DayTemplate>()
+            .WithMany(wp => wp.Periods)
+            .HasForeignKey("DayTemplateId");
     }
+}
 
-    private class PeriodDto
-    {
-        public PeriodType Type { get; init; }
-        public int StartPeriod { get; init; }
-        public int NumberOfPeriods { get; init; }
-        public string? SubjectName { get; init; }
-        public string? BreakDuty { get; init; }
-    }
+public class PeriodDto
+{
+    public PeriodType Type { get; init; }
+    public int StartPeriod { get; init; }
+    public int NumberOfPeriods { get; init; }
+    public string? SubjectName { get; init; }
+    public string? BreakDuty { get; init; }
 
-    private static PeriodDto PeriodToDto(PeriodBase period)
+    public static PeriodDto PeriodToDto(PeriodBase period)
     {
         return period switch
         {
@@ -110,7 +121,7 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
         };
     }
 
-    private static PeriodBase DtoToPeriod(PeriodDto periodDto)
+    public static PeriodBase DtoToPeriod(PeriodDto periodDto)
     {
         return periodDto.Type switch
         {

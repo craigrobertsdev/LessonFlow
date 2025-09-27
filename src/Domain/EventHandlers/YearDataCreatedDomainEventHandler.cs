@@ -1,5 +1,4 @@
 using LessonFlow.Api.Database;
-using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords.DomainEvents;
 using LessonFlow.Interfaces.Persistence;
 using MediatR;

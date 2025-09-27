@@ -1,6 +1,5 @@
 using LessonFlow.Api.Contracts.PlannerTemplates;
 using LessonFlow.Domain.Common.Primatives;
-using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.ValueObjects;
 

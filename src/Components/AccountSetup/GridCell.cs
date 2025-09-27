@@ -1,6 +1,7 @@
 ﻿using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
+using System.Xml;
 
 namespace LessonFlow.Components.AccountSetup;
 
@@ -19,61 +20,54 @@ public record GridCell
     public PeriodBase Period { get; set; }
     public List<(int Start, int End)> RowSpans { get; set; } = [];
 
-    public void SetRowSpans(int oldDuration, int newDuration, List<PeriodBase> templatePeriods)
+    public void SetRowSpans(int oldDuration, int newDuration, List<TemplatePeriod> templatePeriods)
     {
-        if (Period.PeriodType != PeriodType.Lesson)
+        if (Period.PeriodType == PeriodType.Break)
         {
-            throw new InvalidOperationException("Can only set row spans for Lesson periods.");
+            throw new InvalidOperationException("Cannot set row spans for Break periods.");
         }
 
         if (oldDuration == newDuration) return;
 
         var rowsCovered = 0;
-        var cells = Column.Cells;
         var idx = StartRow - 2;
         var start = StartRow;
-        var end = StartRow;
-        var breakCount = 0;
+        int end;
 
         RowSpans.Clear();
 
         while (rowsCovered < Period.NumberOfPeriods && idx < templatePeriods.Count)
         {
-            for (int k = idx; k < templatePeriods.Count; k++)
+            for (int i = idx; i < templatePeriods.Count; i++)
             {
-                // The issue is here. If we are going from a state where there has already been a period removed thus NumberOfPeriods > 1, 
-                // The end index will be reduced by that number and affect where the end of the row span is
-                // Somehow need to adjust for the 
-                if (templatePeriods[k].PeriodType == PeriodType.Lesson)
+                if (templatePeriods[i].PeriodType == PeriodType.Lesson)
                 {
                     rowsCovered++;
-
                     if (rowsCovered == Period.NumberOfPeriods)
                     {
-                        end = templatePeriods[k].StartPeriod + 2;
-                        break;
+                        idx = i;
+                        end = templatePeriods[idx].StartPeriod + 2;
+                        RowSpans.Add((start, end));
+                        return;
                     }
                 }
                 else
                 {
-                    end = templatePeriods[k].StartPeriod + 1;
-                    breakCount++;
+                    idx = i;
                     break;
                 }
             }
 
+            end = templatePeriods[idx].StartPeriod + 1;
             RowSpans.Add((start, end));
 
-            var curr = end - 2 + 1; // -2 because col.Cells is 0-indexed and j starts at 2, +1 because we know col.Cells[end-2] is a LessonPeriod
-            while (curr < templatePeriods.Count && templatePeriods[curr].PeriodType != PeriodType.Lesson)
+            idx++;
+            while (templatePeriods[idx].PeriodType == PeriodType.Break)
             {
-                curr++;
-                end++;
+                idx++;
             }
 
-            idx = curr;
-            start = curr + 2;
-            end = start;
+            start = templatePeriods[idx].StartPeriod + 1;
         }
     }
 }

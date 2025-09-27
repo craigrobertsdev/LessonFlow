@@ -114,34 +114,36 @@
 </div>
 
 @code {
-	[CascadingParameter]
-	private AccountSetupState State { get; set; } = null!;
+  [CascadingParameter]
+  private AccountSetupState State { get; set; } = null!;
 
-	private List<TemplatePeriod> _periods = [];
-	private TimeOnly _startTime;
-	private TimeOnly _endTime;
-	private string? _timeError;
+  private List<TemplatePeriod> _periods = [];
+  private TimeOnly _startTime;
+  private TimeOnly _endTime;
+  private string? _timeError;
 
-	protected override void OnInitialized()
-	{
-		_periods = State.WeekPlannerTemplate.Periods.Select(s => new TemplatePeriod(
-						s.PeriodType,
-						s.Name,
-						s.StartTime,
-						s.EndTime
-				)).ToList();
+  protected override void OnInitialized()
+  {
+    _periods = State.WeekPlannerTemplate.Periods.Select(s => new TemplatePeriod(
+            s.PeriodType,
+            s.StartPeriod,
+            s.Name,
+            s.StartTime,
+            s.EndTime
+        )).ToList();
 
-		_periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
+    _periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
 
-		_startTime = State.StartTime;
-		_endTime = State.EndTime;
-	}
+    _startTime = State.StartTime;
+    _endTime = State.EndTime;
+  }
 
-	private void AddTimeSlot()
-	{
-		_periods.Add(new TemplatePeriod(
-			PeriodType.Lesson,
-			$"New Slot {_periods.Count}",
+  private void AddTimeSlot()
+  {
+    _periods.Add(new TemplatePeriod(
+      PeriodType.Lesson,
+      _periods.LastOrDefault()?.StartPeriod + 1 ?? 1,
+      $"New Slot {_periods.Count}",
 			_periods.LastOrDefault()?.EndTime ?? _startTime,
 			_endTime
 		));
@@ -191,6 +193,11 @@
 				return;
 			}
 		}
+
+    for (int i= 0; i < _periods.Count; i++)
+    {
+      _periods[i].StartPeriod = i + 1;
+    }
 	}
 
 	private void HandleBack()

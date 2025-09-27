@@ -1,6 +1,5 @@
 using LessonFlow.Api.Database.Converters;
 using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

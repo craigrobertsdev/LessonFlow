@@ -69,7 +69,7 @@ public class AppState(AuthenticationStateProvider authStateProvider, IUserReposi
             }
             catch (Exception)
             {
-                // Ignore exceptions here - user will be null
+                throw new UserNotFoundException();
             }
             finally
             {

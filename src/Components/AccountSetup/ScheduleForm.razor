@@ -3,9 +3,11 @@
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Domain.ValueObjects
 
+ TODO
+ Add colours for all subjects***Fix changing working days not showing in scheduleform
 <div class="mb-4 grid grid-cols-2 gap-4 ">
   <div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(SelectedCell is null ? "bg-gray-200" : "")">
-      <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
+    <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
     @if (SelectedCell is null)
     {
       <select disabled class="px-3 flex-grow text-sm focus:outline-none">
@@ -62,25 +64,25 @@
     </div>
   }
 
-  @* Weekday headers *@
   @for (int i = 0; i < weekDays.Length; i++)
   {
     <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
   }
 
-  @* Grid cells *@
   @foreach (var col in GridCols)
   {
     if (col.IsWorkingDay)
     {
-        <CascadingValue Value="this">
-          <ScheduleColumn Column="col" />
-        </CascadingValue>
-      
+      <CascadingValue Value="this">
+        <ScheduleColumn Column="col" />
+      </CascadingValue>
+
     }
     else
     {
-      <div style="grid-column:@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2)" class="p-2 border-gray-100 bg-red-500 p-2"></div>
+      <div style="grid-column:@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
+           class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+      </div>
     }
   }
 

@@ -11,7 +11,7 @@ public record DayTemplateDto(DayOfWeek DayOfWeek, DayType Type, List<LessonTempl
 
 public record LessonTemplateDto(PeriodType PeriodType, int NumberOfPeriods, int StartPeriod, string? SubjectName, string? BreakDuty);
 
-public record TemplatePeriodDto(string? Name, string StartTime, string EndTime, bool IsBreak);
+public record TemplatePeriodDto(string? Name, int StartPeriod, string StartTime, string EndTime, bool IsBreak);
 
 public static class TemplateDtos
 {
@@ -23,6 +23,7 @@ public static class TemplateDtos
             var period = new TemplatePeriod
             (
                 dto.IsBreak ? PeriodType.Break : PeriodType.Lesson,
+                dto.StartPeriod,
                 dto.Name,
                 TimeOnly.Parse(dto.StartTime),
                 TimeOnly.Parse(dto.EndTime)

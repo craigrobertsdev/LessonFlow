@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Identity;
-using LessonFlow;
 using LessonFlow.Domain.Users;
 
 namespace LessonFlow.Components.Account;

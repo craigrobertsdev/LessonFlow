@@ -50,6 +50,10 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     {
         modelBuilder.Ignore<UserId>();
 
+        modelBuilder.Entity<LessonPeriod>().HasBaseType<PeriodBase>();
+        modelBuilder.Entity<BreakPeriod>().HasBaseType<PeriodBase>();
+        modelBuilder.Entity<NitPeriod>().HasBaseType<PeriodBase>();
+
         modelBuilder
             .Ignore<List<IDomainEvent>>()
             .ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);

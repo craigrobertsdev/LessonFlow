@@ -1,7 +1,5 @@
 using LessonFlow.Api.Database.Converters;
-using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Reports;
-using LessonFlow.Domain.Students;
 using LessonFlow.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

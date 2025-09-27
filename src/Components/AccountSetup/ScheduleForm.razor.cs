@@ -3,12 +3,14 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
 using Microsoft.AspNetCore.Components;
+using System.Diagnostics.Eventing.Reader;
 
 namespace LessonFlow.Components.AccountSetup;
 
 public partial class ScheduleForm
 {
     [CascadingParameter] public AccountSetupState State { get; set; } = default!;
+    [Parameter] public Func<Task> SaveChanges { get; set; } = default!;
     WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
     DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
     public List<GridColumn> GridCols = [];
@@ -67,12 +69,12 @@ public partial class ScheduleForm
                 // -1 because the grid starts at 2 and the periods at 1
                 if (cell.Period.NumberOfPeriods == 1 || cell.StartRow == cell.Period.StartPeriod - 1 || cell.Period.PeriodType == PeriodType.Break)
                 {
-                    cell.RowSpans.Add((j, j));
+                    cell.RowSpans.Add((j, j + 1));
                     cell.IsFirstCellInBlock = true;
                 }
                 else
                 {
-                    cell.SetRowSpans(0, cell.Period.NumberOfPeriods, day.Periods);
+                    cell.SetRowSpans(0, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
                 }
 
                 col.Cells.Add(cell);
@@ -126,13 +128,14 @@ public partial class ScheduleForm
         if (newDuration == oldDuration) return;
 
         SelectedCell.Period.NumberOfPeriods = newDuration;
+        SelectedCell.SetRowSpans(oldDuration, newDuration, WeekPlannerTemplate.Periods);
 
         var cells = SelectedCell.Column.Cells;
+        var dayTemplate = WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2];
+        var templatePeriods = WeekPlannerTemplate.Periods;
 
         if (newDuration > oldDuration)
         {
-            SelectedCell.SetRowSpans(oldDuration, newDuration, WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods);
-
             var idx = cells.FindIndex(c => c?.StartRow == SelectedCell.StartRow) + 1;
             var cellsToRemove = newDuration - oldDuration;
             List<GridCell> cellsPendingRemoval = [];
@@ -151,32 +154,78 @@ public partial class ScheduleForm
             {
                 cells.Remove(cell);
             }
+
+            dayTemplate.RemovePeriods(cellsPendingRemoval.Select(c => c.Period));
         }
         else
         {
-            var idx = cells.IndexOf(SelectedCell) + 1;
-
-            var cellsAdded = 0;
-            var cellsToAdd = oldDuration - newDuration;
-            while (cellsAdded < cellsToAdd && idx < WeekPlannerTemplate.Periods.Count)
+            var idx = templatePeriods.FindIndex(tp => tp.StartPeriod == SelectedCell.Period.StartPeriod);
+            var templatePeriodsStartIndex = idx + newDuration;
+            int breaksCovered = 0;
+            var to = templatePeriodsStartIndex + 1 == cells.Count ? cells.Count : templatePeriodsStartIndex + 1;
+            for (int i = 0; i < to; i++)
             {
-                if (idx == cells.Count && cells.Count < WeekPlannerTemplate.Periods.Count)
+                if (templatePeriods[i].PeriodType == PeriodType.Break)
                 {
-                    var newCell = new GridCell([(idx + 2, idx + 3)], new LessonPeriod(string.Empty, idx, 1), SelectedCell.Column);
-                    cells.Add(newCell);
-                    cellsAdded++;
+                    breaksCovered++;
                 }
-                else if (cells[idx].Period.StartPeriod != WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods[idx].StartPeriod)
-                {
-                    var newCell = new GridCell([(idx + 2, idx + 3)], new LessonPeriod(string.Empty, idx, 1), SelectedCell.Column);
-                    cells.Insert(idx, newCell);
-                    cellsAdded++;
-                }
+            }
+            templatePeriodsStartIndex += breaksCovered;
 
-                idx++;
+            var templatePeriodsEndIndex = idx + oldDuration;
+            breaksCovered = 0;
+            to = templatePeriodsEndIndex + 1 == cells.Count ? cells.Count : templatePeriodsEndIndex + 1;
+            for (int i = 0; i < to; i++)
+            {
+                if (templatePeriods[i].PeriodType == PeriodType.Break)
+                {
+                    breaksCovered++;
+                }
+            }
+            templatePeriodsEndIndex += breaksCovered;
+
+            var nextLessonStartPeriod = templatePeriods[templatePeriodsStartIndex].StartPeriod;
+            int cellsStartIdx = 0;
+            for (int i = 0; i < cells.Count; i++)
+            {
+                if (cells[i].Period.StartPeriod == nextLessonStartPeriod + 1)
+                {
+                    cellsStartIdx = i;
+                    break;
+                }
+                else if (cells[i].Period.StartPeriod + 1 == nextLessonStartPeriod)
+                {
+                    cellsStartIdx = i + 1;
+                    break;
+                }
+                else if (i == cells.Count - 1)
+                {
+                    cellsStartIdx = cells.Count - 1;
+                }
             }
 
-            SelectedCell.SetRowSpans(oldDuration, newDuration, WeekPlannerTemplate.DayTemplates[SelectedCell.Column.Col - 2].Periods);
+            while (templatePeriodsStartIndex < templatePeriodsEndIndex)
+            {
+                if (templatePeriods[templatePeriodsStartIndex].PeriodType == PeriodType.Break)
+                {
+                    templatePeriodsStartIndex++;
+                    cellsStartIdx++;
+                    continue;
+                }
+                var newPeriod = new LessonPeriod(string.Empty, templatePeriods[templatePeriodsStartIndex].StartPeriod, 1);
+                var newCell = new GridCell([(cells[cellsStartIdx - 1].StartRow + 1, cells[cellsStartIdx - 1].EndRow + 1)], newPeriod, SelectedCell.Column);
+                if (cellsStartIdx >= cells.Count)
+                {
+                    cells.Add(newCell);
+                }
+                else
+                {
+                    cells.Insert(cellsStartIdx, newCell);
+                }
+                dayTemplate.AddPeriod(newPeriod);
+                cellsStartIdx++;
+                templatePeriodsStartIndex++;
+            }
         }
 
         StateHasChanged();
@@ -192,9 +241,10 @@ public partial class ScheduleForm
             : GetEndRow(col, cell, row + 1);
     }
 
-    private void HandleBack()
+    private async Task HandleBack()
     {
         State.ClearError();
+        await SaveChanges();
         State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Back);
     }
 
