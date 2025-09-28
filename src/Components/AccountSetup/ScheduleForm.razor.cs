@@ -29,35 +29,39 @@ public partial class ScheduleForm
 
     protected override void OnInitialized()
     {
-        if (WeekPlannerTemplate.DayTemplates.Count == 0)
+        // for each day of the week, check if the 
+        List<DayTemplate> templates = [];
+        foreach (var day in weekDays)
         {
-
-            List<DayTemplate> templates = [];
-            foreach (var day in weekDays)
+            var isWorkingDay = State.WorkingDays.Contains(day);
+            if (!isWorkingDay)
             {
-                var isWorkingDay = State.WorkingDays.Contains(day);
-                if (!isWorkingDay)
-                {
-                    templates.Add(new DayTemplate([], day, DayType.Nwd));
-                    continue;
-                }
-
-                int periodCount = 1;
-                var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
-                {
-                    return p.PeriodType switch
-                    {
-                        PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
-                        PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
-                        _ => throw new ArgumentOutOfRangeException()
-                    };
-                }).ToList();
-
-                templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
+                templates.Add(new DayTemplate([], day, DayType.Nwd));
+                continue;
             }
 
-            State.WeekPlannerTemplate.SetDayTemplates(templates);
+            var dayTemplate = WeekPlannerTemplate.DayTemplates.FirstOrDefault(dt => dt.DayOfWeek == day);
+            if (dayTemplate is not null)
+            {
+                templates.Add(dayTemplate);
+                continue;
+            }
+
+            int periodCount = 1;
+            var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
+            {
+                return p.PeriodType switch
+                {
+                    PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
+                    PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+            }).ToList();
+
+            templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
         }
+
+        State.WeekPlannerTemplate.SetDayTemplates(templates);
 
         GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
         {
