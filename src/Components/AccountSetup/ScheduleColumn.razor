@@ -20,52 +20,47 @@
   {
     foreach (var span in cell.RowSpans)
     {
-      <div class="border border-gray-300 flex justify-center items-center hover:outline hover:outline-gray-500 hover:-outline-offset-1
-        @(IsSelected(cell) ? "outline outline-2 outline-gray-500 -outline-offset-1 z-100" : "") 
-        @(IsSelected(cell) && !cell.IsFirstCellInBlock ? "border-t-0" : "") @GetCellColour(cell) select-none"
+      var cellText = string.IsNullOrEmpty(((LessonPeriod)cell.Period).SubjectName) ? "Select subject" : ((LessonPeriod)cell.Period).SubjectName;
+
+      <div class="border border-gray-300 flex justify-center items-center @(cell.IsHovered ? "outline outline-gray-500 -outline-offset-1 z-100 opacity-80" : "") @(IsSelected(cell) ? "outline outline-2 outline-gray-500 -outline-offset-1 z-100" : "")
+              @(IsSelected(cell) && !cell.IsFirstCellInBlock ? "border-t-0" : "") @GetCellColour(cell) select-none @(cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
+        @(string.IsNullOrEmpty(((LessonPeriod)cell.Period).SubjectName) ? "text-gray-700" : "font-semibold")"
            style="grid-column:@cell.Column.Col; grid-row-start:@span.Start; grid-row-end:@span.End"
-           @onclick="() => HandleCellClick(cell)">
-        @if (string.IsNullOrEmpty(((LessonPeriod)cell.Period).SubjectName))
-        {
-          <span class="text-gray-700">Select subject</span>
-        }
-        else
-        {
-          <span class="font-semibold">
-            @(((LessonPeriod)cell.Period).SubjectName)
-          </span>
-        }
+           @onclick="() => HandleCellClick(cell)"
+					 @onmouseover="@(() => {cell.IsHovered = true; StateHasChanged();})"
+					 @onmouseout="@(() => cell.IsHovered = false)"
+           @onmousedown="@(() => cell.IsMouseDown = true)"
+           @onmouseup="@(() => cell.IsMouseDown = false)">
+           @cellText
       </div>
     }
   }
 }
 
 @code {
-  [CascadingParameter] public ScheduleForm Parent { get; set; } = default!;
-  [Parameter] public GridColumn Column { get; set; } = default!;
+	[CascadingParameter] public ScheduleForm Parent { get; set; } = default!;
+	[Parameter] public GridColumn Column { get; set; } = default!;
 
-  bool IsSelected(GridCell cell) => cell == Parent.SelectedCell;
-  int CellsRenderedInBlock { get; set; } = 0;
+	bool IsSelected(GridCell cell) => cell == Parent.SelectedCell;
+	int CellsRenderedInBlock { get; set; } = 0;
 
-  void HandleCellClick(GridCell cell)
-  {
-    if (Parent.SelectedCell == cell || cell.Period.PeriodType == PeriodType.Break)
-    {
-      Parent.SelectedCell = null;
-    }
-    else
-    {
-      Parent.SelectedCell = cell;
-    }
-  }
+	void HandleCellClick(GridCell cell)
+	{
+		if (Parent.SelectedCell == cell || cell.Period.PeriodType == PeriodType.Break)
+		{
+			Parent.SelectedCell = null;
+		}
+		else
+		{
+			Parent.SelectedCell = cell;
+		}
+	}
 
-  string GetCellColour(GridCell cell)
-  {
-    if (cell.Period.PeriodType == PeriodType.Break) return "";
-    return AppConstants.SubjectColours.TryGetValue(((LessonPeriod)cell.Period).SubjectName, out var colour)
-        ? colour
-        : string.Empty;
-  }
-
-
+	string GetCellColour(GridCell cell)
+	{
+		if (cell.Period.PeriodType == PeriodType.Break) return "";
+		return AppConstants.SubjectColours.TryGetValue(((LessonPeriod)cell.Period).SubjectName, out var colour)
+				? colour
+				: string.Empty;
+	}
 }

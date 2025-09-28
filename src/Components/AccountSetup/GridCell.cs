@@ -16,6 +16,8 @@ public record GridCell
     public GridColumn Column { get; set; } = null!;
     public int StartRow => RowSpans.FirstOrDefault().Start;
     public int EndRow => RowSpans[^1].End;
+    public bool IsHovered { get; set; }
+    public bool IsMouseDown { get; set; }
     public bool IsFirstCellInBlock { get; set; }
     public PeriodBase Period { get; set; }
     public List<(int Start, int End)> RowSpans { get; set; } = [];
