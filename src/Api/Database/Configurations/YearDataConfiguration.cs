@@ -45,6 +45,10 @@ public class YearDataConfiguration : IEntityTypeConfiguration<YearData>
         builder.HasMany(yd => yd.SubjectsTaught)
             .WithMany();
 
+        builder.Navigation(yd => yd.WeekPlannerTemplate).AutoInclude();
+        builder.Navigation(yd => yd.Students).AutoInclude();
+        builder.Navigation(yd => yd.SubjectsTaught).AutoInclude();
+
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
         builder.Property<List<DayOfWeek>>("_workingDays")
             .HasColumnName("WorkingDays")
