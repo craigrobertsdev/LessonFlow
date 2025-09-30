@@ -1,0 +1,106 @@
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@page "/WeekPlanner"
+@using LessonFlow.Api.Services
+@using LessonFlow.Components.WeekPlanner
+@using LessonFlow.Domain.Enums
+@using LessonFlow.Domain.PlannerTemplates
+@using LessonFlow.Domain.YearDataRecords
+@using LessonFlow.Exceptions
+@using LessonFlow.Shared
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager NavigationManager
+@inject ILogger<WeekPlanner> Logger
+
+<div style="grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="grid">
+    <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
+
+    @* Lesson and break headers *@
+    @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
+    {
+        var period = WeekPlannerTemplate.Periods[i];
+        <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
+            @period.Name
+        </div>
+    }
+
+    @for (int i = 0; i < weekDays.Length; i++)
+    {
+        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
+    }
+
+    @foreach (var col in GridCols)
+    {
+        if (col.IsWorkingDay)
+        {
+            <CascadingValue Value="this">
+                <WeekPlannerColumn Column="col" />
+            </CascadingValue>
+
+        }
+        else
+        {
+            <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
+                 class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+            </div>
+        }
+    }
+
+</div>
+
+@code {
+    [Inject] private AppState AppState { get; set; } = default!;
+    const string _gridTemplateCols = "0.8fr repeat(5, 1fr)";
+    string _gridRows = string.Empty;
+    DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+
+    YearData YearData { get; set; } = default!;
+    WeekPlannerTemplate WeekPlannerTemplate => AppState.YearData!.WeekPlannerTemplate;
+    List<GridColumn> GridCols { get; set; } = [];
+
+
+    protected override void OnInitialized()
+    {
+        GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
+        {
+            var col = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
+            for (int j = 2; j < day.Periods.Count + 2; j++)
+            {
+                var cell = new GridCell([], day.Periods[j - 2], col);
+                // -1 because the grid starts at 2 and the periods at 1
+                if (cell.Period.NumberOfPeriods == 1 || cell.Period.PeriodType == PeriodType.Break)
+                {
+                    cell.RowSpans.Add((cell.Period.StartPeriod + 1, cell.Period.StartPeriod + 2));
+                    cell.IsFirstCellInBlock = true;
+                }
+                else
+                {
+                    cell.RowSpans.Add((j, j + 1));
+                    cell.SetRowSpans(1, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
+                }
+
+                col.Cells.Add(cell);
+            }
+
+            col.IsWorkingDay = day.IsWorkingDay;
+
+            return col;
+        })
+        .ToList();
+
+        _gridRows = "50px";
+        foreach (var period in WeekPlannerTemplate.Periods)
+        {
+            if (period.PeriodType == PeriodType.Lesson || period.PeriodType == PeriodType.Nit)
+            {
+                _gridRows += " 1.5fr";
+            }
+            else
+            {
+                _gridRows += " 1fr";
+            }
+        }
+    }
+}
