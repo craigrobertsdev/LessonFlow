@@ -6,9 +6,16 @@ using Microsoft.AspNetCore.Components.Authorization;
 
 namespace LessonFlow.Shared;
 
-public class AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger)
+public class AppState
 {
-    private bool _initialised;
+    public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger)
+    {
+        _authStateProvider = authStateProvider;
+        _userRepository = userRepository;
+        _logger = logger;
+    }
+
+    public bool IsInitialised;
     public bool Initialising { get; private set; } = true;
     private User? _user;
     public User? User
@@ -25,6 +32,10 @@ public class AppState(AuthenticationStateProvider authStateProvider, IUserReposi
     }
 
     private YearData? _yearData;
+    private readonly AuthenticationStateProvider _authStateProvider;
+    private readonly IUserRepository _userRepository;
+    private readonly ILogger<AppState> _logger;
+
     public YearData? YearData
     {
         get => _yearData;
@@ -39,17 +50,16 @@ public class AppState(AuthenticationStateProvider authStateProvider, IUserReposi
 
     public async Task InitialiseAsync()
     {
-        logger.LogWarning($"AppState {GetHashCode()}, Initialised == {_initialised}");
-        if (_initialised) return;
+        if (IsInitialised) return;
 
-        _initialised = true;
-        var authState = await authStateProvider.GetAuthenticationStateAsync();
+        IsInitialised = true;
+        var authState = await _authStateProvider.GetAuthenticationStateAsync();
         if (authState.User.Identity?.IsAuthenticated ?? false)
         {
             try
             {
                 var email = authState.User.Identity.Name!;
-                var user = await userRepository.GetByEmail(email, CancellationToken.None);
+                var user = await _userRepository.GetByEmail(email, CancellationToken.None);
                 if (user is null)
                 {
                     throw new UserNotFoundException();
@@ -58,18 +68,22 @@ public class AppState(AuthenticationStateProvider authStateProvider, IUserReposi
                 User = user;
                 if (user.AccountSetupComplete)
                 {
-                    var yearData = await userRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
+                    var yearData = await _userRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
                         ?? throw new YearDataNotFoundException();
                     YearData = yearData;
                 }
                 else
                 {
-                    user.AccountSetupState?.SortWeekPlannerTemplateLessons();
+                    user.AccountSetupState?.WeekPlannerTemplate.SortPeriods();
                 }
             }
-            catch (Exception)
+            catch (YearDataNotFoundException)
             {
-                throw new UserNotFoundException();
+                throw;
+            }
+            catch (UserNotFoundException)
+            {
+                throw;
             }
             finally
             {

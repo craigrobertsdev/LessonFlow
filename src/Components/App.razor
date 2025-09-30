@@ -1,4 +1,5 @@
-﻿@using LessonFlow.Interfaces.Persistence
+﻿@using LessonFlow.Exceptions
+@using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Shared
 
 <!DOCTYPE html>
@@ -20,7 +21,7 @@
 </head>
 
 <body>
-    <Routes />
+    <Routes @rendermode="InteractiveServer"/>
 
     <script src="_framework/blazor.web.js"></script>
     <script src="Components/Pages/TextEditor.razor.js"></script>
@@ -28,3 +29,45 @@
 </body>
 
 </html>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+    [Inject] private AppState AppState { get; set; } = default!;
+    [Inject] private IUserRepository UserRepository { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AppState.IsInitialised) return;
+
+        var hash = AppState.GetHashCode();
+        var authState = await AuthStateTask;
+        if (authState.User.Identity?.IsAuthenticated ?? false)
+        {
+            try
+            {
+                var email = authState.User.Identity.Name!;
+                var user = await UserRepository.GetByEmail(email, CancellationToken.None);
+                if (user is null)
+                {
+                    throw new UserNotFoundException();
+                }
+
+                AppState.User = user;
+                if (user.AccountSetupComplete)
+                {
+                    var yearData = await UserRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
+                        ?? throw new YearDataNotFoundException();
+                    AppState.YearData = yearData;
+                    AppState.YearData.WeekPlannerTemplate.SortPeriods();
+                }
+                else
+                {
+                    user.AccountSetupState?.WeekPlannerTemplate.SortPeriods();
+                }
+
+                AppState.IsInitialised = true;
+            }
+            catch { }
+        }
+    }
+}

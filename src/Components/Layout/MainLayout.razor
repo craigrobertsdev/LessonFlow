@@ -12,16 +12,7 @@
 
     <main class="flex-1">
         <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            @if (RendererInfo.Name == "Server")
-            {
-                <AppStateProvider>
-                    @Body
-                </AppStateProvider>
-            }
-            else
-            {
-                @Body
-            }
+            @Body
         </div>
     </main>
 </div>
