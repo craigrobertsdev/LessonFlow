@@ -64,6 +64,25 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         await context.SaveChangesAsync();
     }
 
+    public async Task CompleteAccountSetup(Guid userId, YearData yearData)
+    {
+        var user = await context.Users
+            .Where(u => u.Id == userId)
+            .Include(u => u.YearDataHistory)
+            .Include(u => u.AccountSetupState)
+            .FirstOrDefaultAsync();
+
+        if (user is null)
+        {
+            throw new Exception("User not found");
+        }
+
+        user.CompleteAccountSetup();
+        user.AddYearData(yearData);
+
+        await context.SaveChangesAsync();
+    }
+
     public async Task<User?> GetById(Guid userId, CancellationToken cancellationToken)
     {
         return await context.Users
@@ -121,6 +140,7 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
     {
         return await context.YearData
             .Where(y => y.UserId == userId && y.CalendarYear == calendarYear)
+            .Include(yd => yd.WeekPlannerTemplate)
             .FirstOrDefaultAsync(cancellationToken);
     }
 

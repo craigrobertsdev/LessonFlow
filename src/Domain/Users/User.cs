@@ -39,9 +39,12 @@ public class User : IdentityUser<Guid>
         return _yearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
     }
 
-    public void CompleteAccountSetup(int lastSelectedYear, DateOnly lastSelectedWeekStart)
+    public void CompleteAccountSetup()
     {
-        LastSelectedYear = lastSelectedYear;
+        if (AccountSetupState is null) return;
+        LastSelectedYear = AccountSetupState.CalendarYear;
+        AccountSetupState = null;
+        AccountSetupComplete = true;
     }
 
     public void SetLastSelectedYear(int year)

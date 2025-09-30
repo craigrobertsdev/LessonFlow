@@ -1,3 +1,4 @@
+using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Common.Interfaces;
 using LessonFlow.Domain.Common.Primatives;
 using LessonFlow.Domain.Curriculum;
@@ -126,17 +127,16 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
         WeekPlannerTemplate = weekPlannerTemplate;
     }
 
-    public YearData(Guid userId, WeekPlannerTemplate weekPlannerTemplate, string schoolName,
-        int calendarYear, List<YearLevelValue> yearLevels, List<DayOfWeek> workingDays)
+    public YearData(Guid userId, AccountSetupState accountSetupState)
     {
         Id = new YearDataId(Guid.NewGuid());
         UserId = userId;
-        SchoolName = schoolName;
-        CalendarYear = calendarYear;
-        WeekPlannerTemplate = weekPlannerTemplate;
-        yearLevels.Sort();
-        _yearLevelsTaught = yearLevels;
-        _workingDays = workingDays;
+        SchoolName = accountSetupState.SchoolName;
+        CalendarYear = accountSetupState.CalendarYear;
+        WeekPlannerTemplate = accountSetupState.WeekPlannerTemplate;
+        _yearLevelsTaught = accountSetupState.YearLevelsTaught;
+        _yearLevelsTaught.Sort();
+        _workingDays = accountSetupState.WorkingDays;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
