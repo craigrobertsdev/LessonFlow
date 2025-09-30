@@ -29,27 +29,11 @@ public class AccountSetupState
         DayOfWeek.Friday
     ];
 
-    public int NumberOfLessons { get; set; }
-    public int NumberOfBreaks { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
     public WeekPlannerTemplate WeekPlannerTemplate { get; set; }
     public string? Error { get; private set; }
     public bool IsLoading { get; private set; }
-
-    public void SortWeekPlannerTemplateLessons()
-    {
-        WeekPlannerTemplate.Periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
-        WeekPlannerTemplate.DayTemplates.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
-        WeekPlannerTemplate.DayTemplates.ForEach(dt =>
-            dt.Periods.Sort((a, b) => a.StartPeriod.CompareTo(b.StartPeriod)));
-    }
-
-    public void SetCurrentStep(AccountSetupStep step)
-    {
-        CurrentStep = step;
-        NotifyStateChanged();
-    }
 
     public void UpdateStep(AccountSetupStep step, ChangeDirection direction)
     {
@@ -62,12 +46,6 @@ public class AccountSetupState
         NotifyStateChanged(direction);
     }
 
-    public bool IsNextStep(AccountSetupStep step)
-    {
-        return StepOrder.IndexOf(step) == StepOrder.IndexOf(CurrentStep) + 1;
-    }
-
-    public AccountSetupStep GetLastCompletedStep() => CompletedSteps.LastOrDefault();
     public void SetSchoolName(string schoolName)
     {
         SchoolName = schoolName;
@@ -80,21 +58,9 @@ public class AccountSetupState
         NotifyStateChanged();
     }
 
-    public void SetYearLevelsTaught(List<YearLevelValue> levels)
-    {
-        YearLevelsTaught = levels;
-        NotifyStateChanged();
-    }
-
     public void SetSubjectsTaught(List<string> subjects)
     {
         SubjectsTaught = subjects;
-        NotifyStateChanged();
-    }
-
-    public void SetWorkingDays(List<DayOfWeek> days)
-    {
-        WorkingDays = days;
         NotifyStateChanged();
     }
 
@@ -103,18 +69,7 @@ public class AccountSetupState
         StartTime = startTime;
         EndTime = endTime;
         WeekPlannerTemplate.SetPeriods(periods);
-        NotifyStateChanged();
-    }
-
-    public void SetDayTemplates(List<DayTemplate> periods)
-    {
-        WeekPlannerTemplate.SetDayTemplates(periods);
-        NotifyStateChanged();
-    }
-
-    public void SetWeekPlannerTemplate(WeekPlannerTemplate template)
-    {
-        WeekPlannerTemplate = template;
+        
         NotifyStateChanged();
     }
 
@@ -194,6 +149,8 @@ public class AccountSetupState
             ];
 
         WeekPlannerTemplate = new WeekPlannerTemplate(periods, userId);
+        StartTime = new TimeOnly(9, 10);
+        EndTime = new TimeOnly(15, 10);
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

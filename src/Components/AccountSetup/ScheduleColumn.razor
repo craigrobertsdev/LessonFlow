@@ -42,7 +42,6 @@
 	[Parameter] public GridColumn Column { get; set; } = default!;
 
 	bool IsSelected(GridCell cell) => cell == Parent.SelectedCell;
-	int CellsRenderedInBlock { get; set; } = 0;
 
 	void HandleCellClick(GridCell cell)
 	{

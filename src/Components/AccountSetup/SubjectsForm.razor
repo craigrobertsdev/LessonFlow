@@ -53,45 +53,52 @@
 </div>
 
 @code {
-  [Parameter]
-  public List<string> Subjects { get; set; } = [];
+    [CascadingParameter]
+    private AccountSetupState State { get; set; } = null!;
 
-  [CascadingParameter]
-  private AccountSetupState State { get; set; }
+    [Parameter]
+    public List<string> Subjects { get; set; } = [];
 
-  private void ToggleSubject(string subject, bool isChecked)
-  {
-    var currentSubjects = new List<string>(State.SubjectsTaught);
+    [Parameter]
+    public Func<Task> SaveChanges { get; set; } = null!;
 
-    if (isChecked && !currentSubjects.Contains(subject))
-      currentSubjects.Add(subject);
-    else if (!isChecked && currentSubjects.Contains(subject))
-      currentSubjects.Remove(subject);
-
-    State.SetSubjectsTaught(currentSubjects);
-  }
-
-  private void HandleBack()
-  {
-    State.ClearError();
-    State.UpdateStep(AccountSetupStep.BasicInfo, ChangeDirection.Back);
-  }
-
-  private void HandleSubmit()
-  {
-    State.ClearError();
-
-    if (!State.SubjectsTaught.Any())
+    private void ToggleSubject(string subject, bool isChecked)
     {
-      State.SetError("Please select at least one subject");
-      return;
+        var currentSubjects = new List<string>(State.SubjectsTaught);
+
+        if (isChecked && !currentSubjects.Contains(subject))
+            currentSubjects.Add(subject);
+        else if (!isChecked && currentSubjects.Contains(subject))
+            currentSubjects.Remove(subject);
+
+        State.SetSubjectsTaught(currentSubjects);
     }
 
-    foreach (var subject in State.SubjectsTaught)
+    private async Task HandleBack()
     {
-      Logger.LogWarning(subject);
+        State.ClearError();
+
+        await SaveChanges();
+        State.UpdateStep(AccountSetupStep.BasicInfo, ChangeDirection.Back);
     }
 
-    State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Forward);
-  }
+    private async Task HandleSubmit()
+    {
+        State.ClearError();
+
+        if (!State.SubjectsTaught.Any())
+        {
+            State.SetError("Please select at least one subject");
+            return;
+        }
+
+        foreach (var subject in State.SubjectsTaught)
+        {
+            Logger.LogWarning(subject);
+        }
+
+        await SaveChanges();
+
+        State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Forward);
+    }
 }

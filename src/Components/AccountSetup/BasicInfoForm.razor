@@ -88,50 +88,55 @@
 </div>
 
 @code {
-  [CascadingParameter]
-  private AccountSetupState AccountSetupState { get; set; } = null!;
+    [CascadingParameter]
+    private AccountSetupState AccountSetupState { get; set; } = null!;
 
-  private void ToggleYearLevel(YearLevelValue level)
-  {
-    if (AccountSetupState.YearLevelsTaught.Contains(level))
-      AccountSetupState.YearLevelsTaught.Remove(level);
-    else
-      AccountSetupState.YearLevelsTaught.Add(level);
-  }
+    [Parameter] 
+    public Func<Task> SaveChanges { get; set; } = null!;
 
-  private void ToggleWorkingDay(DayOfWeek day)
-  {
-    if (AccountSetupState.WorkingDays.Contains(day))
-      AccountSetupState.WorkingDays.Remove(day);
-    else
-      AccountSetupState.WorkingDays.Add(day);
-
-    StateHasChanged();
-  }
-
-  private void HandleSubmit()
-  {
-    AccountSetupState.ClearError();
-
-    if (string.IsNullOrWhiteSpace(AccountSetupState.SchoolName))
+    private void ToggleYearLevel(YearLevelValue level)
     {
-      AccountSetupState.SetError("Please enter your school name");
-      return;
+        if (AccountSetupState.YearLevelsTaught.Contains(level))
+            AccountSetupState.YearLevelsTaught.Remove(level);
+        else
+            AccountSetupState.YearLevelsTaught.Add(level);
     }
 
-    if (!AccountSetupState.YearLevelsTaught.Any())
+    private void ToggleWorkingDay(DayOfWeek day)
     {
-      AccountSetupState.SetError("Please select at least one year level");
-      return;
+        if (AccountSetupState.WorkingDays.Contains(day))
+            AccountSetupState.WorkingDays.Remove(day);
+        else
+            AccountSetupState.WorkingDays.Add(day);
+
+        StateHasChanged();
     }
 
-    if (!AccountSetupState.WorkingDays.Any())
+    private async Task HandleSubmit()
     {
-      AccountSetupState.SetError("Please select at least one working day");
-      return;
-    }
+        AccountSetupState.ClearError();
 
-    AccountSetupState.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Forward);
-    StateHasChanged();
-  }
+        if (string.IsNullOrWhiteSpace(AccountSetupState.SchoolName))
+        {
+            AccountSetupState.SetError("Please enter your school name");
+            return;
+        }
+
+        if (!AccountSetupState.YearLevelsTaught.Any())
+        {
+            AccountSetupState.SetError("Please select at least one year level");
+            return;
+        }
+
+        if (!AccountSetupState.WorkingDays.Any())
+        {
+            AccountSetupState.SetError("Please select at least one working day");
+            return;
+        }
+
+        await SaveChanges();
+
+        AccountSetupState.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Forward);
+        StateHasChanged();
+    }
 }

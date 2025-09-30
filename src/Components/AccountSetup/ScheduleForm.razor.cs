@@ -10,6 +10,8 @@ public partial class ScheduleForm
 {
     [CascadingParameter] public AccountSetupState State { get; set; } = default!;
     [Parameter] public Func<Task> SaveChanges { get; set; } = default!;
+    [Parameter] public Func<Task> CompleteAccountSetup { get; set; } = default!;
+    [Inject] public NavigationManager NavigationManager { get; set; } = default!;
     WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
     DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
     public List<GridColumn> GridCols = [];
@@ -29,7 +31,6 @@ public partial class ScheduleForm
 
     protected override void OnInitialized()
     {
-        // for each day of the week, check if the 
         List<DayTemplate> templates = [];
         foreach (var day in weekDays)
         {
@@ -269,16 +270,6 @@ public partial class ScheduleForm
         }
     }
 
-    private int GetEndRow(GridColumn col, GridCell cell, int row)
-    {
-        if (cell is null) return 1;
-        if (cell.Period.NumberOfPeriods == 1 || row == col.Cells.Count - 1) return row + 2;
-
-        return col.Cells[row]?.Period.PeriodType == PeriodType.Break
-            ? row + 2
-            : GetEndRow(col, cell, row + 1);
-    }
-
     private async Task HandleBack()
     {
         State.ClearError();
@@ -293,24 +284,8 @@ public partial class ScheduleForm
             State.SetLoading(true);
             State.ClearError();
 
-            // Basic validation: ensure grid shape matches config (no forced subject assignment)
-            for (int slotIndex = 0; slotIndex < WeekPlannerTemplate.Periods.Count; slotIndex++)
-            {
-                // foreach (var day in _dayTemplates.Where(d => d.IsWorkingDay))
-                // {
-                // 	if (day.Periods is null || day.Periods.Count <= slotIndex)
-                // 	{
-                // 		State.SetError("Schedule configuration mismatch. Please revisit the Timing step.");
-                // 		return;
-                // 	}
-                // }
-            }
-
-            // Save current state
-            // await UserRepository.UpdateAccountSetupState(User.Id, State);
-
-            // Navigate to week planner (final step)
-            // NavigationManager.NavigateTo("/WeekPlanner");
+            await CompleteAccountSetup();
+            NavigationManager.NavigateTo("/WeekPlanner");
         }
         catch (Exception ex)
         {
