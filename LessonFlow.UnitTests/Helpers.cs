@@ -3,7 +3,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
 
-namespace LessonFlow.UnitTests.UI.AccountSetup;
+namespace LessonFlow.UnitTests;
 internal class Helpers
 {
     public static GridColumn GenerateGridColumn()
