@@ -2,206 +2,76 @@
 @page "/AccountSetup"
 @attribute [Authorize]
 
-@using LessonFlow.Api.Database.Repositories
-@using LessonFlow.Components.AccountSetup.State
 @using LessonFlow.Components.AccountSetup
-@using LessonFlow.Domain.Users
-@using LessonFlow.Exceptions
-@using LessonFlow.Interfaces.Persistence
-@using LessonFlow.Interfaces.Services
-@using LessonFlow.Shared
+@using LessonFlow.Components.AccountSetup.State
 @using Microsoft.AspNetCore.Authorization
-
-@inject NavigationManager NavigationManager
-@inject ITermDatesService TermDatesService
-@inject ICurriculumService CurriculumService
-@inject IUserRepository UserRepository
-@inject IUnitOfWork UnitOfWork
-@inject IJSRuntime JSRuntime
-@inject ILogger<AccountSetup> Logger
-
-@implements IDisposable
 
 <PageTitle>Account Setup</PageTitle>
 
 @if (User is null || _initialLoading)
 {
-	<div class="flex min-h-[40vh] items-center justify-center">
-		<div class="text-center">
-			<div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
-			<p class="text-sm text-gray-600">Loading your account...</p>
-		</div>
-	</div>
+    <div class="flex min-h-[40vh] items-center justify-center">
+        <div class="text-center">
+            <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
+            <p class="text-sm text-gray-600">Loading your account...</p>
+        </div>
+    </div>
 }
 else if (_redirectToLogin)
 {
-	<div class="flex min-h-[40vh] items-center justify-center">
-		<p class="text-sm text-gray-600">Redirecting to login...</p>
-	</div>
+    <div class="flex min-h-[40vh] items-center justify-center">
+        <p class="text-sm text-gray-600">Redirecting to login...</p>
+    </div>
 }
 else if (_redirectToWeekPlanner)
 {
-	<div class="flex min-h-[40vh] items-center justify-center">
-		<p class="text-sm text-gray-600">Redirecting to week planner...</p>
-	</div>
+    <div class="flex min-h-[40vh] items-center justify-center">
+        <p class="text-sm text-gray-600">Redirecting to week planner...</p>
+    </div>
 }
 else if (AccountSetupState is not null)
 {
-	<CascadingValue Value="AccountSetupState">
-		<CascadingValue Value="User">
-			<title>LessonFlow - Account Setup</title>
-			<div class="mx-auto max-w-5xl p-6">
-				<div class="space-y-3">
-					<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-						@if (!string.IsNullOrEmpty(AccountSetupState.Error))
-						{
-							<div class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
-								@AccountSetupState.Error
-							</div>
-						}
+    <CascadingValue Value="AccountSetupState">
+        <CascadingValue Value="User">
+            <title>LessonFlow - Account Setup</title>
+            <div class="mx-auto max-w-5xl p-6">
+                <div class="space-y-3">
+                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                        @if (!string.IsNullOrEmpty(AccountSetupState.Error))
+                        {
+                            <div class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+                                @AccountSetupState.Error
+                            </div>
+                        }
 
-						<ProgressSteps />
-					</div>
+                        <ProgressSteps />
+                    </div>
 
-					<div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-						@switch (_accountSetupStep)
-						{
-							case AccountSetupStep.BasicInfo:
-								<BasicInfoForm />
-								break;
-							case AccountSetupStep.Subjects:
-								<SubjectsForm Subjects="_subjectNames" />
-								break;
-							case AccountSetupStep.Timing:
-								<TimingForm />
-								break;
-							case AccountSetupStep.Schedule:
-                <ScheduleForm SaveChanges="SaveAccountSetupState" />
-								break;
-						}
-					</div>
-				</div>
-			</div>
-		</CascadingValue>
-	</CascadingValue>
+                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                        @switch (_accountSetupStep)
+                        {
+                            case AccountSetupStep.BasicInfo:
+                                <BasicInfoForm SaveChanges="SaveAccountSetupState" />
+                                break;
+                            case AccountSetupStep.Subjects:
+                                <SubjectsForm Subjects="_subjectNames" SaveChanges="SaveAccountSetupState" />
+                                break;
+                            case AccountSetupStep.Timing:
+                                <TimingForm SaveChanges="SaveAccountSetupState" />
+                                break;
+                            case AccountSetupStep.Schedule:
+                                <ScheduleForm SaveChanges="SaveAccountSetupState" CompleteAccountSetup="CompleteAccountSetup" />
+                                break;
+                        }
+                    </div>
+                </div>
+            </div>
+        </CascadingValue>
+    </CascadingValue>
 }
 else
 {
-	<div class="flex min-h-[40vh] items-center justify-center">
-		<p class="text-sm text-gray-600">Setting up your account...</p>
-	</div>
-}
-
-@code {
-  [Parameter] public string? Step { get; set; }
-  [Inject] public AppState AppState { get; set; } = null!;
-
-  public AccountSetupState AccountSetupState { get; set; } = null!;
-  private AccountSetupStep _accountSetupStep { get; set; } = default!;
-  private List<string> _subjectNames = [];
-  private bool _initialLoading = true;
-  private bool _redirectToLogin = false;
-  private bool _redirectToWeekPlanner = false;
-  private bool _hasInitialized = false;
-
-  private User? User => AppState.User;
-
-  protected override async Task OnInitializedAsync()
-  {
-    try
-    {
-      Logger.LogWarning($"AccountSetup {AppState.GetHashCode()}");
-      await AppState.InitialiseAsync();
-
-    }
-    catch (UserNotFoundException)
-    {
-      NavigationManager.NavigateTo("/Account/Login", true);
-    }
-
-    if (User!.AccountSetupState is null)
-    {
-      User.AccountSetupState = new(User.Id);
-    }
-
-    AccountSetupState = User.AccountSetupState;
-    AccountSetupState.OnDirectionChange += ChangeAccountSetupStep;
-
-    _accountSetupStep = User.AccountSetupState.CurrentStep;
-
-    try
-    {
-      AccountSetupState.SetLoading(true);
-      _subjectNames = CurriculumService.GetSubjectNames();
-    }
-    catch (Exception ex)
-    {
-      AccountSetupState.SetError($"Error loading subjects: {ex.Message}");
-    }
-    finally
-    {
-      AccountSetupState.SetLoading(false);
-      _initialLoading = false;
-    }
-  }
-
-  protected override void OnInitialized()
-  {
-    if (_hasInitialized || User is null)
-    {
-      return;
-    }
-
-    _hasInitialized = true;
-
-  }
-
-  private async Task SaveAccountSetupState()
-  {
-    try
-    {
-        if (User is null) throw new UserNotFoundException();
-        await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
-        User.AccountSetupState = AccountSetupState;
-    }
-    catch (Exception ex)
-    {
-      Logger.LogError(ex, "Error saving account setup state");
-      AccountSetupState.SetError("An error occurred while saving your account setup. Please try again.");
-    }
-  }
-
-	private async void ChangeAccountSetupStep(ChangeDirection direction)
-	{
-		var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
-		if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
-		{
-			return;
-		}
-
-		_accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
-
-		await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
-
-		StateHasChanged();
-	}
-
-	private void Logout()
-	{
-
-		NavigationManager.NavigateTo("/auth/login");
-	}
-
-	public void GoToWeekPlanner()
-	{
-		NavigationManager.NavigateTo("/WeekPlanner");
-	}
-
-	public void Dispose()
-	{
-		if (AccountSetupState is not null)
-		{
-			AccountSetupState.OnDirectionChange -= ChangeAccountSetupStep;
-		}
-	}
+    <div class="flex min-h-[40vh] items-center justify-center">
+        <p class="text-sm text-gray-600">Setting up your account...</p>
+    </div>
 }
