@@ -1,5 +1,6 @@
 using LessonFlow.Api.Contracts.PlannerTemplates;
 using LessonFlow.Domain.Common.Primatives;
+using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.ValueObjects;
 
@@ -36,11 +37,6 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         _periods.AddRange(periods);
     }
 
-    public void SortPeriods()
-    {
-        _periods.Sort((x, y) => x.StartTime.CompareTo(y.StartTime));
-    }
-
     public void SetDayTemplates(IReadOnlyList<DayTemplate> dayTemplates)
     {
         _dayTemplates.Clear();
@@ -48,6 +44,66 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         {
             _dayTemplates.Insert(i, dayTemplates[i]);
         }
+    }
+
+    public void AddPeriod(TemplatePeriod period)
+    {
+        _periods.Add(period);
+        foreach (var dayTemplate in _dayTemplates)
+        {
+            if (!dayTemplate.IsWorkingDay) continue;
+
+            var newPeriod = new LessonPeriod(string.Empty, dayTemplate.Periods[^1].StartPeriod + 1, 1);
+            dayTemplate.AddPeriod(newPeriod);
+        }
+    }
+
+    public void RemovePeriod(TemplatePeriod period)
+    {
+        _periods.Remove(period);
+        foreach (var dayTemplate in _dayTemplates)
+        {
+            if (!dayTemplate.IsWorkingDay) continue;
+
+            var idx = dayTemplate.Periods.FindIndex(p => p.StartPeriod == period.StartPeriod);
+            dayTemplate.Periods.RemoveAt(idx);
+        }
+    }
+
+    public void UpdatePeriod(TemplatePeriod period)
+    {
+        var existing = _periods.FindIndex(p => p.StartPeriod == period.StartPeriod);
+        if (existing > -1) _periods[existing] = period;
+
+        foreach (var dayTemplate in _dayTemplates)
+        {
+            if (!dayTemplate.IsWorkingDay) continue;
+            var idx = dayTemplate.Periods.FindIndex(p => p.StartPeriod == period.StartPeriod);
+            if (idx >= 0)
+            {
+                var existingPeriod = dayTemplate.Periods[idx];
+                if (existingPeriod.PeriodType != period.PeriodType)
+                {
+                    PeriodBase newPeriod;
+                    if (period.PeriodType == PeriodType.Break)
+                    {
+                        newPeriod = new BreakPeriod(period.Name ?? "Break", existingPeriod.StartPeriod, 1);
+                    }
+                    else
+                    {
+                        newPeriod = new LessonPeriod(string.Empty, existingPeriod.StartPeriod, 1);
+                    }
+                    dayTemplate.Periods[idx] = newPeriod;
+                }
+            }
+        }
+    }
+
+    public void SortPeriods()
+    {
+        Periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
+        DayTemplates.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
+        DayTemplates.ForEach(dt => dt.Periods.Sort((a, b) => a.StartPeriod.CompareTo(b.StartPeriod)));
     }
 
     public WeekPlannerTemplate(List<TemplatePeriod> periods, List<DayTemplate> dayTemplates,
