@@ -1,6 +1,5 @@
 ﻿@using LessonFlow.Shared
 @inherits LayoutComponentBase
-@implements IDisposable
 
 <RadzenComponents @rendermode="InteractiveServer" />
 
@@ -45,19 +44,24 @@ else
 
 @code {
     [Inject] private AppState AppState { get; set; } = default!;
+    [Inject] private ILogger<MainLayout> Logger { get; set; } = default!;
     private bool _isInitializing = true;
     private bool _hasInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Only initialize once per circuit lifetime
+        Logger.LogInformation("MainLayout OnInitializedAsync called. HasInitialized: {HasInitialized}, AppState.IsInitialised: {AppStateInitialized}", 
+            _hasInitialized, AppState.IsInitialised);
+
         if (_hasInitialized) 
         {
+            Logger.LogInformation("MainLayout already initialized, skipping");
             _isInitializing = false;
             return;
         }
 
         _hasInitialized = true;
+        Logger.LogInformation("Starting MainLayout initialization");
 
         try
         {
@@ -66,33 +70,13 @@ else
                 await AppState.InitialiseAsync();
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Let individual pages handle their own error scenarios
+            Logger.LogError(ex, "Error during MainLayout initialization");
         }
         finally
         {
             _isInitializing = false;
         }
-    }
-
-    protected override void OnInitialized()
-    {
-        // Subscribe to AppState changes to update UI when initialization completes
-        AppState.OnStateChanged += OnAppStateChanged;
-    }
-
-    private void OnAppStateChanged()
-    {
-        if (!AppState.Initialising)
-        {
-            _isInitializing = false;
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
-    public void Dispose()
-    {
-        AppState.OnStateChanged -= OnAppStateChanged;
     }
 }

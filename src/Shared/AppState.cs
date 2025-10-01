@@ -11,7 +11,6 @@ public class AppState
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IUserRepository _userRepository;
     private readonly ILogger<AppState> _logger;
-    private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
 
     public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger)
     {
@@ -49,12 +48,8 @@ public class AppState
 
     public async Task InitialiseAsync()
     {
-        // Use semaphore to prevent concurrent initialization attempts
-        await _initializationSemaphore.WaitAsync();
-
         try
         {
-            // Double-check after acquiring semaphore
             if (IsInitialised || Initialising) return;
 
             _logger.LogInformation("Starting AppState initialization");
@@ -85,7 +80,6 @@ public class AppState
                 }
 
                 IsInitialised = true;
-                _logger.LogInformation("AppState initialization completed successfully");
             }
         }
         catch (Exception ex)
@@ -96,7 +90,6 @@ public class AppState
         finally
         {
             Initialising = false;
-            _initializationSemaphore.Release();
             OnStateChanged?.Invoke();
         }
     }
