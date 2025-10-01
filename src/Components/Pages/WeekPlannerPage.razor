@@ -14,44 +14,70 @@
 @inject NavigationManager NavigationManager
 @inject ILogger<WeekPlanner> Logger
 
-<div style="grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="grid">
-    <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
+<PageTitle>LessonFlow | Week Planner</PageTitle>
 
-    @* Lesson and break headers *@
-    @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
-    {
-        var period = WeekPlannerTemplate.Periods[i];
-        <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
-            @period.Name
+@if (AppState.YearData?.WeekPlannerTemplate == null)
+{
+    <div class="flex min-h-[40vh] items-center justify-center">
+        <div class="text-center">
+            @if (AppState.Initialising)
+            {
+                <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
+                <p class="text-sm text-gray-600">Loading week planner...</p>
+            }
+            else if (AppState.User?.AccountSetupComplete == false)
+            {
+                <p class="text-sm text-gray-600">Redirecting to account setup...</p>
+                NavigationManager.NavigateTo("/AccountSetup", true);
+            }
+            else
+            {
+                <p class="text-sm text-red-600">Week planner data not available.</p>
+            }
         </div>
-    }
+    </div>
+}
+else
+{
+    <div style="grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="grid">
+        <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
 
-    @for (int i = 0; i < weekDays.Length; i++)
-    {
-        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
-    }
-
-    @foreach (var col in GridCols)
-    {
-        if (col.IsWorkingDay)
+        @* Lesson and break headers *@
+        @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
         {
-            <CascadingValue Value="this">
-                <WeekPlannerColumn Column="col" />
-            </CascadingValue>
-
-        }
-        else
-        {
-            <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
-                 class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+            var period = WeekPlannerTemplate.Periods[i];
+            <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
+                @period.Name
             </div>
         }
-    }
 
-</div>
+        @for (int i = 0; i < weekDays.Length; i++)
+        {
+            <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
+        }
+
+        @foreach (var col in GridCols)
+        {
+            if (col.IsWorkingDay)
+            {
+                <CascadingValue Value="this">
+                    <WeekPlannerColumn Column="col" />
+                </CascadingValue>
+
+            }
+            else
+            {
+                <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
+                     class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+                </div>
+            }
+        }
+
+    </div>
+}
 
 @code {
-    [Inject] private AppState AppState { get; set; } = default!;
+    [CascadingParameter] private AppState AppState { get; set; } = default!;
     const string _gridTemplateCols = "0.8fr repeat(5, 1fr)";
     string _gridRows = string.Empty;
     DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
@@ -62,6 +88,24 @@
 
 
     protected override void OnInitialized()
+    {
+        AppState.OnStateChanged += OnAppStateChanged;
+        if (AppState.YearData?.WeekPlannerTemplate != null)
+        {
+            InitialiseGrid();
+        }
+    }
+
+    private void OnAppStateChanged()
+    {
+        if (AppState.YearData?.WeekPlannerTemplate != null && GridCols.Count != 0)
+        {
+            InitialiseGrid();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void InitialiseGrid()
     {
         GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
         {
@@ -101,6 +145,14 @@
             {
                 _gridRows += " 1fr";
             }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (AppState is not null)
+        {
+            AppState.OnStateChanged -= OnAppStateChanged;
         }
     }
 }

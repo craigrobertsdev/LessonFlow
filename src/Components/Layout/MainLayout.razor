@@ -1,21 +1,36 @@
 ﻿@using LessonFlow.Shared
 @inherits LayoutComponentBase
+@implements IDisposable
 
 <RadzenComponents @rendermode="InteractiveServer" />
 
-<div class="min-h-screen flex flex-col flex-grow bg-gray-100">
-    <aside class="bg-white border-r border-gray-200">
-        <div class="h-full overflow-y-auto p-4">
-            <nav />
+@if (_isInitializing)
+{
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
+            <p class="text-sm text-gray-600">Loading...</p>
         </div>
-    </aside>
+    </div>
+}
+else
+{
+    <CascadingValue Value="AppState">
+        <div class="min-h-screen flex flex-col flex-grow bg-gray-100">
+            <aside class="bg-white border-r border-gray-200">
+                <div class="h-full overflow-y-auto p-4">
+                    <NavMenu />
+                </div>
+            </aside>
 
-    <main class="flex-1">
-        <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-            @Body
+            <main class="flex-1">
+                <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+                    @Body
+                </div>
+            </main>
         </div>
-    </main>
-</div>
+    </CascadingValue>
+}
 
 <div id="blazor-error-ui" data-nosnippet style="display:none"
      class="fixed bottom-0 left-0 right-0 bg-red-50 border-t border-red-200 text-red-800 px-4 py-2 text-sm shadow">
@@ -27,3 +42,57 @@
         </div>
     </div>
 </div>
+
+@code {
+    [Inject] private AppState AppState { get; set; } = default!;
+    private bool _isInitializing = true;
+    private bool _hasInitialized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Only initialize once per circuit lifetime
+        if (_hasInitialized) 
+        {
+            _isInitializing = false;
+            return;
+        }
+
+        _hasInitialized = true;
+
+        try
+        {
+            if (!AppState.IsInitialised && !AppState.Initialising)
+            {
+                await AppState.InitialiseAsync();
+            }
+        }
+        catch
+        {
+            // Let individual pages handle their own error scenarios
+        }
+        finally
+        {
+            _isInitializing = false;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to AppState changes to update UI when initialization completes
+        AppState.OnStateChanged += OnAppStateChanged;
+    }
+
+    private void OnAppStateChanged()
+    {
+        if (!AppState.Initialising)
+        {
+            _isInitializing = false;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        AppState.OnStateChanged -= OnAppStateChanged;
+    }
+}

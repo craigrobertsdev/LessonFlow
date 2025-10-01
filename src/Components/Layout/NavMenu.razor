@@ -17,13 +17,13 @@
 
         <AuthorizeView>
           <Authorized>
-            @if (AppState.User is not null && AppState.User.AccountSetupComplete)
+            @if (AppState?.User is not null && AppState.User.AccountSetupComplete)
             {
               <div class="hidden sm:block">
                 <NavLink class="text-sm font-medium text-gray-600 hover:text-gray-900 px-3 py-2 rounded"
                          ActiveClass="text-blue-600 font-semibold bg-blue-50"
-                         href="/LessonPlanner">
-                  Lesson Planner
+                         href="/WeekPlanner">
+                  Week Planner
                 </NavLink>
               </div>
             }
@@ -63,7 +63,7 @@
 </nav>
 
 @code {
-  [CascadingParameter] AppState AppState { get; set; } = null!;
+  [CascadingParameter] AppState? AppState { get; set; }
   string? _currentUrl;
   
   protected override void OnInitialized()

@@ -8,6 +8,11 @@ namespace LessonFlow.Shared;
 
 public class AppState
 {
+    private readonly AuthenticationStateProvider _authStateProvider;
+    private readonly IUserRepository _userRepository;
+    private readonly ILogger<AppState> _logger;
+    private readonly SemaphoreSlim _initializationSemaphore = new(1, 1);
+
     public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger)
     {
         _authStateProvider = authStateProvider;
@@ -15,8 +20,9 @@ public class AppState
         _logger = logger;
     }
 
-    public bool IsInitialised;
-    public bool Initialising { get; private set; } = true;
+    public bool IsInitialised { get; private set; }
+    public bool Initialising { get; private set; }
+
     private User? _user;
     public User? User
     {
@@ -24,18 +30,11 @@ public class AppState
         set
         {
             _user = value;
-            if (OnStateChanged is not null)
-            {
-                OnStateChanged?.Invoke();
-            }
+            OnStateChanged?.Invoke();
         }
     }
 
     private YearData? _yearData;
-    private readonly AuthenticationStateProvider _authStateProvider;
-    private readonly IUserRepository _userRepository;
-    private readonly ILogger<AppState> _logger;
-
     public YearData? YearData
     {
         get => _yearData;
@@ -50,13 +49,20 @@ public class AppState
 
     public async Task InitialiseAsync()
     {
-        if (IsInitialised) return;
+        // Use semaphore to prevent concurrent initialization attempts
+        await _initializationSemaphore.WaitAsync();
 
-        IsInitialised = true;
-        var authState = await _authStateProvider.GetAuthenticationStateAsync();
-        if (authState.User.Identity?.IsAuthenticated ?? false)
+        try
         {
-            try
+            // Double-check after acquiring semaphore
+            if (IsInitialised || Initialising) return;
+
+            _logger.LogInformation("Starting AppState initialization");
+            Initialising = true;
+            OnStateChanged?.Invoke();
+
+            var authState = await _authStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated ?? false)
             {
                 var email = authState.User.Identity.Name!;
                 var user = await _userRepository.GetByEmail(email, CancellationToken.None);
@@ -71,25 +77,27 @@ public class AppState
                     var yearData = await _userRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
                         ?? throw new YearDataNotFoundException();
                     YearData = yearData;
+                    YearData.WeekPlannerTemplate.SortPeriods();
                 }
                 else
                 {
                     user.AccountSetupState?.WeekPlannerTemplate.SortPeriods();
                 }
+
+                IsInitialised = true;
+                _logger.LogInformation("AppState initialization completed successfully");
             }
-            catch (YearDataNotFoundException)
-            {
-                throw;
-            }
-            catch (UserNotFoundException)
-            {
-                throw;
-            }
-            finally
-            {
-                Initialising = false;
-                OnStateChanged?.Invoke();
-            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing AppState");
+            throw;
+        }
+        finally
+        {
+            Initialising = false;
+            _initializationSemaphore.Release();
+            OnStateChanged?.Invoke();
         }
     }
 }
