@@ -1,9 +1,10 @@
 ﻿using LessonFlow.Api.Contracts.PlannerTemplates;
 using LessonFlow.Domain.Enums;
+using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.PlannerTemplates;
 
-public abstract class PeriodBase
+public abstract class PeriodBase : IPlannerPeriod
 {
     public PeriodType PeriodType { get; private set; }
     public int StartPeriod { get; set; }

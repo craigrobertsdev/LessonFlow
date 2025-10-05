@@ -6,7 +6,6 @@ namespace LessonFlow.Api.Contracts.LessonPlans;
 public record LessonPlanDto(
     Guid LessonPlanId,
     CurriculumSubjectDto Subject,
-    string PlanningNotes,
     string PlanningNotesHtml,
     List<ResourceDto> Resources,
     List<LessonCommentDto> Comments,

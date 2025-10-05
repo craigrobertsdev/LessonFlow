@@ -3,28 +3,31 @@ using LessonFlow.Api.Contracts.LessonPlans;
 using LessonFlow.Domain.Common.Interfaces;
 using LessonFlow.Domain.Common.Primatives;
 using LessonFlow.Domain.Curriculum;
+using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.LessonPlans;
 
-public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot
+public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPeriod, IPlannerPeriod
 {
     private readonly List<LessonComment> _comments = [];
     private readonly List<Resource> _resources = [];
 
     public YearData YearData { get; private set; }
     public Subject Subject { get; private set; }
-    public string PlanningNotes { get; private set; }
+    public PeriodType PeriodType { get; private set; }
     public string PlanningNotesHtml { get; private set; }
     public DateOnly LessonDate { get; private set; }
-    public int NumberOfLessons { get; private set; }
+    public int NumberOfPeriods { get; private set; }
     public int StartPeriod { get; private set; }
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
     public IReadOnlyList<Resource> Resources => _resources.AsReadOnly();
     public IReadOnlyList<LessonComment> Comments => _comments.AsReadOnly();
+    public string SubjectName => Subject.Name;
 
     public void AddResource(Resource resource)
     {
@@ -37,12 +40,12 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot
 
     public void SetNumberOfLessons(int newNumberOfLessons)
     {
-        if (newNumberOfLessons == NumberOfLessons)
+        if (newNumberOfLessons == NumberOfPeriods)
         {
             return;
         }
 
-        NumberOfLessons = newNumberOfLessons;
+        NumberOfPeriods = newNumberOfLessons;
         UpdatedDateTime = DateTime.UtcNow;
     }
 
@@ -70,7 +73,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot
 
     public void SetPlanningNotes(string newPlanningNotes, string newPlanningNotesHtml)
     {
-        (PlanningNotes, PlanningNotesHtml) = (newPlanningNotes, newPlanningNotesHtml);
+        PlanningNotesHtml = newPlanningNotesHtml;
     }
 
     public void UpdateResources(IEnumerable<Resource> resources)
@@ -100,14 +103,11 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot
     public LessonPlan(
         YearData yearData,
         Subject subject,
-        List<Guid> contentDescriptionIds,
-        string planningNotes,
+        PeriodType periodType,
         string planningNotesHtml,
         int numberOfPeriods,
         int startPeriod,
         DateOnly lessonDate,
-        DateTime createdDateTime,
-        DateTime updatedDateTime,
         List<Resource>? resources)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(numberOfPeriods);
@@ -116,13 +116,13 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot
         Id = new LessonPlanId(Guid.NewGuid());
         YearData = yearData;
         Subject = subject;
-        PlanningNotes = planningNotes;
+        PeriodType = periodType;
         PlanningNotesHtml = planningNotesHtml;
-        NumberOfLessons = numberOfPeriods;
+        NumberOfPeriods = numberOfPeriods;
         StartPeriod = startPeriod;
         LessonDate = lessonDate;
-        CreatedDateTime = createdDateTime;
-        UpdatedDateTime = updatedDateTime;
+        CreatedDateTime = DateTime.Now;
+        UpdatedDateTime = DateTime.Now;
         _resources = resources ?? [];
     }
 
@@ -146,12 +146,11 @@ public static class LessonPlanDtoExtensions
         return lessonPlans.Select(lp => new LessonPlanDto(
                 lp.Id.Value,
                 lp.MatchSubject(subjects),
-                lp.PlanningNotes,
                 lp.PlanningNotesHtml,
                 lp.MatchResources(resources).ConvertToDtos(),
                 lp.Comments.ToDtos(),
                 lp.StartPeriod,
-                lp.NumberOfLessons))
+                lp.NumberOfPeriods))
             .ToList();
     }
 
@@ -161,12 +160,11 @@ public static class LessonPlanDtoExtensions
         var dto = new LessonPlanDto(
             lessonPlan.Id.Value,
             subject.ToDto(),
-            lessonPlan.PlanningNotes,
             lessonPlan.PlanningNotesHtml,
             lessonPlan.MatchResources(resources).ConvertToDtos(),
             lessonPlan.Comments.ToDtos(),
             lessonPlan.StartPeriod,
-            lessonPlan.NumberOfLessons);
+            lessonPlan.NumberOfPeriods);
 
         return dto;
     }

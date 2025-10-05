@@ -1,11 +1,12 @@
 using LessonFlow.Domain.Enums;
+using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.PlannerTemplates;
 
 /// <summary>
 ///     Represents a planner entry containing the subject and number of periods for a lesson.
 /// </summary>
-public class LessonPeriod : PeriodBase
+public class LessonPeriod : PeriodBase, ILessonPeriod
 {
     public LessonPeriod(string subjectName, int startPeriod, int numberOfPeriods)
         : base(PeriodType.Lesson, startPeriod, numberOfPeriods)
