@@ -1,13 +1,13 @@
 ﻿using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Shared.Interfaces;
 
-namespace LessonFlow.Components.WeekPlanner;
+namespace LessonFlow.Components.WeekPlanners;
 
 public record GridCell
 {
-    public GridCell(List<(int start, int end)> rowSpans, PeriodBase period, GridColumn column)
+    public GridCell(List<(int start, int end)> rowSpans, IPlannerPeriod period, GridColumn column)
     {
         Period = period;
         Column = column;
@@ -15,13 +15,14 @@ public record GridCell
     }
 
     public LessonPlanId LessonPlanId { get; set; } = default!;
-    public GridColumn Column { get; set; } = null!;
+    public GridColumn Column { get; set; }
+    public IPlannerPeriod Period { get; set; }
     public int StartRow => RowSpans.FirstOrDefault().Start;
     public int EndRow => RowSpans[^1].End;
     public bool IsHovered { get; set; }
     public bool IsMouseDown { get; set; }
     public bool IsFirstCellInBlock { get; set; }
-    public PeriodBase Period { get; set; }
+
     public List<(int Start, int End)> RowSpans { get; set; } = [];
 
     public void SetRowSpans(int oldDuration, int newDuration, List<TemplatePeriod> templatePeriods)
@@ -35,7 +36,16 @@ public record GridCell
 
         var rowsCovered = 0;
         var idx = StartRow - 2;
-        var start = StartRow;
+        var breaksCovered = 0;
+        for (int i = 0; i < idx; i++)
+        {
+            if (templatePeriods[i].PeriodType == PeriodType.Break)
+            {
+                breaksCovered++;
+            }
+        }
+
+        var start = StartRow + breaksCovered;
         int end;
 
         RowSpans.Clear();

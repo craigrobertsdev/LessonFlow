@@ -1,4 +1,4 @@
-﻿namespace LessonFlow.Components.WeekPlanner;
+﻿namespace LessonFlow.Components.WeekPlanners;
 
 public class GridColumn
 {
