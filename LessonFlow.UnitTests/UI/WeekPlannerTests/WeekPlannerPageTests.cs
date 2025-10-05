@@ -1,4 +1,5 @@
 ﻿using Bunit;
+using LessonFlow.Api.Services;
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Components.Pages;
 using LessonFlow.Domain.Curriculum;
@@ -8,18 +9,24 @@ using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Interfaces.Services;
 using LessonFlow.Shared;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
 public class WeekPlannerPageTests : TestContext
 {
+    // TODO: Write a test to handle non-working days at the start, end and in the middle of the week
+
     [Fact]
     public void InitialiseGrid_WhenNoLessonsPlanned_ShouldRenderFromWeekPlannerTemplate()
     {
-        var component = RenderWeekPlannerPage();
+        var appState = CreateAppState();
+        var component = RenderWeekPlannerPage(appState);
 
         foreach (var col in component.Instance.GridCols)
         {
@@ -38,9 +45,16 @@ public class WeekPlannerPageTests : TestContext
     [Fact]
     public void InitialiseGrid_WhenAllLessonsPlanned_ShouldRenderFromDayPlan()
     {
-        var component = RenderWeekPlannerPage();
-        var weekPlanner = CreateWeekPlanner(component.Instance.YearData);
-        component.Instance.YearData!.AddWeekPlanner(weekPlanner);
+        var appState = CreateAppStateWithLessonsPlanned();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "weekNumber", "1" },
+            { "termNumber", "1" },
+            { "year", DateTime.Now.Year.ToString() }
+        });
+        navigationManager.NavigateTo(uri);
+        var component = RenderWeekPlannerPage(appState);
 
         foreach (var col in component.Instance.GridCols)
         {
@@ -57,17 +71,23 @@ public class WeekPlannerPageTests : TestContext
 
         foreach (var col in component.Instance.GridCols)
         {
-            foreach (var cell in col.Cells)
-            {
-                // Do assertion to confirm that the period is a LessonPlan not a LessonPeriod
-            }
+
+            Assert.Equal(typeof(LessonPlan), col.Cells[0].Period.GetType());
+            Assert.Equal(typeof(LessonPlan), col.Cells[1].Period.GetType());
+            Assert.Equal(typeof(BreakPeriod), col.Cells[2].Period.GetType());
+            Assert.Equal(typeof(LessonPlan), col.Cells[3].Period.GetType());
+            Assert.Equal(typeof(LessonPlan), col.Cells[4].Period.GetType());
+            Assert.Equal(typeof(BreakPeriod), col.Cells[5].Period.GetType());
+            Assert.Equal(typeof(LessonPlan), col.Cells[6].Period.GetType());
+            Assert.Equal(typeof(LessonPlan), col.Cells[7].Period.GetType());
         }
     }
 
     [Fact]
     public void SetRowSpans_WithMultiPeriodLessonAfterFirstBreak_ShouldSetCorrectly()
     {
-        var component = RenderWeekPlannerPage();
+        var appState = CreateAppState();
+        var component = RenderWeekPlannerPage(appState);
 
         var periods = component.Instance.AppState.YearData!.WeekPlannerTemplate.DayTemplates[0].Periods;
         periods[0].NumberOfPeriods = 2;
@@ -89,18 +109,19 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal((9, 10), col.Cells[5].RowSpans[0]);
     }
 
-    private IRenderedComponent<WeekPlannerPage> RenderWeekPlannerPage()
+    private IRenderedComponent<WeekPlannerPage> RenderWeekPlannerPage(AppState appState)
     {
-        var appState = CreateAppState();
         var component = base.RenderComponent<WeekPlannerPage>(p => p.Add(c => c.AppState, appState));
         return component;
     }
 
-    private static AppState CreateAppState()
+    private AppState CreateAppState()
     {
         var authStateProvider = new Mock<AuthenticationStateProvider>();
         var userRepository = new Mock<IUserRepository>();
         var logger = new Mock<ILogger<AppState>>();
+        var termDatesService = new Mock<ITermDatesService>();
+        Services.AddScoped(sp => termDatesService.Object);
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
         var yearData = new YearData(Guid.NewGuid(), new AccountSetupState(Guid.NewGuid()));
@@ -108,6 +129,14 @@ public class WeekPlannerPageTests : TestContext
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
         appState.YearData = yearData;
 
+        return appState;
+    }
+
+    private AppState CreateAppStateWithLessonsPlanned()
+    {
+
+        var appState = CreateAppState();
+        appState.YearData!.AddWeekPlanner(CreateWeekPlanner(appState.YearData));
         return appState;
     }
 
@@ -132,10 +161,10 @@ public class WeekPlannerPageTests : TestContext
         [
             new LessonPlan(yearData, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
             new LessonPlan(yearData, new Subject([], "Mathematics"), PeriodType.Lesson, "", 1, 2, date, []),
-            new LessonPlan(yearData, new Subject([], "Health and PE"), PeriodType.Lesson, "", 1, 3, date, []),
-            new LessonPlan(yearData, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 4, date, []),
-            new LessonPlan(yearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 5, date, []),
-            new LessonPlan(yearData, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 6, date, [])
+            new LessonPlan(yearData, new Subject([], "Health and PE"), PeriodType.Lesson, "", 1, 4, date, []),
+            new LessonPlan(yearData, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 5, date, []),
+            new LessonPlan(yearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 7, date, []),
+            new LessonPlan(yearData, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
         ];
     }
 }

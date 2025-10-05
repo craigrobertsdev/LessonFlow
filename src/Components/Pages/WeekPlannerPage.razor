@@ -1,18 +1,22 @@
 @rendermode InteractiveServer
 @attribute [Authorize]
-
 @page "/WeekPlanner"
+
 @using LessonFlow.Api.Services
-@using LessonFlow.Components.WeekPlanner
+@using LessonFlow.Components.WeekPlanners
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Domain.PlannerTemplates
+@using LessonFlow.Domain.WeekPlanners
 @using LessonFlow.Domain.YearDataRecords
 @using LessonFlow.Exceptions
+@using LessonFlow.Interfaces.Services
 @using LessonFlow.Shared
+@using LessonFlow.Shared.Interfaces
 @using Microsoft.AspNetCore.Authorization
 
 @inject NavigationManager NavigationManager
-@inject ILogger<WeekPlanner> Logger
+@inject ILogger<WeekPlannerPage> Logger
+@inject ITermDatesService TermDatesService
 
 <PageTitle>LessonFlow | Week Planner</PageTitle>
 
@@ -51,47 +55,57 @@ else
             </div>
         }
 
-        @for (int i = 0; i < weekDays.Length; i++)
+        @for (int i = 0; i < GridCols.Count; i++)
         {
-            <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@weekDays[i]</div>
-        }
-
-        @foreach (var col in GridCols)
-        {
+            var col = GridCols[i];
+            var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
             if (col.IsWorkingDay)
             {
                 <CascadingValue Value="this">
-                    <WeekPlannerColumn Column="col" />
+                    <WeekPlannerColumn Column="col" DayOfWeek="dayOfWeek" />
                 </CascadingValue>
 
             }
             else
             {
+                <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@dayOfWeek</div>
                 <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
                      class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
                 </div>
             }
         }
-
     </div>
 }
 
 @code {
-    [CascadingParameter] private AppState AppState { get; set; } = default!;
-    const string _gridTemplateCols = "0.8fr repeat(5, 1fr)";
-    string _gridRows = string.Empty;
-    DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+    [CascadingParameter] public AppState AppState { get; set; } = default!;
+    [SupplyParameterFromQuery] private int WeekNumber { get; set; }
+    [SupplyParameterFromQuery] private int TermNumber { get; set; }
+    [SupplyParameterFromQuery] private int Year { get; set; }
 
-    YearData YearData { get; set; } = default!;
-    WeekPlannerTemplate WeekPlannerTemplate => AppState.YearData!.WeekPlannerTemplate;
-    List<GridColumn> GridCols { get; set; } = [];
+    private const string _gridTemplateCols = "0.8fr repeat(5, 1fr)";
+    private string _gridRows = string.Empty;
+    private DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
 
+    public YearData YearData => AppState.YearData!;
+    public WeekPlannerTemplate WeekPlannerTemplate => AppState.YearData!.WeekPlannerTemplate;
+    public WeekPlanner WeekPlanner { get; set; } = null!;
+    public List<GridColumn> GridCols { get; set; } = [];
 
     protected override void OnInitialized()
     {
         AppState.OnStateChanged += OnAppStateChanged;
         if (AppState.YearData?.WeekPlannerTemplate != null)
         {
+            var weekPlanner = YearData.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == WeekNumber && wp.TermNumber == TermNumber);
+
+            if (weekPlanner is null)
+            {
+                var weekStart = TermDatesService.GetWeekStart(Year, TermNumber, WeekNumber);
+                weekPlanner = new WeekPlanner(YearData, WeekNumber, TermNumber, Year, weekStart);
+            }
+
+            WeekPlanner = weekPlanner;
             InitialiseGrid();
         }
     }
@@ -107,14 +121,27 @@ else
 
     private void InitialiseGrid()
     {
-        GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
+        // TODO: Make this initialise based on the structure of WeekPlannerTemplate.TemplatePeriods
+        // Then go through WeekPlanner.DayPlans and fill in lessonplans where they have been created
+        // Identify where there are empty slots and fill them in from WeekPlannerTemplate.DayTemplates.Periods
+
+        // GridColumn.Cells = WeekPlanners.DayPlans[dayOfWeek].Periods where the periods are planned.
+        // foreach lesson period in WeekPlannerTemplate.Periods:
+        //  if period.StartPeriod is not covered in GridColumn.Cells then
+        //      find appropriate period in WeekPlannerTemplate and insert up to the minimum of (periods.numberofperiods, number of available periods before next lesson)
+        //      into gridcols at the appropriate index
+        var gridCols = new bool[5, WeekPlannerTemplate.Periods.Count];
+
+        for (int i = 0; i < WeekPlanner.DayPlans.Count; i++)
         {
-            var col = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
-            for (int j = 2; j < day.Periods.Count + 2; j++)
+            var gridCol = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
+            var cells = new List<GridCell>();
+            var dayPlan = WeekPlanner.DayPlans[i];
+            for (int j = 0; j < dayPlan.LessonPlans.Count; j++)
             {
-                var cell = new GridCell([], day.Periods[j - 2], col);
-                // -1 because the grid starts at 2 and the periods at 1
-                if (cell.Period.NumberOfPeriods == 1 || cell.Period.PeriodType == PeriodType.Break)
+                var lessonPlan = dayPlan.LessonPlans[j];
+                var cell = new GridCell([], dayPlan.LessonPlans[j], gridCol);
+                if (cell.Period.NumberOfPeriods == 1)
                 {
                     cell.RowSpans.Add((cell.Period.StartPeriod + 1, cell.Period.StartPeriod + 2));
                     cell.IsFirstCellInBlock = true;
@@ -125,14 +152,35 @@ else
                     cell.SetRowSpans(1, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
                 }
 
-                col.Cells.Add(cell);
+                gridCol.Cells.Add(cell);
+
+                for (int k = 0; k < lessonPlan.NumberOfPeriods; k++)
+                {
+                    if (lessonPlan.StartPeriod - 1 + k < WeekPlannerTemplate.Periods.Count)
+                    {
+                        gridCols[i, lessonPlan.StartPeriod - 1 + k] = true;
+                    }
+                }
             }
+            GridCols.Add(gridCol);
+        }
 
-            col.IsWorkingDay = day.IsWorkingDay;
+        for (int i = 0; i < 5; i++)
+        {
+            var dayTemplate = WeekPlannerTemplate.DayTemplates[i];
+            if (!dayTemplate.IsWorkingDay) continue;
+            for (int j = 0; j < WeekPlannerTemplate.Periods.Count; j++)
+            {
+                if (gridCols[i, j]) continue;
 
-            return col;
-        })
-        .ToList();
+                var period = dayTemplate.Periods.FirstOrDefault(p => p.StartPeriod == j + 1) ?? (IPlannerPeriod)WeekPlannerTemplate.Periods.First(p => p.StartPeriod == j + 1);
+                var cell = new GridCell([], period, GridCols[i]);
+                cell.RowSpans.Add((cell.Period.StartPeriod + 1, cell.Period.StartPeriod + 2));
+                cell.IsFirstCellInBlock = true;
+
+                GridCols[i].Cells.Insert(j, cell);
+            }
+        }
 
         _gridRows = "50px";
         foreach (var period in WeekPlannerTemplate.Periods)

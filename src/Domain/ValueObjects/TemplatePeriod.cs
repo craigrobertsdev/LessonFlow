@@ -1,12 +1,13 @@
 using LessonFlow.Api.Contracts.PlannerTemplates;
 using LessonFlow.Domain.Enums;
+using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.ValueObjects;
 
 /// <summary>
 ///     Represents an entry in a day's schedule, which can be a lesson or a break.
 /// </summary>
-public class TemplatePeriod
+public class TemplatePeriod : IPlannerPeriod 
 {
     /// <summary>
     ///     Represents an entry in a day's schedule, which can be a lesson or a break.
@@ -32,6 +33,7 @@ public class TemplatePeriod
 
     public PeriodType PeriodType { get; set; }
     public int StartPeriod { get; set; }
+    public int NumberOfPeriods { get; } = 1;
     public string? Name { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }
