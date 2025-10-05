@@ -183,7 +183,7 @@ namespace LessonFlow.Api.Database.Migrations
                     b.Property<DateOnly>("LessonDate")
                         .HasColumnType("date");
 
-                    b.Property<int>("NumberOfLessons")
+                    b.Property<int>("NumberOfPeriods")
                         .HasColumnType("integer");
 
                     b.Property<string>("PlanningNotes")
@@ -571,7 +571,7 @@ namespace LessonFlow.Api.Database.Migrations
                     b.ToTable("DayPlan");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanner", b =>
+            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanners", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -1337,14 +1337,14 @@ namespace LessonFlow.Api.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.DayPlan", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.WeekPlanners.WeekPlanner", null)
+                    b.HasOne("LessonFlow.Domain.WeekPlanners.WeekPlanners", null)
                         .WithMany("DayPlans")
                         .HasForeignKey("WeekPlannerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanner", b =>
+            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanners", b =>
                 {
                     b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", "YearData")
                         .WithMany("WeekPlanners")
@@ -1489,7 +1489,7 @@ namespace LessonFlow.Api.Database.Migrations
                     b.Navigation("LessonPlans");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanner", b =>
+            modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanners", b =>
                 {
                     b.Navigation("DayPlans");
                 });

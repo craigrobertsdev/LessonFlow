@@ -44,7 +44,7 @@ namespace LessonFlow.Api.Database.Migrations
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<int>(
-                name: "NumberOfLessons",
+                name: "NumberOfPeriods",
                 table: "AccountSetupState",
                 type: "integer",
                 nullable: false,
@@ -95,7 +95,7 @@ namespace LessonFlow.Api.Database.Migrations
                 table: "AccountSetupState");
 
             migrationBuilder.DropColumn(
-                name: "NumberOfLessons",
+                name: "NumberOfPeriods",
                 table: "AccountSetupState");
 
             migrationBuilder.DropColumn(
