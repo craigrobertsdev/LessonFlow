@@ -14,65 +14,64 @@ namespace LessonFlow.Domain.WeekPlanners;
 /// </summary>
 public class DayPlan : Entity<DayPlanId>
 {
-    private readonly List<LessonPlan> _lessonPlans = [];
-    private readonly List<SchoolEvent> _schoolEvents = [];
-    private Dictionary<int, string>? _breakDutyOverrides;
-
     public WeekPlannerId WeekPlannerId { get; private set; }
     public DateOnly Date { get; private set; }
     public DayOfWeek DayOfWeek => Date.DayOfWeek;
-    public IReadOnlyList<LessonPlan> LessonPlans => _lessonPlans.AsReadOnly();
-    public IReadOnlyList<SchoolEvent> SchoolEvents => _schoolEvents.AsReadOnly();
-    public IReadOnlyDictionary<int, string>? BreakDutyOverrides => _breakDutyOverrides?.AsReadOnly();
+    public List<LessonPlan> LessonPlans { get; set; } = [];
+    public List<SchoolEvent> SchoolEvents { get; set; } = [];
+    public Dictionary<int, string> BreakDutyOverrides { get; set; } = [];
 
     public void AddLessonPlan(LessonPlan lessonPlan)
     {
-        if (_lessonPlans.Contains(lessonPlan))
+        if (LessonPlans.Contains(lessonPlan))
         {
             return;
         }
 
-        _lessonPlans.Add(lessonPlan);
+        LessonPlans.Add(lessonPlan);
     }
 
     public void SetBreakDutyOverride(int periodNumber, string dutyName)
     {
-        if (_breakDutyOverrides is not null && string.IsNullOrWhiteSpace(dutyName))
+        if (string.IsNullOrWhiteSpace(dutyName))
         {
-            _breakDutyOverrides.Remove(periodNumber);
+            BreakDutyOverrides.Remove(periodNumber);
+        }
+        else if (BreakDutyOverrides.TryGetValue(periodNumber, out _))
+        {
+            BreakDutyOverrides[periodNumber] = dutyName;
         }
         else
         {
-            _breakDutyOverrides ??= new Dictionary<int, string>();
-            _breakDutyOverrides[periodNumber] = dutyName;
+            BreakDutyOverrides.Add(periodNumber, dutyName);
         }
     }
 
     public void RemoveBreakDutyOverride(int periodNumber)
     {
-        _breakDutyOverrides?.Remove(periodNumber);
+        BreakDutyOverrides.Remove(periodNumber);
     }
 
     public string? GetBreakDutyOverride(int periodNumber)
     {
-        return _breakDutyOverrides?.GetValueOrDefault(periodNumber);
+        return BreakDutyOverrides.GetValueOrDefault(periodNumber);
     }
 
     public DayPlan(WeekPlannerId weekPlannerId, DateOnly date, List<LessonPlan> lessonPlans, List<SchoolEvent>? schoolEvents)
     {
         Id = new DayPlanId(Guid.NewGuid());
-        _lessonPlans = lessonPlans;
+        LessonPlans = lessonPlans;
         WeekPlannerId = weekPlannerId;
         Date = date;
 
         if (schoolEvents is not null)
         {
-            _schoolEvents = schoolEvents;
+            SchoolEvents = schoolEvents;
         }
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    private DayPlan() {}
+    private DayPlan() { }
 }
 
 public static class DayPlanExtensions
