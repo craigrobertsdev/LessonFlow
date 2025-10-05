@@ -10,11 +10,8 @@ namespace LessonFlow.Domain.TermPlanners;
 
 public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
 {
-    private readonly List<TermPlan> _termPlans = [];
-    private readonly List<YearLevelValue> _yearLevels = [];
-
-    public IReadOnlyList<TermPlan> TermPlans => _termPlans.AsReadOnly();
-    public IReadOnlyList<YearLevelValue> YearLevels => _yearLevels.AsReadOnly();
+    public List<TermPlan> TermPlans { get; private set; } = [];
+    public List<YearLevelValue> YearLevels { get; private set; } = [];
     public YearDataId YearDataId { get; private set; }
     public int CalendarYear { get; private set; }
 
@@ -25,43 +22,43 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
 
     public void AddYearLevel(YearLevelValue yearLevel)
     {
-        if (_yearLevels.Contains(yearLevel))
+        if (YearLevels.Contains(yearLevel))
         {
             throw new InputException("Year level already exists");
         }
 
-        _yearLevels.Add(yearLevel);
+        YearLevels.Add(yearLevel);
         SortYearLevels();
     }
 
     public void SortYearLevels()
     {
-        if (_yearLevels.Count == 1)
+        if (YearLevels.Count == 1)
         {
             return;
         }
 
-        _yearLevels.Sort();
+        YearLevels.Sort();
     }
 
     public void AddTermPlan(TermPlan termPlan)
     {
-        if (_termPlans.Contains(termPlan))
+        if (TermPlans.Contains(termPlan))
         {
             throw new DuplicateTermPlanException();
         }
 
-        if (_termPlans.Count >= 4)
+        if (TermPlans.Count >= 4)
         {
             throw new TooManyTermPlansException();
         }
 
-        if (_termPlans.Any(tp => tp.TermNumber == termPlan.TermNumber))
+        if (TermPlans.Any(tp => tp.TermNumber == termPlan.TermNumber))
         {
             throw new DuplicateTermNumberException();
         }
 
-        _termPlans.Add(termPlan);
+        TermPlans.Add(termPlan);
     }
 
     public void PopulateSubjectsForTerms(List<Subject> subjects)
@@ -79,14 +76,14 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
                 break;
             }
 
-            var subject = subjects.First(s => s.Id == _termPlans[i].Subjects[j].Id);
+            var subject = subjects.First(s => s.Id == TermPlans[i].Subjects[j].Id);
 
             if (subject is null)
             {
                 continue;
             }
 
-            _termPlans[i].SetSubjectAtIndex(subject, j);
+            TermPlans[i].SetSubjectAtIndex(subject, j);
             subjectCounts[i]++;
         }
     }
@@ -98,7 +95,7 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
         YearDataId = yearDataId;
         CalendarYear = calendarYear;
 
-        _yearLevels = RemoveDuplicateYearLevels(yearLevels);
+        YearLevels = RemoveDuplicateYearLevels(yearLevels);
         SortYearLevels();
 
         AddDomainEvent(new TermPlannerCreatedDomainEvent(Guid.NewGuid(), this, yearDataId));

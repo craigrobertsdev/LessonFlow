@@ -9,16 +9,13 @@ namespace LessonFlow.Domain.Users;
 
 public sealed class Resource : Entity<ResourceId>
 {
-    private readonly List<LessonPlan> _lessonPlans = [];
-    private readonly List<YearLevelValue> _yearLevels = [];
-
     public Guid UserId { get; private set; }
     public Subject Subject { get; private set; }
     public string Name { get; }
     public string Url { get; }
     public bool IsAssessment { get; }
-    public IReadOnlyList<LessonPlan> LessonPlans => _lessonPlans.AsReadOnly();
-    public IReadOnlyList<YearLevelValue> YearLevels => _yearLevels.AsReadOnly();
+    public List<LessonPlan> LessonPlans { get; private set; } = [];
+    public List<YearLevelValue> YearLevels { get; private set; } = [];
     public List<string> AssociatedStrands { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
@@ -38,7 +35,7 @@ public sealed class Resource : Entity<ResourceId>
         Url = url;
         IsAssessment = isAssessment;
         Subject = subject;
-        _yearLevels = yearLevels;
+        YearLevels = yearLevels;
 
         if (associatedStrands is not null)
         {

@@ -5,49 +5,47 @@ namespace LessonFlow.Domain.TermPlanners;
 
 public record TermPlan
 {
-    private readonly List<Subject> _subjects = [];
-
     private TermPlan(TermPlanner termPlanner, int termNumber, List<Subject> subjects)
     {
         TermPlanner = termPlanner;
         TermNumber = termNumber;
-        _subjects = subjects;
+        Subjects = subjects;
     }
 
-    public IReadOnlyList<Subject> Subjects => _subjects.AsReadOnly();
+    public List<Subject> Subjects { get; private set; } = [];
     public TermPlanner TermPlanner { get; private set; } = null!;
     public int TermNumber { get; private set; }
 
     public void AddSubject(Subject subject)
     {
-        if (!_subjects.Contains(subject))
+        if (!Subjects.Contains(subject))
         {
-            _subjects.Add(subject);
+            Subjects.Add(subject);
         }
     }
 
     public void AddSubjects(List<Subject> subjects)
     {
-        if (_subjects.Count > 0)
+        if (Subjects.Count > 0)
         {
             throw new TermPlanSubjectsAlreadySetException();
         }
 
-        _subjects.AddRange(subjects);
+        Subjects.AddRange(subjects);
     }
 
     public void SetSubjectAtIndex(Subject subject, int index)
     {
-        _subjects[index] = subject;
+        Subjects[index] = subject;
     }
 
     public void UpdateSubject(Subject subject)
     {
-        var subjectToUpdate = _subjects.FirstOrDefault(s => s.Id == subject.Id);
+        var subjectToUpdate = Subjects.FirstOrDefault(s => s.Id == subject.Id);
 
         if (subjectToUpdate is null)
         {
-            _subjects.Add(subject);
+            Subjects.Add(subject);
             return;
         }
 

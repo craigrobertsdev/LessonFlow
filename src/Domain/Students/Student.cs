@@ -8,16 +8,13 @@ namespace LessonFlow.Domain.Students;
 
 public sealed class Student : Entity<StudentId>, IAggregateRoot
 {
-    private readonly List<Assessment> _assessments = [];
-    private readonly List<Report> _reports = [];
-
     public Guid UserId { get; init; }
     public string FirstName { get; private set; }
     public string LastName { get; private set; }
 
 
-    public IReadOnlyList<Report> Reports => _reports;
-    public IReadOnlyList<Assessment> Assessments => _assessments;
+    public IReadOnlyList<Report> Reports { get; private set; } = [];
+    public IReadOnlyList<Assessment> Assessments { get; private set; } = [];
 
     public Student(
         Guid userId,

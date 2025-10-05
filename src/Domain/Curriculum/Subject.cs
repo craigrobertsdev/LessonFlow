@@ -8,9 +8,8 @@ namespace LessonFlow.Domain.Curriculum;
 
 public class Subject : Entity<SubjectId>, IAggregateRoot
 {
-    private readonly List<YearLevel> _yearLevels = [];
     public string Name { get; } = string.Empty;
-    public IReadOnlyList<YearLevel> YearLevels => _yearLevels.AsReadOnly();
+    public List<YearLevel> YearLevels { get; private set; } = [];
     public string Description { get; private set; } = string.Empty;
 
     public void AddYearLevel(YearLevel yearLevel)
@@ -20,13 +19,13 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
             return;
         }
 
-        _yearLevels.Add(yearLevel);
+        YearLevels.Add(yearLevel);
     }
 
     public List<YearLevel> RemoveYearLevelsNotTaught(List<YearLevelValue> yearLevels)
     {
         var redactedYearLevels = new List<YearLevel>();
-        foreach (var yearLevel in _yearLevels)
+        foreach (var yearLevel in YearLevels)
         {
             if (yearLevels.Contains(yearLevel.YearLevelValue))
             {
@@ -51,7 +50,7 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
     public Subject(List<YearLevel> yearLevels, string name)
     {
         Id = new SubjectId(Guid.NewGuid());
-        _yearLevels = yearLevels;
+        YearLevels = yearLevels;
         Name = name;
     }
 
@@ -59,7 +58,7 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
     {
         Id = new SubjectId(Guid.NewGuid());
         Name = name;
-        _yearLevels = yearLevels;
+        YearLevels = yearLevels;
         Description = description;
     }
 

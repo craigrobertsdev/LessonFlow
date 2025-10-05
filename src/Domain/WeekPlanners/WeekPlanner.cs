@@ -16,14 +16,12 @@ namespace LessonFlow.Domain.WeekPlanners;
 /// </summary>
 public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 {
-    private readonly List<DayPlan> _dayPlans = [];
-
     public YearData YearData { get; private set; }
     public DateOnly WeekStart { get; private set; }
     public int WeekNumber { get; private set; }
     public int TermNumber { get; private set; }
     public int Year { get; private set; }
-    public IReadOnlyList<DayPlan> DayPlans => _dayPlans.AsReadOnly();
+    public List<DayPlan> DayPlans { get; private set; } = [];
     private Lazy<List<DayPlan>> SortedDayPlans { get; set; } = new();
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
@@ -36,8 +34,8 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
             throw new InvalidOperationException("DayPlan's date does not match this WeekPlanner.");
         }
 
-        _dayPlans[idx] = dayPlan;
-        SortedDayPlans = new Lazy<List<DayPlan>>(() => _dayPlans);
+        DayPlans[idx] = dayPlan;
+        SortedDayPlans = new Lazy<List<DayPlan>>(() => DayPlans);
     }
 
     public WeekPlanner(
@@ -58,7 +56,7 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 
         for (var i = 0; i < 5; i++)
         {
-            _dayPlans.Add(new DayPlan(Id, weekStart.AddDays(i), [], []));
+            DayPlans.Add(new DayPlan(Id, weekStart.AddDays(i), [], []));
         }
     }
 
@@ -70,14 +68,14 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 
         List<DayPlan> EnsureSorted()
         {
-            _dayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
-            return _dayPlans;
+            DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
+            return DayPlans;
         }
     }
 
     public void SortDayPlans()
     {
-        _dayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
+        DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
     }
 }
 

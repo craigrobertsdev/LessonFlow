@@ -16,32 +16,25 @@ namespace LessonFlow.Domain.YearDataRecords;
 
 public class YearData : Entity<YearDataId>, IAggregateRoot
 {
-    private readonly List<LessonPlan> _lessonPlans = [];
-    private readonly List<Student> _students = [];
-    private readonly List<Subject> _subjectsTaught = [];
-    private readonly List<WeekPlanner> _weekPlanners = [];
-    private readonly List<YearLevelValue> _yearLevelsTaught = [];
-    private readonly List<DayOfWeek> _workingDays = [];
-
     public string SchoolName { get; private set; } = string.Empty;
     public WeekPlannerTemplate WeekPlannerTemplate { get; set; }
     public Guid UserId { get; init; }
     public TermPlanner? TermPlanner { get; private set; }
     public int CalendarYear { get; init; }
-    public IReadOnlyList<Student> Students => _students.AsReadOnly();
-    public IReadOnlyList<YearLevelValue> YearLevelsTaught => _yearLevelsTaught.AsReadOnly();
-    public IReadOnlyList<Subject> SubjectsTaught => _subjectsTaught.AsReadOnly();
-    public IReadOnlyList<LessonPlan> LessonPlans => _lessonPlans.AsReadOnly();
-    public IReadOnlyList<WeekPlanner> WeekPlanners => _weekPlanners.AsReadOnly();
-    public IReadOnlyList<DayOfWeek> WorkingDays => _workingDays.AsReadOnly();
+    public List<Student> Students { get; private set; } = [];
+    public List<YearLevelValue> YearLevelsTaught { get; private set; } = [];
+    public List<Subject> SubjectsTaught { get; private set; } = [];
+    public List<LessonPlan> LessonPlans { get; private set; } = [];
+    public List<WeekPlanner> WeekPlanners { get; private set; } = [];
+    public List<DayOfWeek> WorkingDays { get; private set; } = [];
 
     public void AddSubjects(List<Subject> subjects)
     {
         foreach (var subject in subjects)
         {
-            if (!_subjectsTaught.Contains(subject))
+            if (!SubjectsTaught.Contains(subject))
             {
-                _subjectsTaught.Add(subject);
+                SubjectsTaught.Add(subject);
             }
         }
     }
@@ -56,23 +49,23 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
 
     public void AddStudent(Student student)
     {
-        if (!_students.Contains(student))
+        if (!Students.Contains(student))
         {
-            _students.Add(student);
+            Students.Add(student);
         }
     }
 
     public void AddYearLevel(YearLevelValue yearLevel)
     {
-        if (!_yearLevelsTaught.Contains(yearLevel))
+        if (!YearLevelsTaught.Contains(yearLevel))
         {
-            _yearLevelsTaught.Add(yearLevel);
+            YearLevelsTaught.Add(yearLevel);
         }
     }
 
     private bool NotInYearLevelsTaught(YearLevelValue yearLevel)
     {
-        return _yearLevelsTaught.Contains(yearLevel);
+        return YearLevelsTaught.Contains(yearLevel);
     }
 
     public void AddTermPlanner(TermPlanner termPlanner)
@@ -96,7 +89,7 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
     public void SetWeekPlannerTemplate(WeekPlannerTemplate weekPlannerTemplate)
     {
         WeekPlannerTemplate = weekPlannerTemplate;
-        _domainEvents.Add(new WeekPlannerTemplateAddedToYearDataEvent(Guid.NewGuid(), WeekPlannerTemplate.Id));
+        AddDomainEvent(new WeekPlannerTemplateAddedToYearDataEvent(Guid.NewGuid(), WeekPlannerTemplate.Id));
     }
 
     public void UpdateWeekPlannerTemplate(WeekPlannerTemplate weekPlannerTemplate)
@@ -108,13 +101,13 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
     public void SetYearLevelsTaught(List<YearLevelValue> yearLevels)
     {
         yearLevels.Sort();
-        _yearLevelsTaught.Clear();
-        _yearLevelsTaught.AddRange(yearLevels);
+        YearLevelsTaught.Clear();
+        YearLevelsTaught.AddRange(yearLevels);
     }
 
     public void AddWeekPlanner(WeekPlanner weekPlanner)
     {
-        _weekPlanners.Add(weekPlanner);
+        WeekPlanners.Add(weekPlanner);
     }
     
     public YearData(Guid userId, WeekPlannerTemplate weekPlannerTemplate, string schoolName,
@@ -134,9 +127,9 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
         SchoolName = accountSetupState.SchoolName;
         CalendarYear = accountSetupState.CalendarYear;
         WeekPlannerTemplate = accountSetupState.WeekPlannerTemplate;
-        _yearLevelsTaught = accountSetupState.YearLevelsTaught;
-        _yearLevelsTaught.Sort();
-        _workingDays = accountSetupState.WorkingDays;
+        YearLevelsTaught = accountSetupState.YearLevelsTaught;
+        YearLevelsTaught.Sort();
+        WorkingDays = accountSetupState.WorkingDays;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

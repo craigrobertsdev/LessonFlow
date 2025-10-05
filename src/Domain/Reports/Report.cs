@@ -9,13 +9,11 @@ namespace LessonFlow.Domain.Reports;
 
 public sealed class Report : Entity<ReportId>, IAggregateRoot
 {
-    private readonly List<ReportComment> _reportComments = [];
-
     public Guid UserId { get; init; }
     public Student Student { get; init; }
     public Subject Subject { get; init; }
     public YearLevelValue YearLevel { get; private set; }
-    public IReadOnlyList<ReportComment> ReportComments => _reportComments.AsReadOnly();
+    public List<ReportComment> ReportComments { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
 
@@ -29,7 +27,7 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
         DateTime updatedDateTime)
     {
          Id = new ReportId(Guid.NewGuid());
-        _reportComments = reportComments;
+        ReportComments = reportComments;
         UserId = userId;
         Student = student;
         Subject = subject;
@@ -41,7 +39,7 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
 
     public void AddReportComment(ReportComment reportComment)
     {
-        _reportComments.Add(reportComment);
+        ReportComments.Add(reportComment);
     }
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private Report()

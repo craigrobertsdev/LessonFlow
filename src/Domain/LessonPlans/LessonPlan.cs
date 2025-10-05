@@ -13,9 +13,6 @@ namespace LessonFlow.Domain.LessonPlans;
 
 public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPeriod, IPlannerPeriod
 {
-    private readonly List<LessonComment> _comments = [];
-    private readonly List<Resource> _resources = [];
-
     public YearData YearData { get; private set; }
     public Subject Subject { get; private set; }
     public PeriodType PeriodType { get; private set; }
@@ -25,15 +22,15 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     public int StartPeriod { get; private set; }
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
-    public IReadOnlyList<Resource> Resources => _resources.AsReadOnly();
-    public IReadOnlyList<LessonComment> Comments => _comments.AsReadOnly();
+    public List<Resource> Resources { get; private set; } = [];
+    public List<LessonComment> Comments { get; private set; } = [];
     public string SubjectName => Subject.Name;
 
     public void AddResource(Resource resource)
     {
-        if (!_resources.Contains(resource))
+        if (!Resources.Contains(resource))
         {
-            _resources.Add(resource);
+            Resources.Add(resource);
             UpdatedDateTime = DateTime.UtcNow;
         }
     }
@@ -80,24 +77,24 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     {
         if (!resources.Any())
         {
-            _resources.Clear();
+            Resources.Clear();
             return;
         }
 
-        var resourcesToRemove = _resources.Where(r => !resources.Contains(r)).ToList();
-        var resourcesToAdd = resources.Where(r => !_resources.Contains(r)).ToList();
-        _resources.RemoveAll(resourcesToRemove.Contains);
-        _resources.AddRange(resourcesToAdd);
+        var resourcesToRemove = Resources.Where(r => !resources.Contains(r)).ToList();
+        var resourcesToAdd = resources.Where(r => !Resources.Contains(r)).ToList();
+        Resources.RemoveAll(resourcesToRemove.Contains);
+        Resources.AddRange(resourcesToAdd);
     }
 
     public void ClearResources()
     {
-        _resources.Clear();
+        Resources.Clear();
     }
 
     public IEnumerable<Resource> MatchResources(IEnumerable<Resource> resources)
     {
-        return resources.Where(_resources.Contains);
+        return resources.Where(Resources.Contains);
     }
 
     public LessonPlan(
@@ -123,7 +120,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
         LessonDate = lessonDate;
         CreatedDateTime = DateTime.Now;
         UpdatedDateTime = DateTime.Now;
-        _resources = resources ?? [];
+        Resources = resources ?? [];
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

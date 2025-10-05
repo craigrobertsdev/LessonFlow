@@ -6,26 +6,24 @@ namespace LessonFlow.Domain.Users;
 
 public class User : IdentityUser<Guid>
 {
-    private readonly List<YearData> _yearDataHistory = [];
-    private readonly List<Resource> _resources = [];
     public bool AccountSetupComplete { get; set; }
     public AccountSetupState? AccountSetupState { get; set; }
     public int LastSelectedYear { get; set; }
     public DateOnly LastSelectedWeekStart { get; set; }
-    public List<YearData> YearDataHistory => _yearDataHistory;
-    public YearData? CurrentYearData => _yearDataHistory.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
-    public List<Resource> Resources => _resources;
+    public List<YearData> YearDataHistory { get; private set; } = [];
+    public YearData? CurrentYearData => YearDataHistory.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
+    public List<Resource> Resources { get; private set; } = [];
 
     public YearData? GetYearData(int year)
     {
-        return _yearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year);
+        return YearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year);
     }
 
     public void AddYearData(YearData yearData)
     {
         if (!YearDataExists(yearData))
         {
-            _yearDataHistory.Add(yearData);
+            YearDataHistory.Add(yearData);
         }
     }
 
@@ -36,7 +34,7 @@ public class User : IdentityUser<Guid>
 
     private bool YearDataExists(int year)
     {
-        return _yearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
+        return YearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
     }
 
     public void CompleteAccountSetup()
@@ -59,9 +57,9 @@ public class User : IdentityUser<Guid>
 
     public void AddResource(Resource resource)
     {
-        if (!_resources.Contains(resource))
+        if (!Resources.Contains(resource))
         {
-            _resources.Add(resource);
+            Resources.Add(resource);
         }
     }
 
