@@ -13,12 +13,10 @@ namespace LessonFlow.Domain.Calendar;
 
 public sealed class Calendar : Entity<CalendarId>, IAggregateRoot
 {
-    private readonly List<SchoolEvent> _schoolEvents = [];
-
     public int TermNumber { get; private set; }
     public DateTime TermStart { get; private set; }
     public DateTime TermEnd { get; private set; }
-    public IReadOnlyList<SchoolEvent> SchoolEvents => _schoolEvents.AsReadOnly();
+    public List<SchoolEvent> SchoolEvents { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
 
@@ -32,7 +30,7 @@ public sealed class Calendar : Entity<CalendarId>, IAggregateRoot
     {
         if (schoolEvents is not null)
         {
-            _schoolEvents = schoolEvents;
+            SchoolEvents = schoolEvents;
         }
 
         Id = new CalendarId(Guid.NewGuid());
