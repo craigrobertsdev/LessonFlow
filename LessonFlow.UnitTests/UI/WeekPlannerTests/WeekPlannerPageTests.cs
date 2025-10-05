@@ -6,6 +6,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Interfaces.Persistence;
@@ -81,6 +82,42 @@ public class WeekPlannerPageTests : TestContext
             Assert.Equal(typeof(LessonPlan), col.Cells[6].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[7].Period.GetType());
         }
+    }
+
+    [Fact]
+    public void InitialiseGrid_WhenSomeLessonsPlanned_ShouldRenderFromDayPlan()
+    {
+        var appState = CreateAppStateWithLessonsPlanned();
+        appState.YearData!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "weekNumber", "1" },
+            { "termNumber", "1" },
+            { "year", DateTime.Now.Year.ToString() }
+        });
+        navigationManager.NavigateTo(uri);
+        var component = RenderWeekPlannerPage(appState);
+
+        var col = component.Instance.GridCols[0];
+        Assert.Equal(8, col.Cells.Count);
+        Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
+        Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
+        Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[3].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
+        Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[6].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[7].RowSpans[0]);
+
+        Assert.Equal(typeof(LessonPeriod), col.Cells[0].Period.GetType());
+        Assert.Equal(typeof(LessonPlan), col.Cells[1].Period.GetType());
+        Assert.Equal(typeof(BreakPeriod), col.Cells[2].Period.GetType());
+        Assert.Equal(typeof(LessonPlan), col.Cells[3].Period.GetType());
+        Assert.Equal(typeof(LessonPlan), col.Cells[4].Period.GetType());
+        Assert.Equal(typeof(BreakPeriod), col.Cells[5].Period.GetType());
+        Assert.Equal(typeof(LessonPlan), col.Cells[6].Period.GetType());
+        Assert.Equal(typeof(LessonPlan), col.Cells[7].Period.GetType());
     }
 
     [Fact]
