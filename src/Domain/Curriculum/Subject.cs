@@ -63,9 +63,7 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
         Description = description;
     }
 
-    public Subject()
-    {
-    }
+    private Subject() { }
 }
 
 public static class CurriculumSubjectExtensions

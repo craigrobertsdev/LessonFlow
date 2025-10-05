@@ -33,8 +33,6 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
             .WithOne(u => u.AccountSetupState)
             .HasForeignKey<AccountSetupState>(s => s.Id);
 
-        // Fix: Configure the relationship properly with AccountSetupState owning WeekPlannerTemplate
-        // Add a shadow property for the foreign key
         builder.HasOne(a => a.WeekPlannerTemplate)
             .WithOne()
             .HasForeignKey<WeekPlannerTemplate>("AccountSetupStateId");
