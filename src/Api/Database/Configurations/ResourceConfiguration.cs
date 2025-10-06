@@ -42,8 +42,7 @@ public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
             .WithMany(lp => lp.Resources);
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
-        builder.Property<List<YearLevelValue>>("_yearLevels")
-            .HasColumnName("YearLevels")
+        builder.Property(r => r.YearLevels)
             .HasMaxLength(100)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),

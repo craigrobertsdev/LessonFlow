@@ -23,12 +23,11 @@ public class DayPlanConfiguration : IEntityTypeConfiguration<DayPlan>
         builder.HasMany(dp => dp.SchoolEvents)
             .WithMany();
 
-        builder.Property<Dictionary<int, string>?>("_breakDutyOverrides")
-            .HasColumnName("BreakDutyOverrides")
+        builder.Property(dp => dp.BreakDutyOverrides)
             .HasColumnType("jsonb")
             .HasConversion(
                 v => JsonSerializer.Serialize(v, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
-                v => JsonSerializer.Deserialize<Dictionary<int, string>>(v, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+                v => JsonSerializer.Deserialize<Dictionary<int, string>>(v, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) ?? new Dictionary<int, string>()
                 );
     }
 }

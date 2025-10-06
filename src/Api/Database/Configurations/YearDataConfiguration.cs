@@ -50,8 +50,7 @@ public class YearDataConfiguration : IEntityTypeConfiguration<YearData>
         builder.Navigation(yd => yd.SubjectsTaught).AutoInclude();
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
-        builder.Property<List<DayOfWeek>>("_workingDays")
-            .HasColumnName("WorkingDays")
+        builder.Property(yd => yd.WorkingDays)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<DayOfWeek>>(v, (JsonSerializerOptions)null),
@@ -60,8 +59,7 @@ public class YearDataConfiguration : IEntityTypeConfiguration<YearData>
                     c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     c => c.ToList()));
 
-        builder.Property<List<YearLevelValue>>("_yearLevelsTaught")
-            .HasColumnName("YearLevels")
+        builder.Property(yd => yd.YearLevelsTaught)
             .HasMaxLength(100)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),

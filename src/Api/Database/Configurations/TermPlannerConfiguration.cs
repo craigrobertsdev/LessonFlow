@@ -28,8 +28,7 @@ public class TermPlannerConfiguration : IEntityTypeConfiguration<TermPlanner>
             .OnDelete(DeleteBehavior.Cascade);
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
-        builder.Property<List<YearLevelValue>>("_yearLevels")
-            .HasColumnName("YearLevels")
+        builder.Property(tp => tp.YearLevels)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<YearLevelValue>>(v, (JsonSerializerOptions)null),
