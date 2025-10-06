@@ -4,7 +4,7 @@ namespace LessonFlow.Interfaces.Services;
 
 public interface ITermDatesService
 {
-    IReadOnlyDictionary<int, IEnumerable<SchoolTerm>> TermDatesByYear { get; }
+    IReadOnlyDictionary<int, List<SchoolTerm>> TermDatesByYear { get; }
     IReadOnlyDictionary<int, Dictionary<int, int>> TermWeekNumbers { get; }
     void SetTermDates(int year, List<SchoolTerm> termDates);
     DateOnly GetWeekStart(int year, int termNumber, int weekNumber);

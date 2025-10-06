@@ -9,7 +9,7 @@ namespace LessonFlow.Api.Services;
 public class TermDatesService : ITermDatesService
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly Dictionary<int, IEnumerable<SchoolTerm>> _termDatesByYear;
+    private readonly Dictionary<int, List<SchoolTerm>> _termDatesByYear;
 
     // year, term number, number of weeks
     private readonly Dictionary<int, Dictionary<int, int>> _termWeekNumbers = [];
@@ -19,7 +19,7 @@ public class TermDatesService : ITermDatesService
     {
         var scope = serviceProvider.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        _termDatesByYear = Task.Run(LoadTermDates).Result;
+        _termDatesByYear = LoadTermDates();
         // To allow API to start without term dates on first run
         if (_termDatesByYear.Count == 0)
         {
@@ -29,7 +29,7 @@ public class TermDatesService : ITermDatesService
         _termWeekNumbers = InitialiseTermWeekNumbers();
     }
 
-    public IReadOnlyDictionary<int, IEnumerable<SchoolTerm>> TermDatesByYear => _termDatesByYear.AsReadOnly();
+    public IReadOnlyDictionary<int, List<SchoolTerm>> TermDatesByYear => _termDatesByYear.AsReadOnly();
     public IReadOnlyDictionary<int, Dictionary<int, int>> TermWeekNumbers => _termWeekNumbers;
 
     public void SetTermDates(int year, List<SchoolTerm> termDates)
@@ -67,7 +67,24 @@ public class TermDatesService : ITermDatesService
             throw new TermDatesNotFoundException();
         }
 
-        return termDates.First(x => x.StartDate <= date && x.EndDate >= date).TermNumber;
+        for (var i = 0; i < termDates.Count - 1; i++)
+        {
+            var termDate = termDates[i];
+            if (date >= termDate.StartDate && date <= termDate.EndDate)
+            {
+                return termDate.TermNumber;
+            }
+            else if (date > termDate.EndDate && date < termDates[i + 1].StartDate)
+            {
+                return termDates[i + 1].TermNumber;
+            }
+            else if (date < termDates[i].StartDate)
+            {
+                return termDates[i].TermNumber;
+            }
+        }
+
+        return termDates[^1].TermNumber;
     }
 
     public int GetTermNumber(DateTime date)
@@ -107,22 +124,21 @@ public class TermDatesService : ITermDatesService
         DateOnly weekStart = date.AddDays(-daysToSubtract);
         return GetWeekNumber(year, termNumber, weekStart);
     }
-    
+
     public int GetWeekNumber(DateTime date)
     {
         return GetWeekNumber(DateOnly.FromDateTime(date));
     }
 
-    private async Task<Dictionary<int, IEnumerable<SchoolTerm>>> LoadTermDates()
+    private Dictionary<int, List<SchoolTerm>> LoadTermDates()
     {
-        var termDates = await _dbContext.TermDates.ToListAsync();
-
+        var termDates = _dbContext.TermDates.ToList();
         if (termDates.Count == 0)
         {
             return [];
         }
 
-        var termDatesByYear = new Dictionary<int, IEnumerable<SchoolTerm>>();
+        var termDatesByYear = new Dictionary<int, List<SchoolTerm>>();
         foreach (var termDate in termDates)
         {
             if (termDatesByYear.ContainsKey(termDate.StartDate.Year))
@@ -131,7 +147,7 @@ public class TermDatesService : ITermDatesService
             }
 
             termDatesByYear.Add(termDate.StartDate.Year,
-                termDates.Where(td => td.StartDate.Year == termDate.StartDate.Year));
+                termDates.Where(td => td.StartDate.Year == termDate.StartDate.Year).ToList());
         }
 
         return termDatesByYear;
@@ -145,8 +161,7 @@ public class TermDatesService : ITermDatesService
             termWeekNumbers.Add(year, new Dictionary<int, int>());
             foreach (var termDate in termDates)
             {
-                var weeks = (int)Math.Floor((double)(termDate.EndDate.DayNumber - termDate.StartDate.DayNumber) / 7) +
-                            1;
+                var weeks = (int)Math.Floor((double)(termDate.EndDate.DayNumber - termDate.StartDate.DayNumber) / 7) + 1;
                 termWeekNumbers[year].Add(termDate.TermNumber, weeks);
             }
         }

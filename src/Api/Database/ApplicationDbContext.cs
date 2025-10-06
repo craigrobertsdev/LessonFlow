@@ -33,18 +33,18 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     {
     }
 
-    public DbSet<Subject> CurriculumSubjects { get; set; } = null!;
-    public DbSet<Resource> Resources { get; set; } = null!;
-    public DbSet<Student> Students { get; set; } = null!;
-    public DbSet<Assessment> Assessments { get; set; } = null!;
-    public DbSet<Report> Reports { get; set; } = null!;
-    public DbSet<LessonPlan> LessonPlans { get; set; } = null!;
-    public DbSet<WeekPlanner> WeekPlanners { get; set; } = null!;
-    public DbSet<WeekPlannerTemplate> WeekPlannerTemplates { get; set; } = null!;
-    public DbSet<TermPlanner> TermPlanners { get; set; } = null!;
-    public DbSet<Calendar> Calendar { get; set; } = null!;
-    public DbSet<YearData> YearData { get; set; } = null!;
-    public DbSet<SchoolTerm> TermDates { get; set; } = null!;
+    public virtual DbSet<Subject> CurriculumSubjects { get; set; } = null!;
+    public virtual DbSet<Resource> Resources { get; set; } = null!;
+    public virtual DbSet<Student> Students { get; set; } = null!;
+    public virtual DbSet<Assessment> Assessments { get; set; } = null!;
+    public virtual DbSet<Report> Reports { get; set; } = null!;
+    public virtual DbSet<LessonPlan> LessonPlans { get; set; } = null!;
+    public virtual DbSet<WeekPlanner> WeekPlanners { get; set; } = null!;
+    public virtual DbSet<WeekPlannerTemplate> WeekPlannerTemplates { get; set; } = null!;
+    public virtual DbSet<TermPlanner> TermPlanners { get; set; } = null!;
+    public virtual DbSet<Calendar> Calendar { get; set; } = null!;
+    public virtual DbSet<YearData> YearData { get; set; } = null!;
+    public virtual DbSet<SchoolTerm> TermDates { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -10,4 +10,4 @@ public class WeekPlannerNotFoundException() : BaseException("Week Planner not fo
 
 public class DayPlanNotFoundException() : BaseException("Day Plan not found", 404, "DayPlan.NotFound");
 
-public class TermDatesNotFoundException() : BaseException("Term dates not found", 404, "TermDates.NotFound");
+public class TermDatesNotFoundException(string message = "Term dates not found") : BaseException(message, 404, "TermDates.NotFound");
