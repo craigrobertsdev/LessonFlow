@@ -2,6 +2,7 @@
 
 public enum DayType
 {
-    WorkingDay,
-    Nwd // Non-Working Day
+    Working,
+    NonWorking,
+    StudentFree
 }
