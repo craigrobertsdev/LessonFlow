@@ -15,7 +15,7 @@ public class DayTemplate
 
     public DayOfWeek DayOfWeek { get; private set; }
     public DayType Type { get; private set; }
-    public bool IsWorkingDay => Type == DayType.WorkingDay;
+    public bool IsWorkingDay => Type == DayType.Working;
     public List<PeriodBase> Periods => _periods;
 
     public void SetPeriods(IEnumerable<PeriodBase> periods)

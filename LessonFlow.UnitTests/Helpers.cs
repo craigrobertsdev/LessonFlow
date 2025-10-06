@@ -62,7 +62,7 @@ internal class Helpers
                 {
                     return new BreakPeriod(p.Name ?? string.Empty, i + 1, 1);
                 }
-            }).ToList(), day, DayType.WorkingDay));
+            }).ToList(), day, DayType.Working));
         }
         var template = new WeekPlannerTemplate(periods, dayTemplates, Guid.NewGuid());
         return template;

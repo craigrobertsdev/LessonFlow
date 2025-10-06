@@ -37,7 +37,7 @@ public partial class ScheduleForm
             var isWorkingDay = State.WorkingDays.Contains(day);
             if (!isWorkingDay)
             {
-                templates.Add(new DayTemplate([], day, DayType.NonWorkingDay));
+                templates.Add(new DayTemplate([], day, DayType.NonWorking));
                 continue;
             }
 
@@ -59,7 +59,7 @@ public partial class ScheduleForm
                 };
             }).ToList();
 
-            templates.Add(new DayTemplate(periods, day, DayType.WorkingDay));
+            templates.Add(new DayTemplate(periods, day, DayType.Working));
         }
 
         State.WeekPlannerTemplate.SetDayTemplates(templates);
