@@ -7,7 +7,7 @@ namespace LessonFlow.Domain.ValueObjects;
 /// <summary>
 ///     Represents an entry in a day's schedule, which can be a lesson or a break.
 /// </summary>
-public class TemplatePeriod : IPlannerPeriod 
+public class TemplatePeriod
 {
     /// <summary>
     ///     Represents an entry in a day's schedule, which can be a lesson or a break.
@@ -33,7 +33,6 @@ public class TemplatePeriod : IPlannerPeriod
 
     public PeriodType PeriodType { get; set; }
     public int StartPeriod { get; set; }
-    public int NumberOfPeriods { get; } = 1;
     public string? Name { get; set; }
     public TimeOnly StartTime { get; set; }
     public TimeOnly EndTime { get; set; }

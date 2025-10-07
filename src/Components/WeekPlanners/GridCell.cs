@@ -37,13 +37,13 @@ public record GridCell
         var rowsCovered = 0;
         var idx = StartRow - 2;
         var breaksCovered = 0;
-        for (int i = 0; i < idx; i++)
-        {
-            if (templatePeriods[i].PeriodType == PeriodType.Break)
-            {
-                breaksCovered++;
-            }
-        }
+        //for (int i = 0; i < idx; i++)
+        //{
+        //    if (templatePeriods[i].PeriodType == PeriodType.Break)
+        //    {
+        //        breaksCovered++;
+        //    }
+        //}
 
         var start = StartRow + breaksCovered;
         int end;
