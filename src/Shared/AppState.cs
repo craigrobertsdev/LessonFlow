@@ -33,16 +33,29 @@ public class AppState
         }
     }
 
-    private YearData? _yearData;
-    public YearData? YearData
+    private Dictionary<int, YearData> _yearDataByYear = [];
+    public Dictionary<int, YearData> YearDataByYear
     {
-        get => _yearData;
+        get => _yearDataByYear;
         set
         {
-            _yearData = value;
+            _yearDataByYear = value;
             OnStateChanged?.Invoke();
         }
     }
+
+    private int _currentYear = DateTime.Now.Year;
+    public int CurrentYear
+    {
+        get => _currentYear;
+        set
+        {
+            _currentYear = value;
+            OnStateChanged?.Invoke();
+        }
+    }
+
+    public YearData? CurrentYearData => _yearDataByYear[_currentYear];
 
     public event Action? OnStateChanged;
 
@@ -71,8 +84,9 @@ public class AppState
                 {
                     var yearData = await _userRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
                         ?? throw new YearDataNotFoundException();
-                    YearData = yearData;
-                    YearData.WeekPlannerTemplate.SortPeriods();
+                    yearData.WeekPlannerTemplate.SortPeriods();
+                    YearDataByYear.Add(yearData.CalendarYear, yearData);
+                    CurrentYear = user.LastSelectedYear;
                 }
                 else
                 {

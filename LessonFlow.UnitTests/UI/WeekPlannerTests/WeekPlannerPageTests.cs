@@ -90,7 +90,7 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenSomeLessonsPlanned_ShouldRenderFromDayPlan()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        appState.YearData!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
+        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
         var navigationManager = Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
@@ -129,8 +129,8 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenNonWorkingDay_ShouldNotRenderCells(DayOfWeek nonWorkingDay)
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var idx = appState.YearData!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
-        appState.YearData!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
+        var idx = appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
+        appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
         var navigationManager = Services.GetRequiredService<NavigationManager>();
         var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
         {
@@ -147,7 +147,7 @@ public class WeekPlannerPageTests : TestContext
     [Fact]
     public void SetRowSpans_WithMultiPeriodLessonAfterFirstBreak_ShouldSetCorrectly()
     {
-        _appState.YearData!.WeekPlannerTemplate = CreateWeekPlannerTemplateWithMultiPeriodLessons();
+        _appState.CurrentYearData!.WeekPlannerTemplate = CreateWeekPlannerTemplateWithMultiPeriodLessons();
         var component = RenderWeekPlannerPage(_appState);
 
         var col = component.Instance.GridCols[0];
@@ -222,8 +222,8 @@ public class WeekPlannerPageTests : TestContext
         await component.Find("button#go-to-selected-date").ClickAsync(new MouseEventArgs());
 
         var instance = component.Instance;
-        Assert.Equal(2025, instance.AppState.YearData!.CalendarYear);
-        Assert.NotNull(instance.AppState.YearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 3));
+        Assert.Equal(2025, instance.AppState.CurrentYearData!.CalendarYear);
+        Assert.NotNull(instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 3));
         Assert.Equal(3, instance.WeekPlanner.TermNumber);
         Assert.Equal(2, instance.WeekPlanner.WeekNumber);
     }
@@ -247,8 +247,8 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(1, component.Instance.SelectedTerm);
         Assert.Equal(2, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.YearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
-        Assert.Equal(2025, component.Instance.AppState.YearData!.CalendarYear);
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
     }
 
     [Fact]
@@ -270,8 +270,8 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(1, component.Instance.SelectedTerm);
         Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.YearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
-        Assert.Equal(2026, component.Instance.AppState.YearData!.CalendarYear);
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
+        Assert.Equal(2026, component.Instance.AppState.CurrentYearData!.CalendarYear);
     }
 
     [Fact]
@@ -315,11 +315,11 @@ public class WeekPlannerPageTests : TestContext
         var yearData = new YearData(Guid.NewGuid(), new AccountSetupState(Guid.NewGuid()));
         var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
-        appState.YearData = yearData;
+        appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
         appState.User = new User();
 
         var weekPlanner = new WeekPlanner(yearData, 2025, 3, 2, new DateOnly(2025, 7, 28));
-        weekPlannerRepository.Setup(wp => wp.GetWeekPlanner(yearData.Id, 2, 3, 2025, new CancellationToken()).Result).Returns(weekPlanner);
+        weekPlannerRepository.Setup(wp => wp.GetWeekPlanner(yearData.Id, 2025, 3, 2, new CancellationToken()).Result).Returns(weekPlanner);
 
         Services.AddScoped(sp => termDatesService);
         Services.AddScoped(sp => weekPlannerRepository.Object);
@@ -331,7 +331,7 @@ public class WeekPlannerPageTests : TestContext
     private AppState CreateAppStateWithLessonsPlanned()
     {
         var appState = CreateAppState();
-        appState.YearData!.AddWeekPlanner(CreateWeekPlanner(appState.YearData!));
+        appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlanner(appState.CurrentYearData!));
         return appState;
     }
 

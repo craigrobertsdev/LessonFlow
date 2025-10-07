@@ -65,7 +65,7 @@
 
   protected override async Task OnInitializedAsync()
   {
-    var lessonData = await LessonPlanRepository.GetByDate(AppState.YearData.Id, new DateOnly(2025, 7, 29), CancellationToken.None);
+    var lessonData = await LessonPlanRepository.GetByDate(AppState.CurrentYearData.Id, new DateOnly(2025, 7, 29), CancellationToken.None);
 
     foreach (var lesson in lessonData)
     {
