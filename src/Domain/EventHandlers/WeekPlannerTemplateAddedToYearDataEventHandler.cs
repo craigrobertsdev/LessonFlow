@@ -25,9 +25,9 @@ public class WeekPlannerTemplateAddedToYearDataEventHandler(
         {
             yearData.AddWeekPlanner(new WeekPlanner(
                 yearData,
-                1,
-                1,
                 yearData.CalendarYear,
+                1,
+                1,
                 termDatesService.GetWeekStart(yearData.CalendarYear, 1, 1)));
         }
 

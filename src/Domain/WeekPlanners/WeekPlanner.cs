@@ -40,9 +40,9 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 
     public WeekPlanner(
         YearData yearData,
-        int weekNumber,
-        int termNumber,
         int year,
+        int termNumber,
+        int weekNumber,
         DateOnly weekStart)
     {
         Id = new WeekPlannerId(Guid.NewGuid());
