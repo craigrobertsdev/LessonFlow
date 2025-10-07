@@ -1,7 +1,13 @@
-﻿using LessonFlow.Components.AccountSetup;
+﻿using LessonFlow.Api.Database;
+using LessonFlow.Api.Services;
+using LessonFlow.Components.AccountSetup;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace LessonFlow.UnitTests;
 internal class Helpers
@@ -66,5 +72,72 @@ internal class Helpers
         }
         var template = new WeekPlannerTemplate(periods, dayTemplates, Guid.NewGuid());
         return template;
+    }
+
+    public static ITermDatesService CreateTermDatesService()
+    {
+
+        var termDatesByYear = new Dictionary<int, List<SchoolTerm>>()
+        {
+            {
+                2025,
+                [
+                    new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4,11)),
+                    new SchoolTerm(2, new DateOnly(2025, 4, 28), new DateOnly(2025, 7, 4)),
+                    new SchoolTerm(3, new DateOnly(2025, 7, 21), new DateOnly(2025, 9, 26)),
+                    new SchoolTerm(4, new DateOnly(2025, 10, 13), new DateOnly(2025, 12, 12))
+                ]
+            },
+            {
+                2026,
+                [
+                    new SchoolTerm(1, new DateOnly(2026, 1, 27), new DateOnly(2026, 4,10)),
+                    new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
+                    new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
+                    new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
+                ]
+            }
+        };
+
+        var dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>().Options;
+        var dbContext = new Mock<ApplicationDbContext>(dbContextOptions);
+        var allYears = termDatesByYear.Values.SelectMany(v => v).ToList();
+
+        var mockDbSet = new Mock<DbSet<SchoolTerm>>();
+        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.Provider).Returns(allYears.AsQueryable().Provider);
+        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.Expression).Returns(allYears.AsQueryable().Expression);
+        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.ElementType).Returns(allYears.AsQueryable().ElementType);
+        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.GetEnumerator()).Returns(allYears.AsQueryable().GetEnumerator());
+
+        dbContext.Setup(db => db.TermDates).Returns(mockDbSet.Object);
+        // Mock the IServiceScope
+        var mockScope = new Mock<IServiceScope>();
+        var mockScopedServiceProvider = new Mock<IServiceProvider>();
+
+        mockScopedServiceProvider
+            .Setup(sp => sp.GetService(typeof(ApplicationDbContext)))
+            .Returns(dbContext.Object);
+
+        mockScope
+            .Setup(s => s.ServiceProvider)
+            .Returns(mockScopedServiceProvider.Object);
+
+        var mockScopeFactory = new Mock<IServiceScopeFactory>();
+        mockScopeFactory
+            .Setup(f => f.CreateScope())
+            .Returns(mockScope.Object);
+
+        var mockRootServiceProvider = new Mock<IServiceProvider>();
+        mockRootServiceProvider
+            .Setup(sp => sp.GetService(typeof(IServiceScopeFactory)))
+            .Returns(mockScopeFactory.Object);
+
+        var service = new TermDatesService(mockRootServiceProvider.Object);
+
+        foreach (var (year, terms) in termDatesByYear)
+        {
+            service.SetTermDates(year, terms);
+        }
+        return service;
     }
 }

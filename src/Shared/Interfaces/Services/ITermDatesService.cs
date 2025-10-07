@@ -13,4 +13,6 @@ public interface ITermDatesService
     int GetWeekNumber(int year, int termNumber, DateOnly weekStart);
     int GetWeekNumber(DateOnly date);
     int GetWeekNumber(DateTime date);
+    DateOnly GetNextWeek(int year, int termNumber, int weekNumber);
+    DateOnly GetPreviousWeek(int year, int termNumber, int weekNumber);
 }
