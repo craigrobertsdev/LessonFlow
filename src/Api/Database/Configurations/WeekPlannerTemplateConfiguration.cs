@@ -35,8 +35,6 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
                     v => v.ToString(),
                     v => Enum.Parse<PeriodType>(v))
                 .HasMaxLength(20);
-
-            pb.Ignore(p => p.NumberOfPeriods);
         });
 
         builder.HasMany(ws => ws.DayTemplates)
@@ -45,7 +43,6 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
         builder.Navigation(wp => wp.Periods).AutoInclude();
         builder.Navigation(wp => wp.DayTemplates).AutoInclude();
     }
-
 }
 
 public class DayTemplateConfiguration : IEntityTypeConfiguration<DayTemplate>
