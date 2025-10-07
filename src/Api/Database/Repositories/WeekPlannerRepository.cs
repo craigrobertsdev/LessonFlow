@@ -8,7 +8,7 @@ namespace LessonFlow.Api.Database.Repositories;
 
 public class WeekPlannerRepository(ApplicationDbContext context) : IWeekPlannerRepository
 {
-    public async Task<WeekPlanner?> GetWeekPlanner(YearDataId yearDataId, int weekNumber, int termNumber, int year,
+    public async Task<WeekPlanner?> GetWeekPlanner(YearDataId yearDataId, int year, int termNumber, int weekNumber,
         CancellationToken cancellationToken)
     {
         var weekPlanner = await context.WeekPlanners

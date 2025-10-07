@@ -5,7 +5,7 @@ namespace LessonFlow.Interfaces.Persistence;
 
 public interface IWeekPlannerRepository
 {
-    Task<WeekPlanner?> GetWeekPlanner(YearDataId yearDataId, int weekNumber, int termNumber, int year,
+    Task<WeekPlanner?> GetWeekPlanner(YearDataId yearDataId, int year, int termNumber, int weekNumber,
         CancellationToken cancellationToken);
     Task<WeekPlanner?> GetWeekPlanner(YearDataId yearDataId, DateOnly weekStart, CancellationToken cancellationToken);
     Task<WeekPlanner?> GetByLessonDate(DateOnly lessonDate, CancellationToken cancellationToken);
