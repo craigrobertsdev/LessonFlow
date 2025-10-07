@@ -2,7 +2,6 @@ using LessonFlow.Api.Database;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Exceptions;
 using LessonFlow.Interfaces.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Api.Services;
 
@@ -54,7 +53,7 @@ public class TermDatesService : ITermDatesService
         var weekStart = term.StartDate.AddDays(7 * (weekNumber - 1));
         if (weekStart > term.EndDate)
         {
-            throw new ArgumentException("Week number is greater than the number of weeks in the term");
+            throw new ArgumentOutOfRangeException("Week number is greater than the number of weeks in the term");
         }
 
         return weekStart;
@@ -96,7 +95,7 @@ public class TermDatesService : ITermDatesService
     {
         if (termNumber is < 1 or > 4)
         {
-            throw new ArgumentException("Term number must be between 1 and 4");
+            throw new ArgumentOutOfRangeException("Term number must be between 1 and 4");
         }
 
         var term = _termDatesByYear[year].First(x => x.TermNumber == termNumber);
@@ -104,7 +103,7 @@ public class TermDatesService : ITermDatesService
         var weekNumber = (int)Math.Floor((double)(weekStart.DayNumber - term.StartDate.DayNumber) / 7) + 1;
         if (weekNumber > _termWeekNumbers[year][termNumber])
         {
-            throw new ArgumentException("Week start is greater than the end of the term");
+            throw new ArgumentOutOfRangeException("Week start is greater than the end of the term");
         }
 
         return weekNumber;
@@ -167,5 +166,81 @@ public class TermDatesService : ITermDatesService
         }
 
         return termWeekNumbers;
+    }
+
+    /// <summary>
+    /// Gets the start date of the next school week.
+    /// </summary>
+    /// <param name="year"></param>
+    /// <param name="termNumber"></param>
+    /// <param name="weekNumber"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>
+    public DateOnly GetNextWeek(int year, int termNumber, int weekNumber)
+    {
+        if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
+        {
+            throw new ArgumentOutOfRangeException("There are no current term dates for that calendar year");
+        }
+
+        if (!termWeekNumbers.TryGetValue(termNumber, out var weeks))
+        {
+            throw new ArgumentOutOfRangeException("Requested term number doesn't exist");
+        }
+
+        if (weekNumber < weeks)
+        {
+            return GetWeekStart(year, termNumber, weekNumber + 1);
+        }
+
+        if (termNumber < termWeekNumbers.Keys.Max(x => x))
+        {
+            return GetWeekStart(year, termNumber + 1, 1);
+        }
+
+        if (_termDatesByYear.ContainsKey(year + 1))
+        {
+            return GetWeekStart(year + 1, 1, 1);
+        }
+
+        throw new ArgumentOutOfRangeException("There is no next week available");
+    }
+
+    /// <summary>
+    /// Gets the start date of the previous school week.
+    /// </summary>
+    /// <param name="year"></param>
+    /// <param name="termNumber"></param>
+    /// <param name="weekNumber"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>
+    public DateOnly GetPreviousWeek(int year, int termNumber, int weekNumber)
+    {
+        if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
+        {
+            throw new ArgumentOutOfRangeException("There are no current term dates for that calendar year");
+        }
+
+        if (!termWeekNumbers.TryGetValue(termNumber, out var weeks))
+        {
+            throw new ArgumentOutOfRangeException("Requested term number doesn't exist");
+        }
+
+        if (weekNumber > 1)
+        {
+            return GetWeekStart(year, termNumber, weekNumber - 1);
+        }
+
+        if (termNumber > 1)
+        {
+            return GetWeekStart(year, termNumber - 1, termWeekNumbers[termNumber - 1]);
+        }
+
+        if (termNumber == 1 && weekNumber == 1 && _termWeekNumbers.TryGetValue(year - 1, out var prevTermWeekNumbers))
+        {
+            return GetWeekStart(year - 1, prevTermWeekNumbers.Keys.Max(), prevTermWeekNumbers[prevTermWeekNumbers.Keys.Max()]);
+        }
+
+        throw new ArgumentOutOfRangeException("There is no previous week available");
     }
 }
