@@ -12,7 +12,6 @@ public class ScheduleFormTests : TestContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
         var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
-
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("6");
 
