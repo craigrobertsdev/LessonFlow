@@ -91,7 +91,7 @@ internal class Helpers
             {
                 2026,
                 [
-                    new SchoolTerm(1, new DateOnly(2026, 1, 27), new DateOnly(2026, 4,10)),
+                    new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4,10)),
                     new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
                     new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
                     new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
@@ -109,8 +109,6 @@ internal class Helpers
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.ElementType).Returns(allYears.AsQueryable().ElementType);
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.GetEnumerator()).Returns(allYears.AsQueryable().GetEnumerator());
 
-        dbContext.Setup(db => db.TermDates).Returns(mockDbSet.Object);
-        // Mock the IServiceScope
         var mockScope = new Mock<IServiceScope>();
         var mockScopedServiceProvider = new Mock<IServiceProvider>();
 
