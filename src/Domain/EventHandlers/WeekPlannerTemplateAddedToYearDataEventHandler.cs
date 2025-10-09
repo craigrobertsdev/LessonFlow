@@ -28,7 +28,7 @@ public class WeekPlannerTemplateAddedToYearDataEventHandler(
                 yearData.CalendarYear,
                 1,
                 1,
-                termDatesService.GetWeekStart(yearData.CalendarYear, 1, 1)));
+                termDatesService.GetFirstDayOfWeek(yearData.CalendarYear, 1, 1)));
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

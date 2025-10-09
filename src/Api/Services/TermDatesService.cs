@@ -2,6 +2,8 @@ using LessonFlow.Api.Database;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Exceptions;
 using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared;
+using UglyToad.PdfPig.Tokens;
 
 namespace LessonFlow.Api.Services;
 
@@ -9,10 +11,9 @@ public class TermDatesService : ITermDatesService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly Dictionary<int, List<SchoolTerm>> _termDatesByYear;
-
     // year, term number, number of weeks
     private readonly Dictionary<int, Dictionary<int, int>> _termWeekNumbers = [];
-
+    private readonly Dictionary<int, List<SchoolHoliday>> _schoolHolidaysByYear = [];
 
     public TermDatesService(IServiceProvider serviceProvider)
     {
@@ -26,17 +27,19 @@ public class TermDatesService : ITermDatesService
         }
 
         _termWeekNumbers = InitialiseTermWeekNumbers();
+        _schoolHolidaysByYear = InitialiseSchoolHolidays();
     }
 
     public IReadOnlyDictionary<int, List<SchoolTerm>> TermDatesByYear => _termDatesByYear.AsReadOnly();
     public IReadOnlyDictionary<int, Dictionary<int, int>> TermWeekNumbers => _termWeekNumbers;
+    public IReadOnlyDictionary<int, List<SchoolHoliday>> SchoolHolidaysByYear => _schoolHolidaysByYear;
 
     public void SetTermDates(int year, List<SchoolTerm> termDates)
     {
         _termDatesByYear[year] = termDates;
     }
 
-    public DateOnly GetWeekStart(int year, int termNumber, int weekNumber)
+    public DateOnly GetFirstDayOfWeek(int year, int termNumber, int weekNumber)
     {
         if (termNumber is < 1 or > 4)
         {
@@ -115,9 +118,9 @@ public class TermDatesService : ITermDatesService
         var year = date.Year;
 
         var daysToSubtract = (int)date.DayOfWeek - 1;
-        if (daysToSubtract < 0)
+        if (daysToSubtract == -1) // Sunday
         {
-            daysToSubtract += 7; // Handle Sunday (0) by wrapping to 7 days back
+            daysToSubtract += 7;
         }
 
         DateOnly weekStart = date.AddDays(-daysToSubtract);
@@ -168,14 +171,44 @@ public class TermDatesService : ITermDatesService
         return termWeekNumbers;
     }
 
-    /// <summary>
-    /// Gets the start date of the next school week.
-    /// </summary>
-    /// <param name="year"></param>
-    /// <param name="termNumber"></param>
-    /// <param name="weekNumber"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>
+    private Dictionary<int, List<SchoolHoliday>> InitialiseSchoolHolidays()
+    {
+        var schoolHolidays = new Dictionary<int, List<SchoolHoliday>>();
+        foreach (var (year, termDates) in _termDatesByYear)
+        {
+            var holidays = new List<SchoolHoliday>();
+            for (int i = 0; i < termDates.Count; i++)
+            {
+                if (i == termDates.Count - 1)
+                {
+                    if (_termDatesByYear.ContainsKey(year + 1))
+                    {
+                        var nextYearTermDates = _termDatesByYear[year + 1];
+                        var termDate = termDates[i];
+                        var holiday = new SchoolHoliday(termDate.TermNumber, termDate.EndDate.AddDays(1), nextYearTermDates[0].StartDate.AddDays(-1));
+                        holidays.Add(holiday);
+                    }
+                    else
+                    {
+                        var termDate = termDates[i];
+                        var holiday = new SchoolHoliday(termDate.TermNumber, termDate.EndDate.AddDays(1), new DateOnly(year, 12, 31));
+                        holidays.Add(holiday);
+                    }
+                }
+                else
+                {
+                    var termDate = termDates[i];
+                    var holiday = new SchoolHoliday(termDate.TermNumber, termDate.EndDate.AddDays(1), termDates[i + 1].StartDate.AddDays(-1));
+                    holidays.Add(holiday);
+                }
+            }
+
+            schoolHolidays.Add(year, holidays);
+        }
+
+        return schoolHolidays;
+    }
+
     public DateOnly GetNextWeek(int year, int termNumber, int weekNumber)
     {
         if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
@@ -190,30 +223,30 @@ public class TermDatesService : ITermDatesService
 
         if (weekNumber < weeks)
         {
-            return GetWeekStart(year, termNumber, weekNumber + 1);
+            return GetFirstDayOfWeek(year, termNumber, weekNumber + 1);
         }
 
         if (termNumber < termWeekNumbers.Keys.Max(x => x))
         {
-            return GetWeekStart(year, termNumber + 1, 1);
+            return GetFirstDayOfWeek(year, termNumber + 1, 1);
         }
 
         if (_termDatesByYear.ContainsKey(year + 1))
         {
-            return GetWeekStart(year + 1, 1, 1);
+            return GetFirstDayOfWeek(year + 1, 1, 1);
         }
 
         throw new ArgumentOutOfRangeException("There is no next week available");
     }
 
-    /// <summary>
-    /// Gets the start date of the previous school week.
-    /// </summary>
-    /// <param name="year"></param>
-    /// <param name="termNumber"></param>
-    /// <param name="weekNumber"></param>
-    /// <returns></returns>
-    /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>
+    public DateOnly GetNextWeek(DateOnly date)
+    {
+        var termNumber = GetTermNumber(date);
+        var weekNumber = GetWeekNumber(date);
+        return GetNextWeek(date.Year, termNumber, weekNumber);
+    }
+
+
     public DateOnly GetPreviousWeek(int year, int termNumber, int weekNumber)
     {
         if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
@@ -228,19 +261,35 @@ public class TermDatesService : ITermDatesService
 
         if (weekNumber > 1)
         {
-            return GetWeekStart(year, termNumber, weekNumber - 1);
+            return GetFirstDayOfWeek(year, termNumber, weekNumber - 1);
         }
 
         if (termNumber > 1)
         {
-            return GetWeekStart(year, termNumber - 1, termWeekNumbers[termNumber - 1]);
+            return GetFirstDayOfWeek(year, termNumber - 1, termWeekNumbers[termNumber - 1]);
         }
 
         if (termNumber == 1 && weekNumber == 1 && _termWeekNumbers.TryGetValue(year - 1, out var prevTermWeekNumbers))
         {
-            return GetWeekStart(year - 1, prevTermWeekNumbers.Keys.Max(), prevTermWeekNumbers[prevTermWeekNumbers.Keys.Max()]);
+            return GetFirstDayOfWeek(year - 1, prevTermWeekNumbers.Keys.Max(), prevTermWeekNumbers[prevTermWeekNumbers.Keys.Max()]);
         }
 
         throw new ArgumentOutOfRangeException("There is no previous week available");
+    }
+
+    public bool IsSchoolHoliday(DateTime date)
+    {
+        if (_schoolHolidaysByYear.TryGetValue(date.Year, out var holidays))
+        {
+            foreach (var holiday in holidays)
+            {
+                if (holidays.Any(h => date.GreaterThanOrEqualTo(h.StartDate) && date.LessThanOrEqualTo(h.EndDate)))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }
