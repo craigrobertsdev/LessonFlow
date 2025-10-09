@@ -223,7 +223,7 @@
         State.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Back);
     }
 
-    private async Task HandleSubmit()
+    private void HandleSubmit()
     {
         if (!string.IsNullOrEmpty(_timeError)) return;
 
