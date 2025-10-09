@@ -109,6 +109,8 @@ internal class Helpers
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.ElementType).Returns(allYears.AsQueryable().ElementType);
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.GetEnumerator()).Returns(allYears.AsQueryable().GetEnumerator());
 
+        dbContext.Setup(db => db.TermDates).Returns(mockDbSet.Object);
+
         var mockScope = new Mock<IServiceScope>();
         var mockScopedServiceProvider = new Mock<IServiceProvider>();
 
