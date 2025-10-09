@@ -64,10 +64,12 @@ else
             }
         </div>
 
-        <div>
-            <input id="term-date" type="date" @onchange="SelectedTermDateChanged" />
+        <div class="flex flex-col">
+            <RadzenDatePicker TValue="DateOnly?" Value="SelectedDate" Change="SelectedTermDateChanged" DateFormat="dd/MM/yyyy" 
+                DateRender="DateRender" Min="MinCalendarDate" Max="MaxCalendarDate" />
             <button id="go-to-selected-date" @onclick="HandleGoToSelectedDateClicked">Go to Week Planner</button>
-            <button id="next-week" @onclick="HandleGoToNextWeek">Next Week</button>
+            <button id="previous-week" @onclick="HandleGoToPreviousWeek" disabled="@(!_canNavigateToPreviousWeek)">Previous Week</button>
+            <button id="next-week" @onclick="HandleGoToNextWeek" disabled="@(!_canNavigateToNextWeek)">Next Week</button>
         </div>
     </div>
 }
