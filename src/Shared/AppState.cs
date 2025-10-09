@@ -55,7 +55,7 @@ public class AppState
         }
     }
 
-    public YearData? CurrentYearData => _yearDataByYear[_currentYear];
+    public YearData CurrentYearData => _yearDataByYear[_currentYear];
 
     public event Action? OnStateChanged;
 
@@ -106,5 +106,13 @@ public class AppState
             Initialising = false;
             OnStateChanged?.Invoke();
         }
+    }
+
+    public void AddNewYearData(int year, YearData yearData)
+    {
+        if (!IsInitialised) return;
+
+        _yearDataByYear.Add(year, yearData);
+        OnStateChanged?.Invoke();
     }
 }

@@ -25,8 +25,11 @@ public class WeekPlannerPageTests : TestContext
 
     public WeekPlannerPageTests()
     {
-        _appState = CreateAppState();
+        _appState = CreateAppState(2025);
+        JSInterop.SetupVoid("Radzen.preventArrows", _ => true);
+        JSInterop.SetupVoid("Radzen.createDatePicker", _ => true);
     }
+
     [Fact]
     public void InitialiseGrid_WhenNoLessonsPlanned_ShouldRenderFromWeekPlannerTemplate()
     {
@@ -191,26 +194,11 @@ public class WeekPlannerPageTests : TestContext
     {
         var component = RenderWeekPlannerPage(_appState);
 
-        component.Find("input#term-date").Change("2025-07-28");
+        component.Instance.SelectedTermDateChanged(new DateTime(2025, 7, 28));
 
         Assert.Equal(2025, component.Instance.SelectedYear);
         Assert.Equal(3, component.Instance.SelectedTerm);
         Assert.Equal(2, component.Instance.SelectedWeek);
-    }
-
-    [Theory]
-    [InlineData("2025-01-01", 2025, 1, 1)]
-    [InlineData("2025-04-14", 2025, 2, 1)]
-    [InlineData("2025-07-05", 2025, 3, 1)]
-    [InlineData("2025-09-27", 2025, 4, 1)]
-    [InlineData("2025-12-13", 2026, 1, 1)]
-    public void SelectCalendarDate_WhenInSchoolHolidays_SetsYearTermAndWeekToFirstWeekOfNextTerm(string date, int year, int termNumber, int weekNumber)
-    {
-        var component = RenderWeekPlannerPage(_appState);
-        component.Find("input#term-date").Change(date);
-        Assert.Equal(year, component.Instance.SelectedYear);
-        Assert.Equal(termNumber, component.Instance.SelectedTerm);
-        Assert.Equal(weekNumber, component.Instance.SelectedWeek);
     }
 
     [Fact]
@@ -218,7 +206,7 @@ public class WeekPlannerPageTests : TestContext
     {
         var component = RenderWeekPlannerPage(_appState);
 
-        component.Find("input#term-date").Change("2025-07-28");
+        component.Instance.SelectedTermDateChanged(new DateTime(2025, 7, 28));
         await component.Find("button#go-to-selected-date").ClickAsync(new MouseEventArgs());
 
         var instance = component.Instance;
@@ -271,17 +259,33 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
+        Assert.Equal(2026, component.Instance.AppState.CurrentYear);
         Assert.Equal(2026, component.Instance.AppState.CurrentYearData!.CalendarYear);
     }
 
-    [Fact]
-    public void NavigateToNextWeek_WhenOutOfRange_ButtonCannotBeClicked()
+    [Theory]
+    [InlineData(2026, 4, 8, true)]
+    [InlineData(2025, 4, 8, false)]
+    public void NavigateToNextWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
     {
-        throw new NotImplementedException();
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "weekNumber", weekNumber },
+            { "termNumber", termNumber },
+            { "year", year }
+        });
+        navigationManager.NavigateTo(uri);
+        var component = RenderWeekPlannerPage(_appState);
+
+        var nextWeekButton = component.Find("button#next-week");
+        nextWeekButton.Click();
+
+        Assert.Equal(isDisabled, nextWeekButton.HasAttribute("disabled"));
     }
 
     [Fact]
-    public void NavigateToPreviousWeek_WhenClicked_LoadsPreviousWeekPlanner()
+    public void NavigateToPreviousWeek_WhenPreviousWeekWithinSameYear_LoadsPreviousWeekPlanner()
     {
         var appState = CreateAppStateWithLessonsPlanned();
         var navigationManager = Services.GetRequiredService<NavigationManager>();
@@ -297,23 +301,75 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(1, component.Instance.SelectedWeek);
     }
 
+    [Fact]
+    public void NavigateToPreviousWeek_WhenPreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearData()
+    {
+        var appState = CreateAppState(2026);
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "weekNumber", "1" },
+            { "termNumber", "1" },
+            { "year", "2026" }
+        });
+        navigationManager.NavigateTo(uri);
+        var component = RenderWeekPlannerPage(appState);
+        component.Find("button#previous-week").Click();
+
+        Assert.Equal(9, component.Instance.SelectedWeek);
+        Assert.Equal(4, component.Instance.SelectedTerm);
+        Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
+        Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
+        Assert.Equal(2025, component.Instance.AppState.CurrentYear);
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
+    }
+
+    [Theory]
+    [InlineData(2026, 1, 2, false)]
+    [InlineData(2025, 1, 2, true)]
+    public void NavigateToPreviousWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
+    {
+        var navigationManager = Services.GetRequiredService<NavigationManager>();
+        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
+        {
+            { "weekNumber", weekNumber },
+            { "termNumber", termNumber },
+            { "year", year }
+        });
+        navigationManager.NavigateTo(uri);
+        var component = RenderWeekPlannerPage(_appState);
+
+        var previousWeekButton = component.Find("button#previous-week");
+        previousWeekButton.Click();
+
+        Assert.Equal(isDisabled, previousWeekButton.HasAttribute("disabled"));
+    }
+
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlannerPage(AppState appState)
     {
         var component = base.RenderComponent<WeekPlannerPage>(p => p.Add(c => c.AppState, appState));
         return component;
     }
 
-    private AppState CreateAppState()
+    private AppState CreateAppState(int calendarYear)
     {
         var authStateProvider = new Mock<AuthenticationStateProvider>();
         var userRepository = new Mock<IUserRepository>();
         var weekPlannerRepository = new Mock<IWeekPlannerRepository>();
+        var yearDataRepository = new Mock<IYearDataRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var termDatesService = Helpers.CreateTermDatesService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
-        var yearData = new YearData(Guid.NewGuid(), new AccountSetupState(Guid.NewGuid()));
+        appState.CurrentYear = calendarYear;
+
+        var accountSetupState = new AccountSetupState(Guid.NewGuid());
+        accountSetupState.SetCalendarYear(calendarYear);
+
+        var yearData = new YearData(Guid.NewGuid(), accountSetupState);
         var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
         appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
         appState.User = new User();
@@ -324,13 +380,15 @@ public class WeekPlannerPageTests : TestContext
         Services.AddScoped(sp => termDatesService);
         Services.AddScoped(sp => weekPlannerRepository.Object);
         Services.AddScoped(sp => userRepository.Object);
+        Services.AddScoped(sp => yearDataRepository.Object);
 
+        appState.GetType().GetProperty(nameof(appState.IsInitialised))!.SetValue(appState, true);
         return appState;
     }
 
     private AppState CreateAppStateWithLessonsPlanned()
     {
-        var appState = CreateAppState();
+        var appState = CreateAppState(2025);
         appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlanner(appState.CurrentYearData!));
         return appState;
     }
