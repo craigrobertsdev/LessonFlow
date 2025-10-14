@@ -55,6 +55,26 @@ public class AppState
         }
     }
 
+    private int _currentTerm = 1;
+    public int CurrentTerm {
+        get => _currentTerm;
+        set
+        {
+            _currentTerm = value;
+            OnStateChanged?.Invoke();
+        }
+    }
+
+    private int _currentWeek = 1;
+    public int CurrentWeek {
+        get => _currentWeek;
+        set
+        {
+            _currentWeek = value;
+            OnStateChanged?.Invoke();
+        }
+    }
+
     public YearData CurrentYearData => _yearDataByYear[_currentYear];
 
     public event Action? OnStateChanged;
