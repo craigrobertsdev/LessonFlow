@@ -2,7 +2,7 @@ using LessonFlow.Api.Database;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Api.Services;

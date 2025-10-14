@@ -1,4 +1,4 @@
-namespace LessonFlow.Interfaces.Services;
+namespace LessonFlow.Shared.Interfaces.Services;
 
 public interface IStorageManager
 {

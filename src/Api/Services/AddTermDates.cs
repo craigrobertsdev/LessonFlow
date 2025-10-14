@@ -1,6 +1,6 @@
 using LessonFlow.Api.Contracts.Services;
 using LessonFlow.Api.Database;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LessonFlow.Api.Services;

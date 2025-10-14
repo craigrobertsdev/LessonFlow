@@ -3,7 +3,7 @@ using LessonFlow.Api.Database;
 using LessonFlow.Api.Database.Repositories;
 using LessonFlow.Interfaces.Curriculum;
 using LessonFlow.Interfaces.Persistence;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Api.Services;
 using LessonFlow.Api.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Api.Services.FileStorage;

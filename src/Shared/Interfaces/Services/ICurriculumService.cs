@@ -2,7 +2,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 
-namespace LessonFlow.Interfaces.Services;
+namespace LessonFlow.Shared.Interfaces.Services;
 
 public interface ICurriculumService
 {

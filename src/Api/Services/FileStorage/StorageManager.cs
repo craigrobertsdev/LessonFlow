@@ -1,4 +1,4 @@
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 
 namespace LessonFlow.Api.Services.FileStorage;
 
