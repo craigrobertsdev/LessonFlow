@@ -7,16 +7,18 @@ namespace LessonFlow.Components.WeekPlanners;
 
 public record GridCell
 {
-    public GridCell(List<(int start, int end)> rowSpans, IPlannerPeriod period, GridColumn column)
+    public GridCell(List<(int start, int end)> rowSpans, IPlannerPeriod period, GridColumn column, int periodNumber)
     {
         Period = period;
         Column = column;
         RowSpans = rowSpans;
+        PeriodNumber = periodNumber;
     }
 
     public LessonPlanId LessonPlanId { get; set; } = default!;
     public GridColumn Column { get; set; }
     public IPlannerPeriod Period { get; set; }
+    public int PeriodNumber { get; set; }
     public int StartRow => RowSpans.FirstOrDefault().Start;
     public int EndRow => RowSpans[^1].End;
     public bool IsHovered { get; set; }
@@ -37,14 +39,6 @@ public record GridCell
         var rowsCovered = 0;
         var idx = StartRow - 2;
         var breaksCovered = 0;
-        //for (int i = 0; i < idx; i++)
-        //{
-        //    if (templatePeriods[i].PeriodType == PeriodType.Break)
-        //    {
-        //        breaksCovered++;
-        //    }
-        //}
-
         var start = StartRow + breaksCovered;
         int end;
 

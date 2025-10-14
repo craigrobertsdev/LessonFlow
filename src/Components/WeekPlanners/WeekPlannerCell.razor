@@ -1,0 +1,52 @@
+@using LessonFlow.Components.Pages
+@using LessonFlow.Components.WeekPlanners
+@using LessonFlow.Domain.Enums
+@using LessonFlow.Domain.PlannerTemplates
+@using LessonFlow.Shared.Interfaces
+
+<div class="border border-gray-300 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
+         @(Cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
+         @(Cell.IsHovered ? "bg-gray-50" : "")
+         @(string.IsNullOrEmpty(Period.SubjectName) ? "text-gray-700" : "font-semibold")"
+     style="grid-column-start:@Column.Col; grid-row-start:@RowSpan.Start; grid-row-end:@RowSpan.End"
+     @onmouseover="@(() => { Cell.IsHovered = true; StateHasChanged(); })"
+     @onmouseout="@(() => { Cell.IsHovered = false; StateHasChanged(); })"
+     @onmousedown="@(() => Cell.IsMouseDown = true)"
+     @onclick="GoToLessonPlanner"
+     @onmouseup="@(() => Cell.IsMouseDown = false)">
+
+    @CellText
+
+</div>
+
+@code {
+    [CascadingParameter] public WeekPlannerPage WeekPlanner { get; set; } = default!;
+    [CascadingParameter] public WeekPlannerColumn Parent { get; set; } = default!;
+    [Parameter] public GridCell Cell { get; set; } = default!;
+    [Parameter] public GridColumn Column { get; set; } = default!;
+    [Parameter] public (int Start, int End) RowSpan { get; set; } = default!;
+
+    private ILessonPeriod Period => (ILessonPeriod)Cell.Period;
+    private string CellText { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Cell.Period.PeriodType == PeriodType.Break) throw new InvalidOperationException("Break periods should not use WeekPlannerCell component.");
+
+        CellText = string.IsNullOrEmpty(Period.SubjectName) ? "No subject planned" : Period.SubjectName;
+    }
+
+    private string GetCellColour(GridCell cell)
+    {
+        if (cell.Period.PeriodType == PeriodType.Break) return "";
+
+        return AppConstants.SubjectColours.TryGetValue(Period.SubjectName, out var colour)
+                ? colour
+                : string.Empty;
+    }
+
+    private void GoToLessonPlanner()
+    {
+        WeekPlanner.NavigateToLessonPlanner(Parent.Date, Cell);
+    }
+}

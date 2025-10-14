@@ -13,9 +13,10 @@
 {
     <div class="flex min-h-[40vh] items-center justify-center">
         <div class="text-center">
+            <LoadingSpinner />
+
             @if (AppState.Initialising)
             {
-                <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
                 <p class="text-sm text-gray-600">Loading week planner...</p>
             }
             else if (AppState.User?.AccountSetupComplete == false)
@@ -32,6 +33,14 @@
 }
 else
 {
+    if (_loading)
+    {
+        <div class="absolute top-[50%] left-[50%]">
+            <LoadingSpinner />
+        </div>
+        return;
+    }
+
     <div class="flex flex-col">
         <div class="grid grid-cols-[max-content_1fr_max-content] w-full border border-gray-300">
             <div class="col-start-1 flex items-center">
@@ -47,13 +56,13 @@ else
             </div>
 
             <div class="col-start-3">
-                <div class="grid grid-cols-4 ml-auto justify-start pr-4">
+                <div class="grid grid-cols-4 ml-auto items-center justify-start pr-4">
                     <div class="col-start-1 ml-auto flex gap-2 justify-center items-center font-semibold">
                         <p class="font-semibold">Year</p>
                         <select id="year-selector" @onchange="SelectedYearChanged" class="border-b border-gray-300 p-1 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
                             @foreach (var year in TermDatesService.AvailableYears)
                             {
-                                <option value="@year">@year</option>
+                                <option value="@year" selected="@(year == SelectedYear)">@year</option>
                             }
                         </select>
                     </div>
@@ -63,7 +72,7 @@ else
                         <select id="term-selector" @onchange="SelectedTermChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
                             @foreach (var term in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year].Keys.Max()))
                             {
-                                <option value="@term">@term</option>
+                                <option value="@term" selected="@(term == SelectedTerm)">@term</option>
                             }
                         </select>
                     </div>
@@ -73,12 +82,14 @@ else
                         <select id="week-selector" @onchange="SelectedWeekChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
                             @foreach (var week in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year][SelectedTerm]))
                             {
-                                <option value="@week">@week</option>
+                                <option value="@week" selected="@(week == SelectedWeek)">@week</option>
                             }
                         </select>
                     </div>
 
-                    <Button Id="go-to-week" Class="col-start-4" OnClick="@HandleGoToSelectedDateClicked" Type="ButtonType.Submit">Go To Selected</Button>
+                    <div class="col-start-4 flex justify-center">
+                        <Button Id="go-to-week" Class="" OnClick="@HandleGoToSelectedDateClicked" Type="ButtonType.Submit">Go To Date</Button>
+                    </div>
 
                 </div>
 
@@ -106,28 +117,30 @@ else
                     var col = GridCols[i];
                     var dayIncrement = i;
                     var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
+                    var date = WeekPlanner.WeekStart.AddDays(dayIncrement);
                     if (col.IsWorkingDay)
                     {
                         <CascadingValue Value="this">
-                            <WeekPlannerColumn Column="col" DayOfWeek="dayOfWeek" Date="WeekPlanner.WeekStart.AddDays(dayIncrement)" />
+                            <WeekPlannerColumn Column="col" DayOfWeek="dayOfWeek" Date="date" />
                         </CascadingValue>
 
                     }
                     else
                     {
-                        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@dayOfWeek</div>
+                        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex flex-col justify-center items-center">
+                            <p class="font-bold">
+                                @dayOfWeek
+                            </p>
+                            <p>
+                                @date.ToString("MMM d")
+                            </p>
+                        </div>
                         <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
                              class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
                         </div>
                     }
                 }
             </div>
-
-            @*   <div class="flex flex-col">
-                <RadzenDatePicker TValue="DateOnly?" Value="SelectedDate" Change="SelectedTermDateChanged" DateFormat="dd/MM/yyyy"
-                                  DateRender="DateRender" Min="MinCalendarDate" Max="MaxCalendarDate" />
-                <button id="go-to-selected-date" @onclick="HandleGoToSelectedDateClicked">Go to Week Planner</button>
-            </div> *@
         </div>
     </div>
 }

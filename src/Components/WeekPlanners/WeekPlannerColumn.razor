@@ -3,15 +3,15 @@
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Shared.Interfaces
 
-<div class="grid grid-rows-subgrid grid-cols-subgrid row-span-full @(IsCurrentWeekday() ? "border border-blue-500" : "")"
+<div class="grid grid-rows-subgrid grid-cols-subgrid row-span-full @(IsCurrentWeekday() ? "border border-gray-400" : "")"
      style="grid-column:@Column.Col">
 
-    <div class="row-start-1 border border-gray-100 flex flex-col justify-center items-center">
+    <div class="row-start-1 border border-gray-100 flex flex-col justify-center items-center @(IsCurrentWeekday() ? "border-gray-400 bg-gray-400" : "")">
         <p class="font-bold">
             @DayOfWeek
         </p>
         <p>
-            @Date.ToString("d/M")
+            @Date.ToString("MMM d")
         </p>
     </div>
 
@@ -29,37 +29,21 @@
         }
         else
         {
-            foreach (var span in cell.RowSpans)
-            {
-                var cellText = string.IsNullOrEmpty(((ILessonPeriod)cell.Period).SubjectName) ? "No subject planned" : ((ILessonPeriod)cell.Period).SubjectName;
-
-                <div class="border border-gray-300 flex justify-center items-center @(cell.IsHovered ? "outline outline-gray-500 -outline-offset-1 z-100 opacity-80" : "")
-                                                         @GetCellColour(cell) select-none @(cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
-                                                         @(string.IsNullOrEmpty(((ILessonPeriod)cell.Period).SubjectName) ? "text-gray-700" : "font-semibold")"
-                     style="grid-column-start:@Column.Col; grid-row-start:@span.Start; grid-row-end:@span.End"
-                     @onmouseover="@(() => { cell.IsHovered = true; StateHasChanged(); })"
-                     @onmouseout="@(() => { cell.IsHovered = true; StateHasChanged(); })"
-                     @onmousedown="@(() => cell.IsHovered = false)"
-                     AccountSetup. @onmouseup="@(() => cell.IsMouseDown = false)">
-                    @cellText
-                </div>
-            }
+            <CascadingValue Value="this">
+                @foreach (var span in cell.RowSpans)
+                {
+                <WeekPlannerCell Column="Column" Cell="cell" RowSpan="span" />
+                }
+            </CascadingValue>
         }
     }
 </div>
 
 @code {
+
     [Parameter] public GridColumn Column { get; set; } = default!;
     [Parameter] public DayOfWeek DayOfWeek { get; set; }
     [Parameter] public DateOnly Date { get; set; }
-
-    string GetCellColour(GridCell cell)
-    {
-        if (cell.Period.PeriodType == PeriodType.Break) return "";
-        return AppConstants.SubjectColours.TryGetValue(((ILessonPeriod)cell.Period).SubjectName, out var colour)
-                ? colour
-                : string.Empty;
-    }
 
     bool IsCurrentWeekday() => DateTime.Now.DayOfWeek == DayOfWeek;
 }

@@ -11,13 +11,10 @@ using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System.ComponentModel;
 
 namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
 public class WeekPlannerPageTests : TestContext
@@ -154,35 +151,6 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public void GetTermWeeks_WhenCalled_ReturnsCorrectNumberOfWeeks()
-    {
-        var appState = CreateAppState(2025);
-        appState.CurrentTerm = 1;
-        appState.CurrentWeek = 1;
-        var component = RenderWeekPlannerPage(appState);
-
-        var termAndWeekNumbers = component.Instance.GetTermAndWeekNumbers();
-
-        Assert.Equal(4, termAndWeekNumbers.Count);
-        Assert.Equal(11, termAndWeekNumbers[1]);
-        Assert.Equal(10, termAndWeekNumbers[2]);
-        Assert.Equal(10, termAndWeekNumbers[3]);
-        Assert.Equal(9, termAndWeekNumbers[4]);
-    }
-
-    [Fact]
-    public void SelectCalendarDate_WhenInTermTime_SetsCorrectYearTermAndWeek()
-    {
-        var component = RenderWeekPlannerPage(_appState);
-
-        component.Instance.SelectedTermDateChanged(new DateTime(2025, 7, 28));
-
-        Assert.Equal(2025, component.Instance.SelectedYear);
-        Assert.Equal(3, component.Instance.SelectedTerm);
-        Assert.Equal(2, component.Instance.SelectedWeek);
-    }
-
-    [Fact]
     public void NavigateToNextWeek_WhenNextWeekWithinSameYear_LoadsNextWeekPlanner()
     {
         var appState = CreateAppStateWithLessonsPlanned();
@@ -192,8 +160,8 @@ public class WeekPlannerPageTests : TestContext
         var component = RenderWeekPlannerPage(appState);
         component.Find("button#next-week").Click();
 
-        Assert.Equal(2, component.Instance.SelectedWeek);
-        Assert.Equal(1, component.Instance.SelectedTerm);
+        Assert.Equal(2, component.Instance.AppState.CurrentWeek);
+        Assert.Equal(1, component.Instance.AppState.CurrentTerm);
         Assert.Equal(2, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
@@ -205,17 +173,14 @@ public class WeekPlannerPageTests : TestContext
     public void NavigateToNextWeek_WhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
     {
         var component = RenderWeekPlannerPage(_appState);
-        component.Instance.SelectedYear = year;
         component.Instance.AppState.CurrentYear = year;
-        component.Instance.SelectedTerm = term;
         component.Instance.AppState.CurrentTerm = term;
-        component.Instance.SelectedWeek = week;
         component.Instance.AppState.CurrentWeek = week;
 
         component.Find("button#next-week").Click();
         Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
-        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
-        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
+        Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
         Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
@@ -224,19 +189,16 @@ public class WeekPlannerPageTests : TestContext
     public void NavigateToNextWeek_NavigateFirstThenWhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
     {
         var component = RenderWeekPlannerPage(_appState);
-        component.Instance.SelectedYear = year;
         component.Instance.AppState.CurrentYear = year;
-        component.Instance.SelectedTerm = term;
         component.Instance.AppState.CurrentTerm = term;
-        component.Instance.SelectedWeek = week;
         component.Instance.AppState.CurrentWeek = week;
 
         component.Find("button#previous-week").Click();
         component.Find("button#next-week").Click();
         component.Find("button#next-week").Click();
-        Assert.Equal(expectedYear, component.Instance.SelectedYear);
-        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
-        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
+        Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
+        Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
         Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
@@ -254,10 +216,10 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(2026, component.Instance.AppState.CurrentYear);
         Assert.Equal(2026, component.Instance.AppState.CurrentYearData!.CalendarYear);
 
-        Assert.Equal(1, component.Instance.SelectedTerm);
+        Assert.Equal(1, component.Instance.AppState.CurrentTerm);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
 
-        Assert.Equal(1, component.Instance.SelectedWeek);
+        Assert.Equal(1, component.Instance.AppState.CurrentWeek);
         Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
 
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
@@ -290,7 +252,7 @@ public class WeekPlannerPageTests : TestContext
 
         component.Find("button#previous-week").Click();
 
-        Assert.Equal(1, component.Instance.SelectedWeek);
+        Assert.Equal(1, component.Instance.AppState.CurrentWeek);
     }
 
     [Theory]
@@ -304,9 +266,9 @@ public class WeekPlannerPageTests : TestContext
 
         component.Find("button#previous-week").Click();
 
-        Assert.Equal(expectedYear, component.Instance.SelectedYear);
-        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
-        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
+        Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
+        Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
         Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
@@ -320,10 +282,10 @@ public class WeekPlannerPageTests : TestContext
 
         component.Find("button#previous-week").Click();
 
-        Assert.Equal(9, component.Instance.SelectedWeek);
+        Assert.Equal(9, component.Instance.AppState.CurrentWeek);
         Assert.Equal(9, component.Instance.WeekNumber);
         Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
-        Assert.Equal(4, component.Instance.SelectedTerm);
+        Assert.Equal(4, component.Instance.AppState.CurrentTerm);
         Assert.Equal(4, component.Instance.TermNumber);
         Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
