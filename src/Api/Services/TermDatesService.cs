@@ -1,9 +1,8 @@
 using LessonFlow.Api.Database;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Exceptions;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
-using UglyToad.PdfPig.Tokens;
 
 namespace LessonFlow.Api.Services;
 
@@ -11,7 +10,7 @@ public class TermDatesService : ITermDatesService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly Dictionary<int, List<SchoolTerm>> _termDatesByYear;
-    // year, term number, number of weeks
+    // {year, {term number, number of weeks} }
     private readonly Dictionary<int, Dictionary<int, int>> _termWeekNumbers = [];
     private readonly Dictionary<int, List<SchoolHoliday>> _schoolHolidaysByYear = [];
 
@@ -28,11 +27,13 @@ public class TermDatesService : ITermDatesService
 
         _termWeekNumbers = InitialiseTermWeekNumbers();
         _schoolHolidaysByYear = InitialiseSchoolHolidays();
+        AvailableYears = _termDatesByYear.Keys.OrderBy(y => y).ToList();
     }
 
     public IReadOnlyDictionary<int, List<SchoolTerm>> TermDatesByYear => _termDatesByYear.AsReadOnly();
     public IReadOnlyDictionary<int, Dictionary<int, int>> TermWeekNumbers => _termWeekNumbers;
     public IReadOnlyDictionary<int, List<SchoolHoliday>> SchoolHolidaysByYear => _schoolHolidaysByYear;
+    public List<int> AvailableYears { get; private set; } = [];
 
     public void SetTermDates(int year, List<SchoolTerm> termDates)
     {
@@ -132,6 +133,25 @@ public class TermDatesService : ITermDatesService
         return GetWeekNumber(DateOnly.FromDateTime(date));
     }
 
+    public int GetNextWeekNumber(DateOnly date)
+    {
+        var termNumber = GetTermNumber(date);
+        var weekNumber = GetWeekNumber(date);
+        if (weekNumber < _termWeekNumbers[date.Year][termNumber])
+        {
+            return weekNumber + 1;
+        }
+        if (termNumber < _termWeekNumbers[date.Year].Keys.Max(x => x))
+        {
+            return 1;
+        }
+        if (_termWeekNumbers.ContainsKey(date.Year + 1))
+        {
+            return 1;
+        }
+        throw new ArgumentOutOfRangeException("There is no next week available");
+    }
+
     private Dictionary<int, List<SchoolTerm>> LoadTermDates()
     {
         var termDates = _dbContext.TermDates.ToList();
@@ -140,6 +160,7 @@ public class TermDatesService : ITermDatesService
             return [];
         }
 
+        termDates.Sort((a, b) => a.TermNumber.CompareTo(b.TermNumber));
         var termDatesByYear = new Dictionary<int, List<SchoolTerm>>();
         foreach (var termDate in termDates)
         {
@@ -246,7 +267,6 @@ public class TermDatesService : ITermDatesService
         return GetNextWeek(date.Year, termNumber, weekNumber);
     }
 
-
     public DateOnly GetPreviousWeek(int year, int termNumber, int weekNumber)
     {
         if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
@@ -291,5 +311,68 @@ public class TermDatesService : ITermDatesService
         }
 
         return false;
+    }
+
+    public DateOnly GetWeekInNextTerm(int year, int termNumber, int weekNumber)
+    {
+        if (!_termDatesByYear.ContainsKey(year))
+        {
+            throw new ArgumentOutOfRangeException("There are no current term dates for that calendar year");
+        }
+
+        if (termNumber < 1 || termNumber > 4)
+        {
+            throw new ArgumentOutOfRangeException("Requested term number doesn't exist");
+        }
+
+        if (termNumber < 4)
+        {
+            return GetFirstDayOfWeek(year, termNumber + 1, weekNumber);
+        }
+
+        if (_termDatesByYear.ContainsKey(year + 1))
+        {
+            return GetFirstDayOfWeek(year + 1, 1, weekNumber);
+        }
+
+        throw new ArgumentOutOfRangeException("There is no next term available");
+    }
+
+    public DateOnly GetWeekInPreviousTerm(int year, int termNumber, int weekNumber)
+    {
+        if (!_termDatesByYear.ContainsKey(year))
+        {
+            throw new ArgumentOutOfRangeException("There are no current term dates for that calendar year");
+        }
+        if (termNumber < 1 || termNumber > 4)
+        {
+            throw new ArgumentOutOfRangeException("Requested term number doesn't exist");
+        }
+        if (termNumber > 1)
+        {
+            return GetFirstDayOfWeek(year, termNumber - 1, weekNumber);
+        }
+        if (_termDatesByYear.ContainsKey(year - 1))
+        {
+            var previousYear = year - 1;
+            var lastTermNumber = _termDatesByYear[previousYear].Max(t => t.TermNumber);
+            return GetFirstDayOfWeek(previousYear, lastTermNumber, weekNumber);
+        }
+
+        throw new ArgumentOutOfRangeException("There is no previous term available");
+    }
+
+    public DateOnly GetLastWeekOfTerm(int year, int termNumber)
+    {
+        if (!_termWeekNumbers.TryGetValue(year, out var termWeekNumbers))
+        {
+            throw new ArgumentOutOfRangeException("There are no current term dates for that calendar year");
+        }
+        if (!termWeekNumbers.TryGetValue(termNumber, out var weeks))
+        {
+            throw new ArgumentOutOfRangeException("Requested term number doesn't exist");
+        }
+
+        return GetFirstDayOfWeek(year, termNumber, weeks);
     }
 }

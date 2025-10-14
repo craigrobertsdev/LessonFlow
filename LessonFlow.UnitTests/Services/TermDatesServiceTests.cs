@@ -1,5 +1,5 @@
 ﻿using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 
 namespace LessonFlow.UnitTests.Services;
 public class TermDatesServiceTests
@@ -186,6 +186,22 @@ public class TermDatesServiceTests
         Assert.False(isHoliday);
     }
 
+    [Theory]
+    [MemberData(nameof(ValidNextTermDataGenerator))]
+    public void GetWeekInNextTerm_NextTermExists_ReturnsNextTerm(int year, int term, int week, DateOnly termStart)
+    {
+        var nextTerm = _termDatesService.GetWeekInNextTerm(year, term, week);
+        Assert.Equal(termStart, nextTerm);
+    }
+
+    [Theory]
+    [MemberData(nameof(ValidPreviousTermDataGenerator))]
+    public void GetWeekInPreviousTerm_PreviousTermExists_ReturnsPreviousTerm(int year, int term, int week, DateOnly termStart)
+    {
+        var previousTerm = _termDatesService.GetWeekInPreviousTerm(year, term, week);
+        Assert.Equal(termStart, previousTerm);
+    }
+
     public static TheoryData<DateOnly, int> ValidTermDateGenerator()
     {
         var data = new TheoryData<DateOnly, int>();
@@ -194,7 +210,6 @@ public class TermDatesServiceTests
 
         return data;
     }
-
 
     public static TheoryData<int, int, int, DateOnly> NextWeekDataGenerator()
     {
@@ -224,6 +239,7 @@ public class TermDatesServiceTests
         data.Add(2025, 2, 1, new DateOnly(2025, 4, 7));
         data.Add(2025, 3, 5, new DateOnly(2025, 8, 11));
         data.Add(2026, 1, 1, new DateOnly(2025, 12, 8));
+        data.Add(2025, 1, 5, new DateOnly(2025,  2, 17));
         return data;
     }
 
@@ -284,6 +300,26 @@ public class TermDatesServiceTests
         data.Add(new DateTime(2026, 6, 10));
         data.Add(new DateTime(2026, 9, 20));
         data.Add(new DateTime(2026, 11, 25));
+        return data;
+    }
+
+    public static TheoryData<int, int, int, DateOnly> ValidNextTermDataGenerator()
+    {
+        var data = new TheoryData<int, int, int, DateOnly>();
+        data.Add(2025, 1, 1, new DateOnly(2025, 4, 28));
+        data.Add(2025, 3, 1, new DateOnly(2025, 10, 13));
+        data.Add(2025, 4, 1, new DateOnly(2026, 1, 26));
+        data.Add(2025, 1, 4, new DateOnly(2025, 5, 19));
+        return data;
+    }
+
+    public static TheoryData<int, int, int, DateOnly> ValidPreviousTermDataGenerator()
+    {
+        var data = new TheoryData<int, int, int, DateOnly>();
+        data.Add(2025, 2, 1, new DateOnly(2025, 1, 27));
+        data.Add(2025, 4, 1, new DateOnly(2025, 7, 21));
+        data.Add(2026, 1, 1, new DateOnly(2025, 10, 13));
+        data.Add(2025, 2, 4, new DateOnly(2025, 2, 17));
         return data;
     }
 }
