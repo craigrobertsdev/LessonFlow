@@ -4,7 +4,7 @@ using LessonFlow.Components.AccountSetup;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;

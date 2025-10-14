@@ -2,6 +2,8 @@
 @attribute [Authorize]
 @page "/WeekPlanner"
 
+@using LessonFlow.Components.Enums
+@using LessonFlow.Components.Shared
 @using LessonFlow.Components.WeekPlanners
 @using Microsoft.AspNetCore.Authorization
 
@@ -30,46 +32,106 @@
 }
 else
 {
-    <div class="flex gap-6">
-        <div style="grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="grid">
-            <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
+    <div class="flex flex-col">
+        <div class="grid grid-cols-[max-content_1fr_max-content] w-full border border-gray-300">
+            <div class="col-start-1 flex items-center">
+                <button id="previous-week" @onclick="HandleGoToPreviousWeek" disabled="@(!_canNavigateToPreviousWeek)" title="Go to previous week"
+                        class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToPreviousWeek ? "" : "text-gray-400 hover:bg-transparent")">
+                    <LeftArrow />
+                </button>
 
-            @* Lesson and break headers *@
-            @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
-            {
-                var period = WeekPlannerTemplate.Periods[i];
-                <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
-                    @period.Name
+                <button id="next-week" @onclick="HandleGoToNextWeek" disabled="@(!_canNavigateToNextWeek)" title="Go to next week"
+                        class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToNextWeek ? "" : "text-gray-400 hover:bg-transparent")">
+                    <RightArrow />
+                </button>
+            </div>
+
+            <div class="col-start-3">
+                <div class="grid grid-cols-4 ml-auto justify-start pr-4">
+                    <div class="col-start-1 ml-auto flex gap-2 justify-center items-center font-semibold">
+                        <p class="font-semibold">Year</p>
+                        <select id="year-selector" @onchange="SelectedYearChanged" class="border-b border-gray-300 p-1 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                            @foreach (var year in TermDatesService.AvailableYears)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-start-2 flex gap-2 justify-center items-center font-semibold my-1">
+                        <p class="font-semibold">Term</p>
+                        <select id="term-selector" @onchange="SelectedTermChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                            @foreach (var term in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year].Keys.Max()))
+                            {
+                                <option value="@term">@term</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-start-3 flex gap-2 justify-center items-center font-semibold my-1">
+                        <p class="font-semibold">Week</p>
+                        <select id="week-selector" @onchange="SelectedWeekChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                            @foreach (var week in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year][SelectedTerm]))
+                            {
+                                <option value="@week">@week</option>
+                            }
+                        </select>
+                    </div>
+
+                    <Button Id="go-to-week" Class="col-start-4" OnClick="@HandleGoToSelectedDateClicked" Type="ButtonType.Submit">Go To Selected</Button>
+
                 </div>
-            }
 
-            @for (int i = 0; i < GridCols.Count; i++)
-            {
-                var col = GridCols[i];
-                var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
-                if (col.IsWorkingDay)
-                {
-                    <CascadingValue Value="this">
-                        <WeekPlannerColumn Column="col" DayOfWeek="dayOfWeek" />
-                    </CascadingValue>
+            </div>
+        </div>
 
-                }
-                else
+        <div class="row-start-2">
+            <div style="grid-template-rows:@(_gridRows); grid-template-columns:@(_gridTemplateCols);" class="grid">
+                <div class="row-start-1 col-start-1 flex flex-col justify-center items-center border border-gray-100 font-semibold">
+                    <div>@Year</div>
+                    <div>Term @TermNumber Week @WeekNumber</div>
+                </div>
+
+                @* Lesson and break headers *@
+                @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
                 {
-                    <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@dayOfWeek</div>
-                    <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
-                         class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+                    var period = WeekPlannerTemplate.Periods[i];
+                    <div class="row-start-@(i + 2) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold">
+                        @period.Name
                     </div>
                 }
-            }
-        </div>
 
-        <div class="flex flex-col">
-            <RadzenDatePicker TValue="DateOnly?" Value="SelectedDate" Change="SelectedTermDateChanged" DateFormat="dd/MM/yyyy" 
-                DateRender="DateRender" Min="MinCalendarDate" Max="MaxCalendarDate" />
-            <button id="go-to-selected-date" @onclick="HandleGoToSelectedDateClicked">Go to Week Planner</button>
-            <button id="previous-week" @onclick="HandleGoToPreviousWeek" disabled="@(!_canNavigateToPreviousWeek)">Previous Week</button>
-            <button id="next-week" @onclick="HandleGoToNextWeek" disabled="@(!_canNavigateToNextWeek)">Next Week</button>
+                @for (int i = 0; i < GridCols.Count; i++)
+                {
+                    var col = GridCols[i];
+                    var dayIncrement = i;
+                    var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
+                    if (col.IsWorkingDay)
+                    {
+                        <CascadingValue Value="this">
+                            <WeekPlannerColumn Column="col" DayOfWeek="dayOfWeek" Date="WeekPlanner.WeekStart.AddDays(dayIncrement)" />
+                        </CascadingValue>
+
+                    }
+                    else
+                    {
+                        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@dayOfWeek</div>
+                        <div style="grid-column :@(col.Col); grid-row: 2/@(WeekPlannerTemplate.Periods.Count + 2);"
+                             class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+                        </div>
+                    }
+                }
+            </div>
+
+            @*   <div class="flex flex-col">
+                <RadzenDatePicker TValue="DateOnly?" Value="SelectedDate" Change="SelectedTermDateChanged" DateFormat="dd/MM/yyyy"
+                                  DateRender="DateRender" Min="MinCalendarDate" Max="MaxCalendarDate" />
+                <button id="go-to-selected-date" @onclick="HandleGoToSelectedDateClicked">Go to Week Planner</button>
+            </div> *@
         </div>
     </div>
+}
+
+@code {
+    private const string ButtonDisabledClass = "text-gray-400 hover:bg-transparent";
 }

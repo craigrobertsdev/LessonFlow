@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.ComponentModel;
 
 namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
 public class WeekPlannerPageTests : TestContext
@@ -53,14 +54,9 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenAllLessonsPlanned_ShouldRenderFromDayPlan()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
         var component = RenderWeekPlannerPage(appState);
 
         foreach (var col in component.Instance.GridCols)
@@ -94,14 +90,9 @@ public class WeekPlannerPageTests : TestContext
     {
         var appState = CreateAppStateWithLessonsPlanned();
         appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
         var component = RenderWeekPlannerPage(appState);
 
         var col = component.Instance.GridCols[0];
@@ -134,14 +125,9 @@ public class WeekPlannerPageTests : TestContext
         var appState = CreateAppStateWithLessonsPlanned();
         var idx = appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
         appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
         var component = RenderWeekPlannerPage(appState);
         var col = component.Instance.GridCols[idx];
         Assert.Empty(col.Cells);
@@ -170,15 +156,10 @@ public class WeekPlannerPageTests : TestContext
     [Fact]
     public void GetTermWeeks_WhenCalled_ReturnsCorrectNumberOfWeeks()
     {
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
-        var component = RenderWeekPlannerPage(_appState);
+        var appState = CreateAppState(2025);
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
+        var component = RenderWeekPlannerPage(appState);
 
         var termAndWeekNumbers = component.Instance.GetTermAndWeekNumbers();
 
@@ -202,32 +183,12 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public async Task GoToSelectedDate_WhenDateInSchoolTermAndWeekPlannerExists_LoadsCorrectYearDataAndWeekPlanner()
-    {
-        var component = RenderWeekPlannerPage(_appState);
-
-        component.Instance.SelectedTermDateChanged(new DateTime(2025, 7, 28));
-        await component.Find("button#go-to-selected-date").ClickAsync(new MouseEventArgs());
-
-        var instance = component.Instance;
-        Assert.Equal(2025, instance.AppState.CurrentYearData!.CalendarYear);
-        Assert.NotNull(instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 3));
-        Assert.Equal(3, instance.WeekPlanner.TermNumber);
-        Assert.Equal(2, instance.WeekPlanner.WeekNumber);
-    }
-
-    [Fact]
     public void NavigateToNextWeek_WhenNextWeekWithinSameYear_LoadsNextWeekPlanner()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
         var component = RenderWeekPlannerPage(appState);
         component.Find("button#next-week").Click();
 
@@ -239,28 +200,67 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
     }
 
+    [Theory]
+    [MemberData(nameof(NavigateToNextWeekAfterHolidaysGenerator))]
+    public void NavigateToNextWeek_WhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    {
+        var component = RenderWeekPlannerPage(_appState);
+        component.Instance.SelectedYear = year;
+        component.Instance.AppState.CurrentYear = year;
+        component.Instance.SelectedTerm = term;
+        component.Instance.AppState.CurrentTerm = term;
+        component.Instance.SelectedWeek = week;
+        component.Instance.AppState.CurrentWeek = week;
+
+        component.Find("button#next-week").Click();
+        Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
+        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
+        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
+    }
+
+    [Theory]
+    [MemberData(nameof(NavigateToNextWeekAfterHolidaysGenerator))]
+    public void NavigateToNextWeek_NavigateFirstThenWhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    {
+        var component = RenderWeekPlannerPage(_appState);
+        component.Instance.SelectedYear = year;
+        component.Instance.AppState.CurrentYear = year;
+        component.Instance.SelectedTerm = term;
+        component.Instance.AppState.CurrentTerm = term;
+        component.Instance.SelectedWeek = week;
+        component.Instance.AppState.CurrentWeek = week;
+
+        component.Find("button#previous-week").Click();
+        component.Find("button#next-week").Click();
+        component.Find("button#next-week").Click();
+        Assert.Equal(expectedYear, component.Instance.SelectedYear);
+        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
+        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
+    }
+
     [Fact]
     public void NavigateToNextWeek_WhenNextWeekIsNextYear_LoadsNextWeekPlannerWithNextYearData()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "9" },
-            { "termNumber", "4" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentTerm = 4;
+        appState.CurrentWeek = 9;
         var component = RenderWeekPlannerPage(appState);
+
         component.Find("button#next-week").Click();
 
-        Assert.Equal(1, component.Instance.SelectedWeek);
-        Assert.Equal(1, component.Instance.SelectedTerm);
-        Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
-        Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
         Assert.Equal(2026, component.Instance.AppState.CurrentYear);
         Assert.Equal(2026, component.Instance.AppState.CurrentYearData!.CalendarYear);
+
+        Assert.Equal(1, component.Instance.SelectedTerm);
+        Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
+
+        Assert.Equal(1, component.Instance.SelectedWeek);
+        Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
+
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
     }
 
     [Theory]
@@ -268,15 +268,10 @@ public class WeekPlannerPageTests : TestContext
     [InlineData(2025, 4, 8, false)]
     public void NavigateToNextWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
     {
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", weekNumber },
-            { "termNumber", termNumber },
-            { "year", year }
-        });
-        navigationManager.NavigateTo(uri);
-        var component = RenderWeekPlannerPage(_appState);
+        var appState = CreateAppState(year);
+        appState.CurrentTerm = termNumber;
+        appState.CurrentWeek = weekNumber;
+        var component = RenderWeekPlannerPage(appState);
 
         var nextWeekButton = component.Find("button#next-week");
         nextWeekButton.Click();
@@ -288,40 +283,75 @@ public class WeekPlannerPageTests : TestContext
     public void NavigateToPreviousWeek_WhenPreviousWeekWithinSameYear_LoadsPreviousWeekPlanner()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "2" },
-            { "termNumber", "1" },
-            { "year", "2025" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentYear = 2025;
+        appState.CurrentWeek = 2;
+        appState.CurrentTerm = 1;
         var component = RenderWeekPlannerPage(appState);
+
         component.Find("button#previous-week").Click();
+
         Assert.Equal(1, component.Instance.SelectedWeek);
+    }
+
+    [Theory]
+    [MemberData(nameof(NavigateToLastWeekBeforeHolidaysGenerator))]
+    public void NavigateToPreviousWeek_WhenPreviousWeekBeforeSchoolHolidays_LoadsLastWeekOfPreviousTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    {
+        var appState = CreateAppState(year);
+        appState.CurrentTerm = term;
+        appState.CurrentWeek = week;
+        var component = RenderWeekPlannerPage(appState);
+
+        component.Find("button#previous-week").Click();
+
+        Assert.Equal(expectedYear, component.Instance.SelectedYear);
+        Assert.Equal(expectedTerm, component.Instance.SelectedTerm);
+        Assert.Equal(expectedWeek, component.Instance.SelectedWeek);
+        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
     [Fact]
     public void NavigateToPreviousWeek_WhenPreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearData()
     {
         var appState = CreateAppState(2026);
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", "1" },
-            { "termNumber", "1" },
-            { "year", "2026" }
-        });
-        navigationManager.NavigateTo(uri);
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
         var component = RenderWeekPlannerPage(appState);
+
         component.Find("button#previous-week").Click();
 
         Assert.Equal(9, component.Instance.SelectedWeek);
-        Assert.Equal(4, component.Instance.SelectedTerm);
+        Assert.Equal(9, component.Instance.WeekNumber);
         Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
+        Assert.Equal(4, component.Instance.SelectedTerm);
+        Assert.Equal(4, component.Instance.TermNumber);
         Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
         Assert.Equal(2025, component.Instance.AppState.CurrentYear);
+        Assert.Equal(2025, component.Instance.Year);
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
+    }
+
+    [Fact]
+    public void NavigateToPreviousWeekAfterNavigatingToNextWeek_PreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearData()
+    {
+        var appState = CreateAppState(2025);
+        appState.CurrentTerm = 4;
+        appState.CurrentWeek = 9;
+        var component = RenderWeekPlannerPage(appState);
+
+        component.Find("button#next-week").Click();
+        component.Find("button#previous-week").Click();
+
+        Assert.Equal(9, component.Instance.SelectedWeek);
+        Assert.Equal(9, component.Instance.AppState.CurrentWeek);
+        Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
+        Assert.Equal(4, component.Instance.SelectedTerm);
+        Assert.Equal(4, component.Instance.AppState.CurrentTerm);
+        Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
+        Assert.Equal(2025, component.Instance.AppState.CurrentYear);
+        Assert.Equal(2025, component.Instance.Year);
         Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
     }
 
@@ -330,20 +360,73 @@ public class WeekPlannerPageTests : TestContext
     [InlineData(2025, 1, 2, true)]
     public void NavigateToPreviousWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
     {
-        var navigationManager = Services.GetRequiredService<NavigationManager>();
-        var uri = navigationManager.GetUriWithQueryParameters(new Dictionary<string, object?>
-        {
-            { "weekNumber", weekNumber },
-            { "termNumber", termNumber },
-            { "year", year }
-        });
-        navigationManager.NavigateTo(uri);
-        var component = RenderWeekPlannerPage(_appState);
+        var appState = CreateAppState(year);
+        appState.CurrentTerm = termNumber;
+        appState.CurrentWeek = weekNumber;
+        var component = RenderWeekPlannerPage(appState);
 
         var previousWeekButton = component.Find("button#previous-week");
         previousWeekButton.Click();
 
         Assert.Equal(isDisabled, previousWeekButton.HasAttribute("disabled"));
+    }
+
+    [Theory]
+    [MemberData(nameof(GoToSelectedWeekDatesGenerator))]
+    public void GoToSelectedWeek_WhenInTermTime_LoadsCorrectWeekPlanner(int year, int termNumber, int weekNumber)
+    {
+        var component = RenderWeekPlannerPage(_appState);
+        component.Instance.SelectedYear = year;
+        component.Instance.SelectedTerm = termNumber;
+        component.Instance.SelectedWeek = weekNumber;
+
+        component.Find("select#year-selector").Change(year.ToString());
+        component.Find("select#term-selector").Change(termNumber.ToString());
+        component.Find("select#week-selector").Change(weekNumber.ToString());
+        component.Find("button#go-to-week").Click();
+
+        Assert.Equal(year, component.Instance.SelectedYear);
+        Assert.Equal(year, component.Instance.AppState.CurrentYear);
+
+        Assert.Equal(termNumber, component.Instance.SelectedTerm);
+        Assert.Equal(termNumber, component.Instance.WeekPlanner.TermNumber);
+        Assert.Equal(termNumber, component.Instance.AppState.CurrentTerm);
+
+        Assert.Equal(weekNumber, component.Instance.SelectedWeek);
+        Assert.Equal(weekNumber, component.Instance.WeekPlanner.WeekNumber);
+        Assert.Equal(weekNumber, component.Instance.AppState.CurrentWeek);
+        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == weekNumber && wp.TermNumber == termNumber));
+    }
+
+    public static TheoryData<int, int, int> GoToSelectedWeekDatesGenerator()
+    {
+        var data = new TheoryData<int, int, int>();
+        data.Add(2025, 1, 11);
+        data.Add(2025, 2, 10);
+        data.Add(2025, 3, 10);
+        data.Add(2025, 4, 7);
+        data.Add(2026, 4, 7);
+        return data;
+    }
+
+    public static TheoryData<int, int, int, int, int, int> NavigateToNextWeekAfterHolidaysGenerator()
+    {
+        var data = new TheoryData<int, int, int, int, int, int>();
+        data.Add(2025, 1, 11, 2025, 2, 1);
+        data.Add(2025, 2, 10, 2025, 3, 1);
+        data.Add(2025, 3, 10, 2025, 4, 1);
+
+        return data;
+    }
+
+    public static TheoryData<int, int, int, int, int, int> NavigateToLastWeekBeforeHolidaysGenerator()
+    {
+        var data = new TheoryData<int, int, int, int, int, int>();
+        data.Add(2025, 2, 1, 2025, 1, 11);
+        data.Add(2025, 3, 1, 2025, 2, 10);
+        data.Add(2025, 4, 1, 2025, 3, 10);
+
+        return data;
     }
 
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlannerPage(AppState appState)

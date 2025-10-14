@@ -1,4 +1,3 @@
-using LessonFlow.Api.Contracts.WeekPlanners;
 using LessonFlow.Components.WeekPlanners;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
@@ -6,19 +5,18 @@ using LessonFlow.Domain.Users;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Interfaces.Persistence;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
-using Radzen;
 
 namespace LessonFlow.Components.Pages;
 
 public partial class WeekPlannerPage : ComponentBase
 {
     [CascadingParameter] public AppState AppState { get; set; } = default!;
-    [SupplyParameterFromQuery] private int WeekNumber { get; set; }
-    [SupplyParameterFromQuery] private int TermNumber { get; set; }
-    [SupplyParameterFromQuery] private int Year { get; set; }
+    internal int Year => AppState.CurrentYear;
+    internal int TermNumber => AppState.CurrentTerm;
+    internal int WeekNumber => AppState.CurrentWeek;
 
     [Inject] NavigationManager NavigationManager { get; set; } = default!;
     [Inject] ILogger<WeekPlannerPage> Logger { get; set; } = default!;
@@ -33,6 +31,8 @@ public partial class WeekPlannerPage : ComponentBase
     private string? _error;
     private bool _canNavigateToNextWeek;
     private bool _canNavigateToPreviousWeek;
+    private bool _canNavigateToNextTerm;
+    private bool _canNavigateToPreviousTerm;
 
     internal YearData YearData => AppState.CurrentYearData!;
     internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData!.WeekPlannerTemplate;
@@ -63,9 +63,10 @@ public partial class WeekPlannerPage : ComponentBase
 
         if (WeekNumber == 0 || TermNumber == 0 || Year == 0)
         {
-            WeekNumber = TermDatesService.GetWeekNumber(DateTime.Now);
-            TermNumber = TermDatesService.GetTermNumber(DateTime.Now);
-            Year = DateTime.Now.Year;
+            var inSchoolHolidays = TermDatesService.IsSchoolHoliday(DateTime.Now);
+            AppState.CurrentWeek = inSchoolHolidays ? TermDatesService.GetNextWeekNumber(DateOnly.FromDateTime(DateTime.Now)) : TermDatesService.GetWeekNumber(DateTime.Now);
+            AppState.CurrentTerm = TermDatesService.GetTermNumber(DateTime.Now);
+            AppState.CurrentYear = DateTime.Now.Year;
         }
 
         SelectedYear = Year;
@@ -206,17 +207,6 @@ public partial class WeekPlannerPage : ComponentBase
         return TermDatesService.TermWeekNumbers[Year];
     }
 
-    private void DateRender(DateRenderEventArgs args)
-    {
-        var isSchoolHoliday = TermDatesService.IsSchoolHoliday(args.Date);
-        if (isSchoolHoliday)
-        {
-            args.Attributes.Add("class", "bg-gray-200 text-gray-500");
-        }
-
-        args.Disabled = isSchoolHoliday || args.Date.DayOfWeek == DayOfWeek.Saturday || args.Date.DayOfWeek == DayOfWeek.Sunday;
-    }
-
     internal void SelectedTermDateChanged(DateTime? date)
     {
         if (date is DateTime newDate)
@@ -235,32 +225,16 @@ public partial class WeekPlannerPage : ComponentBase
         _error = null;
         try
         {
-            if (Year != SelectedYear)
-            {
-                var yearData = await UserRepository.GetYearDataByYear(User.Id, SelectedYear, new CancellationToken());
-                if (yearData is null)
-                {
-                    _error = $"Error trying to load data for calendar year {SelectedYear}";
-                    _loading = false;
-                    return;
-                }
+            var selectedDate = TermDatesService.GetFirstDayOfWeek(SelectedYear, SelectedTerm, SelectedWeek);
 
-                AppState.YearDataByYear.Add(SelectedYear, yearData);
-                AppState.CurrentYear = SelectedYear;
-            }
+            await LoadWeekPlannerForDate(selectedDate);
 
-            var weekPlanner = await WeekPlannerRepository.GetWeekPlanner(AppState.CurrentYearData!.Id, SelectedYear, SelectedTerm, SelectedWeek, new CancellationToken());
-            if (weekPlanner is null)
-            {
-                var weekStart = TermDatesService.GetFirstDayOfWeek(SelectedYear, SelectedTerm, SelectedWeek);
-                weekPlanner = new WeekPlanner(AppState.CurrentYearData!, SelectedYear, SelectedTerm, SelectedWeek, weekStart);
-            }
+            AppState.CurrentTerm = SelectedTerm;
+            AppState.CurrentWeek = SelectedWeek;
+            AppState.CurrentYear = SelectedYear;
 
-            AppState.CurrentYearData.WeekPlanners.Add(weekPlanner);
-            WeekPlanner = weekPlanner;
-            WeekNumber = SelectedWeek;
-            TermNumber = SelectedTerm;
-            Year = SelectedYear;
+            UpdateCanNavigate();
+            StateHasChanged();
         }
         finally
         {
@@ -276,36 +250,13 @@ public partial class WeekPlannerPage : ComponentBase
             var nextWeek = TermDatesService.GetNextWeek(Year, TermNumber, WeekNumber);
 
             SelectedTerm = TermDatesService.GetTermNumber(nextWeek);
-            SelectedWeek = TermDatesService.GetWeekNumber(nextWeek);
+            SelectedWeek = TermDatesService.GetWeekNumber(nextWeek.Year, SelectedTerm, nextWeek);
 
-            if (nextWeek.Year != SelectedYear)
-            {
-                SelectedYear = nextWeek.Year;
-                // TODO: check if yeardata is already loaded.
-                var yearData = await YearDataRepository.GetByUserIdAndYear(User.Id, SelectedYear, new CancellationToken());
-                if (yearData is null)
-                {
-                    var schoolName = AppState.YearDataByYear[SelectedYear - 1].SchoolName;
-                    yearData = new YearData(User.Id, WeekPlannerTemplate, schoolName, SelectedYear);
-                }
+            await LoadWeekPlannerForDate(nextWeek);
+            AppState.CurrentTerm = SelectedTerm;
+            AppState.CurrentWeek = SelectedWeek;
 
-                AppState.AddNewYearData(SelectedYear, yearData);
-                AppState.CurrentYear = SelectedYear;
-            }
-
-            var weekPlanner = await WeekPlannerRepository.GetWeekPlanner(AppState.CurrentYearData!.Id, nextWeek, new CancellationToken());
-            if (weekPlanner is null)
-            {
-                weekPlanner = new WeekPlanner(AppState.CurrentYearData!, SelectedYear, SelectedTerm, SelectedWeek, nextWeek);
-            }
-
-            WeekPlanner = weekPlanner;
-            YearData.WeekPlanners.Add(weekPlanner);
-
-            TermNumber = SelectedTerm;
-            WeekNumber = SelectedWeek;
-
-            _canNavigateToNextWeek = CanNavigateToNextWeek();
+            UpdateCanNavigate();
         }
         catch (ArgumentOutOfRangeException ex)
         {
@@ -340,34 +291,12 @@ public partial class WeekPlannerPage : ComponentBase
             SelectedTerm = TermDatesService.GetTermNumber(previousWeek);
             SelectedWeek = TermDatesService.GetWeekNumber(previousWeek);
 
-            if (previousWeek.Year != SelectedYear)
-            {
-                SelectedYear = previousWeek.Year;
-                var schoolName = AppState.CurrentYearData.SchoolName;
-                // TODO: check if yeardata is already loaded.
-                var yearData = await YearDataRepository.GetByUserIdAndYear(User.Id, SelectedYear, new CancellationToken());
-                if (yearData is null)
-                {
-                    yearData = new YearData(User.Id, WeekPlannerTemplate, schoolName, SelectedYear);
-                }
+            await LoadWeekPlannerForDate(previousWeek);
 
-                AppState.AddNewYearData(SelectedYear, yearData);
-                AppState.CurrentYear = SelectedYear;
-            }
+            AppState.CurrentTerm = SelectedTerm;
+            AppState.CurrentWeek = SelectedWeek;
 
-            var weekPlanner = await WeekPlannerRepository.GetWeekPlanner(AppState.CurrentYearData!.Id, previousWeek, new CancellationToken());
-            if (weekPlanner is null)
-            {
-                weekPlanner = new WeekPlanner(AppState.CurrentYearData!, SelectedYear, SelectedTerm, SelectedWeek, previousWeek);
-            }
-
-            WeekPlanner = weekPlanner;
-            YearData.WeekPlanners.Add(weekPlanner);
-
-            TermNumber = SelectedTerm;
-            WeekNumber = SelectedWeek;
-
-            _canNavigateToPreviousWeek = CanNavigateToPreviousWeek();
+            UpdateCanNavigate();
         }
         catch (ArgumentOutOfRangeException ex)
         {
@@ -377,6 +306,42 @@ public partial class WeekPlannerPage : ComponentBase
         {
             _loading = false;
         }
+    }
+
+    private async Task LoadWeekPlannerForDate(DateOnly nextWeek)
+    {
+        if (nextWeek.Year != SelectedYear)
+        {
+            SelectedYear = nextWeek.Year;
+        }
+
+        if (!AppState.YearDataByYear.ContainsKey(SelectedYear))
+        {
+            var yearData = await YearDataRepository.GetByUserIdAndYear(User.Id, SelectedYear, new CancellationToken());
+            if (yearData is null)
+            {
+                var schoolName = AppState.CurrentYearData.SchoolName;
+                yearData = new YearData(User.Id, WeekPlannerTemplate, schoolName, SelectedYear);
+            }
+
+            AppState.AddNewYearData(SelectedYear, yearData);
+        }
+
+        AppState.CurrentYear = SelectedYear;
+
+        var weekPlanner = AppState.CurrentYearData.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == nextWeek);
+        if (weekPlanner is null)
+        {
+            weekPlanner = await WeekPlannerRepository.GetWeekPlanner(AppState.CurrentYearData!.Id, nextWeek, new CancellationToken());
+            if (weekPlanner is null)
+            {
+                weekPlanner = new WeekPlanner(AppState.CurrentYearData!, SelectedYear, SelectedTerm, SelectedWeek, nextWeek);
+            }
+
+            YearData.WeekPlanners.Add(weekPlanner);
+        }
+
+        WeekPlanner = weekPlanner;
     }
 
     private bool CanNavigateToPreviousWeek()
@@ -390,6 +355,30 @@ public partial class WeekPlannerPage : ComponentBase
         {
             return false;
         }
+    }
+
+    private void SelectedYearChanged(ChangeEventArgs args)
+    {
+        var year = int.Parse((string)args.Value!);
+        SelectedYear = year;
+    }
+
+    private void SelectedTermChanged(ChangeEventArgs args)
+    {
+        var term = int.Parse((string)args.Value!);
+        SelectedTerm = term;
+    }
+
+    private void SelectedWeekChanged(ChangeEventArgs args)
+    {
+        var week = int.Parse((string)args.Value!);
+        SelectedWeek = week;
+    }
+
+    private void UpdateCanNavigate()
+    {
+        _canNavigateToNextWeek = CanNavigateToNextWeek();
+        _canNavigateToPreviousWeek = CanNavigateToPreviousWeek();
     }
 
     public void Dispose()

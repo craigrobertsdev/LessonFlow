@@ -6,7 +6,14 @@
 <div class="grid grid-rows-subgrid grid-cols-subgrid row-span-full @(IsCurrentWeekday() ? "border border-blue-500" : "")"
      style="grid-column:@Column.Col">
 
-    <div class="row-start-1 border border-gray-100 flex justify-center items-center">@DayOfWeek</div>
+    <div class="row-start-1 border border-gray-100 flex flex-col justify-center items-center">
+        <p class="font-bold">
+            @DayOfWeek
+        </p>
+        <p>
+            @Date.ToString("d/M")
+        </p>
+    </div>
 
     @foreach (var cell in Column.Cells)
     {
@@ -27,8 +34,8 @@
                 var cellText = string.IsNullOrEmpty(((ILessonPeriod)cell.Period).SubjectName) ? "No subject planned" : ((ILessonPeriod)cell.Period).SubjectName;
 
                 <div class="border border-gray-300 flex justify-center items-center @(cell.IsHovered ? "outline outline-gray-500 -outline-offset-1 z-100 opacity-80" : "")
-                                             @GetCellColour(cell) select-none @(cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
-                                             @(string.IsNullOrEmpty(((ILessonPeriod)cell.Period).SubjectName) ? "text-gray-700" : "font-semibold")"
+                                                         @GetCellColour(cell) select-none @(cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
+                                                         @(string.IsNullOrEmpty(((ILessonPeriod)cell.Period).SubjectName) ? "text-gray-700" : "font-semibold")"
                      style="grid-column-start:@Column.Col; grid-row-start:@span.Start; grid-row-end:@span.End"
                      @onmouseover="@(() => { cell.IsHovered = true; StateHasChanged(); })"
                      @onmouseout="@(() => { cell.IsHovered = true; StateHasChanged(); })"
@@ -44,6 +51,7 @@
 @code {
     [Parameter] public GridColumn Column { get; set; } = default!;
     [Parameter] public DayOfWeek DayOfWeek { get; set; }
+    [Parameter] public DateOnly Date { get; set; }
 
     string GetCellColour(GridCell cell)
     {
