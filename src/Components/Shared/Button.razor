@@ -1,0 +1,29 @@
+﻿@using LessonFlow.Components.Enums
+
+<button id="@Id" class="@BaseStyle @ButtonCss @Class" type="button" @onclick="HandleClick">@ChildContent</button>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public ButtonType Type { get; set; } = ButtonType.Submit;
+    [Parameter] public string? Class { get; set; } = string.Empty;
+    [Parameter] public string Id { get; set; } = string.Empty;
+
+    private async Task HandleClick()
+    {
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(null);
+        }
+    }
+
+    private string BaseStyle = "px-2 rounded-full";
+
+    private string ButtonCss => Type switch
+    {
+        ButtonType.Submit => "bg-blue-600 hover:bg-blue-700 text-white",
+        ButtonType.Delete => "bg-red-600 hover:bg-red-700 text-white",
+        ButtonType.Cancel => "bg-gray-200 hover:bg-gray-300 text-gray-800",
+        _ => "bg-gray-200 hover:bg-gray-300 text-gray-800"
+    };
+}
