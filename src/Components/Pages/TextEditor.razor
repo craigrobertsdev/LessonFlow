@@ -1,19 +1,21 @@
-﻿<RadzenHtmlEditor @ref="@HtmlEditor" @bind-Value=@htmlValue style="height: 100%;" Input=@OnInput />
+﻿@using Radzen.Blazor
+
+<RadzenHtmlEditor @ref="@HtmlEditor" @bind-Value=@htmlValue style="height: 100%;" Input=@OnInput />
 
 @code {
-  [Parameter] public string? LessonText { get; set; }
-  [Parameter] public EventCallback<string?> OnLessonTextChange { get; set; }
-  RadzenHtmlEditor HtmlEditor = default!;
-  string htmlValue = string.Empty;
+    [Parameter] public string? LessonText { get; set; }
+    [Parameter] public EventCallback<string?> OnLessonTextChange { get; set; }
+    RadzenHtmlEditor HtmlEditor = default!;
+    string htmlValue = string.Empty;
 
-  protected override void OnInitialized()
-  {
-    htmlValue = LessonText ?? string.Empty;
-  }
+    protected override void OnInitialized()
+    {
+        htmlValue = LessonText ?? string.Empty;
+    }
 
 
-  void OnInput(string html)
-  {
-    OnLessonTextChange.InvokeAsync(html);
-  }
+    void OnInput(string html)
+    {
+        OnLessonTextChange.InvokeAsync(html);
+    }
 }

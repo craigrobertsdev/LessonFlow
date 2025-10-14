@@ -3,7 +3,7 @@ using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Exceptions;
 using LessonFlow.Interfaces.Persistence;
-using LessonFlow.Interfaces.Services;
+using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
