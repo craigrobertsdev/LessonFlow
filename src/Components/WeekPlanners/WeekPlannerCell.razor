@@ -4,7 +4,7 @@
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Shared.Interfaces
 
-<div class="border border-gray-300 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
+<div class="border border-gray-100 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
          @(Cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
          @(Cell.IsHovered ? "bg-gray-50" : "")
          @(string.IsNullOrEmpty(Period.SubjectName) ? "text-gray-700" : "font-semibold")"

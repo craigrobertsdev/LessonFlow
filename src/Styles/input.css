@@ -1,1 +1,15 @@
 ﻿@import "tailwindcss";
+
+@source inline("row-start-3");
+@source inline("row-start-4");
+@source inline("row-start-5");
+@source inline("row-start-6");
+@source inline("row-start-7");
+@source inline("row-start-8");
+@source inline("row-start-9");
+@source inline("row-start-10");
+@source inline("row-start-11");
+@source inline("row-start-12");
+@source inline("row-start-13");
+@source inline("row-start-14");
+@source inline("row-start-15");
