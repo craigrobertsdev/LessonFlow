@@ -8,6 +8,7 @@ using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
+using static LessonFlow.Shared.AppConstants;
 
 namespace LessonFlow.Components.Pages;
 
@@ -141,7 +142,7 @@ public partial class WeekPlannerPage : ComponentBase
                 var cell = new GridCell([], dayPlan.LessonPlans[j], gridCol, lessonPlan.StartPeriod);
                 if (cell.Period.NumberOfPeriods == 1)
                 {
-                    cell.RowSpans.Add((cell.Period.StartPeriod + 2, cell.Period.StartPeriod + 3));
+                    cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
                     cell.IsFirstCellInBlock = true;
                 }
                 else
@@ -165,7 +166,9 @@ public partial class WeekPlannerPage : ComponentBase
         for (int i = 0; i < 5; i++)
         {
             var dayTemplate = WeekPlannerTemplate.DayTemplates[i];
+
             if (!dayTemplate.IsWorkingDay) continue;
+
             for (int j = 0; j < WeekPlannerTemplate.Periods.Count; j++)
             {
                 if (filledGridCells[i, j]) continue;
@@ -183,7 +186,7 @@ public partial class WeekPlannerPage : ComponentBase
                 }
 
                 var cell = new GridCell([], period, GridCols[i], period.StartPeriod);
-                cell.RowSpans.Add((cell.Period.StartPeriod + 2, cell.Period.StartPeriod + 3));
+                cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
                 cell.IsFirstCellInBlock = true;
                 if (cell.Period.NumberOfPeriods > 1)
                 {

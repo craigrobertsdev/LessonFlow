@@ -2,6 +2,7 @@
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Shared.Interfaces;
+using static LessonFlow.Shared.AppConstants;
 
 namespace LessonFlow.Components.WeekPlanners;
 
@@ -37,9 +38,8 @@ public record GridCell
         if (oldDuration == newDuration) return;
 
         var rowsCovered = 0;
-        var idx = StartRow - 2;
-        var breaksCovered = 0;
-        var start = StartRow + breaksCovered;
+        var idx = StartRow - WEEK_PLANNER_GRID_START_ROW_OFFSET - 1;
+        var start = StartRow;
         int end;
 
         RowSpans.Clear();
@@ -54,7 +54,7 @@ public record GridCell
                     if (rowsCovered == Period.NumberOfPeriods)
                     {
                         idx = i;
-                        end = templatePeriods[idx].StartPeriod + 2;
+                        end = templatePeriods[idx].StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1;
                         RowSpans.Add((start, end));
                         return;
                     }
