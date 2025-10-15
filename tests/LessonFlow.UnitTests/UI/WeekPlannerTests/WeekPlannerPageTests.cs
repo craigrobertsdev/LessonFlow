@@ -140,15 +140,15 @@ public class WeekPlannerPageTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(6, col.Cells.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
 
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
         Assert.Single(col.Cells[1].RowSpans);
 
-        Assert.Equal((5, 7), col.Cells[2].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[3].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[4].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[5].RowSpans[0]);
+        Assert.Equal((6, 8), col.Cells[2].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[4].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[5].RowSpans[0]);
     }
 
     [Fact]

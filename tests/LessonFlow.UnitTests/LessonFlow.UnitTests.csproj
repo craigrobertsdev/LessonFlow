@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\LessonFlow.csproj" />
+    <ProjectReference Include="..\..\src\LessonFlow.csproj" />
   </ItemGroup>
 
   <ItemGroup>

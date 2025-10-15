@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LessonFlow", "src\LessonFlow.csproj", "{93C522C2-DF90-4575-8500-D9666E02AFFC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LessonFlow.UnitTests", "LessonFlow.UnitTests\LessonFlow.UnitTests.csproj", "{E14BE85A-0AD4-4BB4-96E7-E9F840D12BA7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LessonFlow.UnitTests", "tests/LessonFlow.UnitTests\LessonFlow.UnitTests.csproj", "{E14BE85A-0AD4-4BB4-96E7-E9F840D12BA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

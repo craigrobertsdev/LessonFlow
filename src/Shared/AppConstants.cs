@@ -1,10 +1,12 @@
 using System.Collections.Immutable;
 using LessonFlow.Domain.Enums;
 
-namespace LessonFlow;
+namespace LessonFlow.Shared;
 
 public static class AppConstants
 {
+    public const int WEEK_PLANNER_GRID_START_ROW_OFFSET = 2;
+
     public static readonly ImmutableArray<DayOfWeek> WeekDays =
     [
         DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
@@ -18,11 +20,17 @@ public static class AppConstants
         YearLevelValue.Year8, YearLevelValue.Year9, YearLevelValue.Year10
     ];
 
-    public static Dictionary<string, string> SubjectColours = new() 
+    public static Dictionary<string, string> SubjectColours = new()
     {
         { "English", "bg-blue-200" },
-        {"Mathematics", "bg-red-200" },
-        { "Language", "bg-yellow-200" }
+        { "Mathematics", "bg-red-200" },
+        { "Language", "bg-yellow-200" },
+        { "Science", "bg-green-200" },
+        { "Humanities And Social Science", "bg-purple-200" },
+        { "The Arts", "bg-pink-200" },
+        { "Health and Physical Education", "bg-teal-200" },
+        { "Technologies", "bg-orange-200" },
+        { "Other", "bg-gray-200" }
     };
 
 
