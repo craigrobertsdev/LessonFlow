@@ -70,6 +70,14 @@ public class DayPlan : Entity<DayPlanId>
         }
     }
 
+    public DayPlan Clone()
+    {
+        return new DayPlan(WeekPlannerId, Date, [.. LessonPlans], [.. SchoolEvents])
+        {
+            BreakDutyOverrides = new Dictionary<int, string>(BreakDutyOverrides)
+        };
+    }
+
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private DayPlan() { }
 }
