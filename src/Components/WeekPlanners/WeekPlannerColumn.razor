@@ -1,4 +1,5 @@
-﻿@using LessonFlow.Components.WeekPlanners
+﻿@using LessonFlow.Components.Pages
+@using LessonFlow.Components.WeekPlanners
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Shared.Interfaces
@@ -15,15 +16,29 @@
         </p>
     </div>
 
+    <div class="row-start-2 flex justify-center items-center border border-gray-100">
+        <p>Before School</p>
+    </div>
+
     @foreach (var cell in Column.Cells)
     {
         if (cell.Period.PeriodType == PeriodType.Break)
         {
-            <div class="border border-gray-300 text-center"
+            <div class="border border-gray-100 text-center"
                  style="grid-column-start:@Column.Col; grid-row-start:@cell.RowSpans[0].Start">
-                <div class="w-full p-1">
-                    <input @bind="@(((BreakPeriod)cell.Period).BreakDuty)" class="border-2 focus:ring-0 border-gray-300 bg-white p-1 rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
-                           placeholder="Duty name" />
+                <div class="w-full h-full p-1 flex justify-center items-center">
+                    @if (WeekPlanner.EditingBreaks)
+                    {
+                        <input id=@($"break-duty-{Column.Col}-{cell.PeriodNumber}") @bind="@(((BreakPeriod)cell.Period).BreakDuty)"
+                               class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+                               placeholder="Duty name" />
+                    }
+                    else
+                    {
+                        <p class="h-full w-full flex items-center justify-center font-semibold">
+                            @((BreakPeriod)cell.Period).Name
+                        </p>
+                    }
                 </div>
             </div>
         }
@@ -32,15 +47,19 @@
             <CascadingValue Value="this">
                 @foreach (var span in cell.RowSpans)
                 {
-                <WeekPlannerCell Column="Column" Cell="cell" RowSpan="span" />
+                    <WeekPlannerCell Column="Column" Cell="cell" RowSpan="span" />
                 }
             </CascadingValue>
         }
     }
+
+    <div class="row-start-[-1] border border-gray-100 flex justify-center items-center">
+        <p>After School</p>
+    </div>
 </div>
 
 @code {
-
+    [CascadingParameter] public WeekPlannerPage WeekPlanner { get; set; } = default!;
     [Parameter] public GridColumn Column { get; set; } = default!;
     [Parameter] public DayOfWeek DayOfWeek { get; set; }
     [Parameter] public DateOnly Date { get; set; }

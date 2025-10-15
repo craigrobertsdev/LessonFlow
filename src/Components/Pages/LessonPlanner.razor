@@ -1,5 +1,6 @@
 ﻿@rendermode InteractiveServer
 @page "/LessonPlanner"
+@page "/LessonPlanner/{Year:int}-{Month:int}-{Day:int}/{PeriodStart:int}"
 @inject ILessonPlanRepository LessonPlanRepository
 @using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Shared
@@ -56,8 +57,13 @@
 </div>
 
 @code {
-  [CascadingParameter]
-  public AppState AppState { get; set; } = default!;
+    [CascadingParameter]
+    public AppState AppState { get; set; } = default!;
+
+    [Parameter] public int Year { get; set; }
+    [Parameter] public int Month { get; set; }
+    [Parameter] public int Day { get; set; }
+    [Parameter] public int PeriodStart { get; set; }
 
   List<int> AvailableLessonSlots = new List<int> { 1, 2, 3, 4, 5 };
   public string? SelectedSubject { get; set; }

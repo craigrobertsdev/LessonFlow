@@ -5,6 +5,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.WeekPlanners;
@@ -36,14 +37,14 @@ public class WeekPlannerPageTests : TestContext
         foreach (var col in component.Instance.GridCols)
         {
             Assert.Equal(8, col.Cells.Count);
-            Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
-            Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
-            Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
-            Assert.Equal((5, 6), col.Cells[3].RowSpans[0]);
-            Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
-            Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
-            Assert.Equal((8, 9), col.Cells[6].RowSpans[0]);
-            Assert.Equal((9, 10), col.Cells[7].RowSpans[0]);
+            Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
+            Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+            Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+            Assert.Equal((6, 7), col.Cells[3].RowSpans[0]);
+            Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
+            Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
+            Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
+            Assert.Equal((10, 11), col.Cells[7].RowSpans[0]);
         }
     }
 
@@ -59,14 +60,14 @@ public class WeekPlannerPageTests : TestContext
         foreach (var col in component.Instance.GridCols)
         {
             Assert.Equal(8, col.Cells.Count);
-            Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
-            Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
-            Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
-            Assert.Equal((5, 6), col.Cells[3].RowSpans[0]);
-            Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
-            Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
-            Assert.Equal((8, 9), col.Cells[6].RowSpans[0]);
-            Assert.Equal((9, 10), col.Cells[7].RowSpans[0]);
+            Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
+            Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+            Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+            Assert.Equal((6, 7), col.Cells[3].RowSpans[0]);
+            Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
+            Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
+            Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
+            Assert.Equal((10, 11), col.Cells[7].RowSpans[0]);
         }
 
         foreach (var col in component.Instance.GridCols)
@@ -94,14 +95,14 @@ public class WeekPlannerPageTests : TestContext
 
         var col = component.Instance.GridCols[0];
         Assert.Equal(8, col.Cells.Count);
-        Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
-        Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
-        Assert.Equal((5, 6), col.Cells[3].RowSpans[0]);
-        Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[6].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[7].RowSpans[0]);
+        Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
+        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[3].RowSpans[0]);
+        Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[7].RowSpans[0]);
 
         Assert.Equal(typeof(LessonPeriod), col.Cells[0].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[1].Period.GetType());
@@ -194,8 +195,9 @@ public class WeekPlannerPageTests : TestContext
         component.Instance.AppState.CurrentWeek = week;
 
         component.Find("button#previous-week").Click();
-        component.Find("button#next-week").Click();
-        component.Find("button#next-week").Click();
+        var nextButton = component.Find("button#next-week");
+        nextButton.Click();
+        nextButton.Click();
         Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
         Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
         Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
@@ -360,6 +362,84 @@ public class WeekPlannerPageTests : TestContext
         Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == weekNumber && wp.TermNumber == termNumber));
     }
 
+    [Fact]
+    public void EditWeekPlanner_WhenClicked_CreatesACopyOfCurrentWeekPlanner()
+    {
+        var appState = CreateAppStateWithLessonsPlanned();
+        var component = RenderWeekPlannerPage(appState);
+
+        component.Find("button#edit-week-planner").Click();
+
+        var weekPlanner = component.Instance.WeekPlanner;
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+
+        Assert.NotNull(editingWeekPlanner);
+        for (int i = 0; i < weekPlanner.DayPlans.Count; i++)
+        {
+            for (int j = 0; j < weekPlanner.DayPlans[i].LessonPlans.Count; j++)
+            {
+                Assert.Equal(weekPlanner.DayPlans[i].LessonPlans[j], editingWeekPlanner.DayPlans[i].LessonPlans[j]);
+            }
+
+            for (int j = 0; j < weekPlanner.DayPlans[i].SchoolEvents.Count; j++)
+            {
+                Assert.Equal(weekPlanner.DayPlans[i].SchoolEvents[j], editingWeekPlanner.DayPlans[i].SchoolEvents[j]);
+            }
+
+            Assert.Equal(weekPlanner.DayPlans[i].BreakDutyOverrides, editingWeekPlanner.DayPlans[i].BreakDutyOverrides);
+            Assert.Equal(weekPlanner.DayPlans[i].DayOfWeek, editingWeekPlanner.DayPlans[i].DayOfWeek);
+        }
+
+        Assert.NotEqual(weekPlanner.Id, editingWeekPlanner.Id);
+    }
+
+    [Fact]
+    public void EditWeekPlanner_WhenCancelClicked_DiscardsTheEditingWeekPlanner()
+    {
+        var appState = CreateAppStateWithLessonsPlanned();
+        var component = RenderWeekPlannerPage(appState);
+        var weekPlanner = component.Instance.WeekPlanner;
+
+        component.Find("button#edit-week-planner").Click();
+        Assert.NotNull(component.Instance.EditingWeekPlanner);
+
+        component.Find("button#cancel-editing").Click();
+        Assert.Null(component.Instance.EditingWeekPlanner);
+        Assert.Equal(weekPlanner, component.Instance.WeekPlanner);
+    }
+
+    [Fact]
+    public void EditWeekPlanner_WhenBreakDutyAddedInInputField_UpdatesEditingWeekPlanner()
+    {
+        var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
+        component.Find("button#edit-week-planner").Click();
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        Assert.NotNull(editingWeekPlanner);
+
+        var breakDutyInput = component.Find("input#break-duty-1-3");
+        breakDutyInput.Change("Test Duty");
+
+        Assert.Equal("Test Duty", component.Instance.EditingWeekPlanner!.DayPlans[0].BreakDutyOverrides[3]);
+    }
+
+    [Fact]
+    public async Task EditWeekPlanner_WhenSaveChangesClicked_UpdatesFieldsInComponentWeekPlanner()
+    {
+        var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
+        var weekPlanner = component.Instance.WeekPlanner;
+
+        component.Find("button#edit-week-planner").Click();
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        editingWeekPlanner!.DayPlans[0].BreakDutyOverrides.Add(1, "Test Override");
+
+        var saveButton = component.Find("button#save-changes");
+        await saveButton.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        Assert.Null(component.Instance.EditingWeekPlanner);
+        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.Equal("Test Override", component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[1]);
+    }
+
     public static TheoryData<int, int, int> GoToSelectedWeekDatesGenerator()
     {
         var data = new TheoryData<int, int, int>();
@@ -404,6 +484,7 @@ public class WeekPlannerPageTests : TestContext
         var weekPlannerRepository = new Mock<IWeekPlannerRepository>();
         var yearDataRepository = new Mock<IYearDataRepository>();
         var logger = new Mock<ILogger<AppState>>();
+        var unitOfWork = new Mock<IUnitOfWork>();
         var termDatesService = Helpers.CreateTermDatesService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
@@ -426,6 +507,7 @@ public class WeekPlannerPageTests : TestContext
         Services.AddScoped(sp => weekPlannerRepository.Object);
         Services.AddScoped(sp => userRepository.Object);
         Services.AddScoped(sp => yearDataRepository.Object);
+        Services.AddScoped(sp => unitOfWork.Object);
 
         appState.GetType().GetProperty(nameof(appState.IsInitialised))!.SetValue(appState, true);
         return appState;
@@ -435,6 +517,7 @@ public class WeekPlannerPageTests : TestContext
     {
         var appState = CreateAppState(2025);
         appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlanner(appState.CurrentYearData!));
+        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].Date);
         return appState;
     }
 
@@ -463,6 +546,15 @@ public class WeekPlannerPageTests : TestContext
             new LessonPlan(yearData, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 5, date, []),
             new LessonPlan(yearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 7, date, []),
             new LessonPlan(yearData, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
+        ];
+    }
+
+    private static List<SchoolEvent> CreateSchoolEvents(DateOnly date)
+    {
+        return
+        [
+            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("123", "Fake", "DisneyLand"), "Swimming", true, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
+            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("456", "Main St", "FakeLand"), "Athletics", false, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
         ];
     }
 
