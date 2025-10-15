@@ -11,3 +11,7 @@ bin
 *.db-shm
 *.db-wal
 *.DS_Store
+
+*.pdf
+*.docx
+*.txt
