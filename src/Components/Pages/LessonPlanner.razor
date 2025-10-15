@@ -1,9 +1,11 @@
 ﻿@rendermode InteractiveServer
-@page "/LessonPlanner"
-@page "/LessonPlanner/{Year:int}-{Month:int}-{Day:int}/{PeriodStart:int}"
-@inject ILessonPlanRepository LessonPlanRepository
 @using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Shared
+
+@page "/LessonPlanner"
+@page "/LessonPlanner/{Date:int}-{Month:int}-{Day:int}/{PeriodStart:int}"
+
+@inject ILessonPlanRepository LessonPlanRepository
 
 <div class="mx-auto max-w-7xl p-4 space-y-6">
   <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
