@@ -416,28 +416,73 @@ public class WeekPlannerPageTests : TestContext
         var editingWeekPlanner = component.Instance.EditingWeekPlanner;
         Assert.NotNull(editingWeekPlanner);
 
-        var breakDutyInput = component.Find("input#break-duty-1-3");
+        var breakDutyInput = component.Find("input#break-duty-2-3");
         breakDutyInput.Change("Test Duty");
 
         Assert.Equal("Test Duty", component.Instance.EditingWeekPlanner!.DayPlans[0].BreakDutyOverrides[3]);
     }
 
     [Fact]
-    public async Task EditWeekPlanner_WhenSaveChangesClicked_UpdatesFieldsInComponentWeekPlanner()
+    public async Task SaveChanges_WhenClicked_UpdatesFieldsInComponentWeekPlanner()
     {
         var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
         var weekPlanner = component.Instance.WeekPlanner;
 
         component.Find("button#edit-week-planner").Click();
-        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
-        editingWeekPlanner!.DayPlans[0].BreakDutyOverrides.Add(1, "Test Override");
+        var breakDutyInput = component.Find("input#break-duty-2-3");
+        breakDutyInput.Change("Test Duty");
 
         var saveButton = component.Find("button#save-changes");
         await saveButton.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
 
-        Assert.Null(component.Instance.EditingWeekPlanner);
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        Assert.Null(editingWeekPlanner);
         Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
-        Assert.Equal("Test Override", component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[1]);
+        Assert.Equal("Test Duty", component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[3]);
+    }
+
+    [Fact]
+    public async Task SaveChanges_WhenChangingExistingBreakDutyOverride_ShouldUpdateCorrectly()
+    {
+        var originalValue = "Test Duty";
+        var newValue = "Test Duty 2";
+        var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
+        var weekPlanner = component.Instance.WeekPlanner;
+
+        component.Find("button#edit-week-planner").Click();
+        component.Find("input#break-duty-2-3").Change(originalValue);
+        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        component.Find("button#edit-week-planner").Click();
+        component.Find("input#break-duty-2-3").Change(newValue);
+        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        Assert.Null(editingWeekPlanner);
+        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.Equal(newValue, component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[3]);
+    }
+
+    [Fact]
+    public async Task SaveChanges_WhenClearingExistingBreakDutyOverride_ShouldRemoveFromOverrides()
+    {
+        var originalValue = "Test Duty";
+        var newValue = string.Empty;
+        var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
+        var weekPlanner = component.Instance.WeekPlanner;
+
+        component.Find("button#edit-week-planner").Click();
+        component.Find("input#break-duty-2-3").Change(originalValue);
+        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        component.Find("button#edit-week-planner").Click();
+        component.Find("input#break-duty-2-3").Change(newValue);
+        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+
+        var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        Assert.Null(editingWeekPlanner);
+        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.False(weekPlanner.DayPlans[0].BreakDutyOverrides.ContainsKey(3));
     }
 
     public static TheoryData<int, int, int> GoToSelectedWeekDatesGenerator()

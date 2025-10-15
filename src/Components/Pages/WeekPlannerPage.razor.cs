@@ -44,7 +44,7 @@ public partial class WeekPlannerPage : ComponentBase
     internal int SelectedYear { get; set; }
     internal int SelectedTerm { get; set; }
     internal int SelectedWeek { get; set; }
-    internal bool EditingBreaks => _editingBreaks;
+    internal bool EditingDuties => _editingBreaks;
     internal WeekPlanner? EditingWeekPlanner { get; set; }
 
     protected override async Task OnInitializedAsync()
@@ -381,10 +381,10 @@ public partial class WeekPlannerPage : ComponentBase
 
     internal void NavigateToLessonPlanner(DateOnly date, GridCell cell)
     {
-        NavigationManager.NavigateTo($"/LessonPlanner/{DateToUrlString(date)}/{cell.PeriodNumber}");
+        NavigationManager.NavigateTo($"/LessonPlanner/{DateToUrlString(date)}/{cell.Period.StartPeriod}");
     }
 
-    private string DateToUrlString(DateOnly date) => $"{date.Year}-{date.Month}-{date.Day}";
+    private static string DateToUrlString(DateOnly date) => $"{date.Year}-{date.Month}-{date.Day}";
 
     private void HandleToggleEditBreaks()
     {
@@ -402,20 +402,55 @@ public partial class WeekPlannerPage : ComponentBase
         _editingBreaks = false;
     }
 
-    private void HandleBreakNameChanged(DayOfWeek day, BreakPeriod breakPeriod, ChangeEventArgs args)
+    internal void HandleBreakNameChanged(DayOfWeek day, BreakPeriod breakPeriod, string newName)
     {
         if (EditingWeekPlanner is null) return;
-        var newName = (string)args.Value!;
+
+        var dayPlan = EditingWeekPlanner.DayPlans.First(dp => dp.DayOfWeek == day);
+        if (string.IsNullOrEmpty(newName))
+        {
+            if (dayPlan.BreakDutyOverrides.ContainsKey(breakPeriod.StartPeriod))
+            {
+                dayPlan.BreakDutyOverrides.Remove(breakPeriod.StartPeriod);
+            }
+            return;
+        }
+
+        if (!dayPlan.BreakDutyOverrides.TryAdd(breakPeriod.StartPeriod, newName))
+        {
+            dayPlan.BreakDutyOverrides[breakPeriod.StartPeriod] = newName;
+        }
+    }
+
+    internal void HandleBeforeSchoolDutyChanged(DayOfWeek day, string newName)
+    {
+        if (EditingWeekPlanner is null) return;
+        var dayPlan = EditingWeekPlanner.DayPlans.First(dp => dp.DayOfWeek == day);
+        dayPlan.BeforeSchoolDuty = newName;
+    }
+
+    internal void HandleAfterSchoolDutyChanged(DayOfWeek day, string newName)
+    {
+        if (EditingWeekPlanner is null) return;
+        var dayPlan = EditingWeekPlanner.DayPlans.First(dp => dp.DayOfWeek == day);
+        dayPlan.AfterSchoolDuty = newName;
     }
 
     private async Task HandleSaveChanges()
     {
+        if (EditingWeekPlanner is null) return;
         try
         {
             _error = null;
             _loading = true;
-        
-            
+
+            foreach (var dayPlan in EditingWeekPlanner.DayPlans)
+            {
+                var originalDayPlan = WeekPlanner.DayPlans.First(dp => dp.DayOfWeek == dayPlan.DayOfWeek);
+                originalDayPlan.BreakDutyOverrides = dayPlan.BreakDutyOverrides;
+                originalDayPlan.BeforeSchoolDuty = dayPlan.BeforeSchoolDuty;
+                originalDayPlan.AfterSchoolDuty = dayPlan.AfterSchoolDuty;
+            }
 
             WeekPlannerRepository.Add(WeekPlanner);
             await UnitOfWork.SaveChangesAsync();

@@ -20,6 +20,8 @@ public class DayPlan : Entity<DayPlanId>
     public List<LessonPlan> LessonPlans { get; set; } = [];
     public List<SchoolEvent> SchoolEvents { get; set; } = [];
     public Dictionary<int, string> BreakDutyOverrides { get; set; } = [];
+    public string? BeforeSchoolDuty { get; set; } 
+    public string? AfterSchoolDuty { get; set; } 
 
     public void AddLessonPlan(LessonPlan lessonPlan)
     {

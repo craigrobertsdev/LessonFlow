@@ -29,5 +29,11 @@ public class DayPlanConfiguration : IEntityTypeConfiguration<DayPlan>
                 v => JsonSerializer.Serialize(v, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
                 v => JsonSerializer.Deserialize<Dictionary<int, string>>(v, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) ?? new Dictionary<int, string>()
                 );
+
+        builder.Property(dp => dp.BeforeSchoolDuty)
+            .HasMaxLength(50);
+
+        builder.Property(dp => dp.AfterSchoolDuty)
+            .HasMaxLength(50);
     }
 }
