@@ -22,7 +22,6 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     public int TermNumber { get; private set; }
     public int Year { get; private set; }
     public List<DayPlan> DayPlans { get; private set; } = [];
-    private Lazy<List<DayPlan>> SortedDayPlans { get; set; } = new();
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
 
@@ -35,7 +34,11 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
         }
 
         DayPlans[idx] = dayPlan;
-        SortedDayPlans = new Lazy<List<DayPlan>>(() => DayPlans);
+    }
+
+    public void SortDayPlans()
+    {
+        DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
     }
 
     public WeekPlanner(
@@ -61,22 +64,7 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-    private WeekPlanner()
-    {
-        SortedDayPlans = new Lazy<List<DayPlan>>(EnsureSorted);
-        return;
-
-        List<DayPlan> EnsureSorted()
-        {
-            DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
-            return DayPlans;
-        }
-    }
-
-    public void SortDayPlans()
-    {
-        DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
-    }
+    private WeekPlanner() { }
 }
 
 public static class WeekPlannerExtensions
