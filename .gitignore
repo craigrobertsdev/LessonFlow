@@ -12,8 +12,4 @@ bin
 *.db-wal
 *.DS_Store
 
-*.pdf
-*.docx
-*.txt
-*.xlsx
 Api
