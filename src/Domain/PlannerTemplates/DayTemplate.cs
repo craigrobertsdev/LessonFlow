@@ -17,6 +17,8 @@ public class DayTemplate
     public DayType Type { get; private set; }
     public bool IsWorkingDay => Type == DayType.Working;
     public List<PeriodBase> Periods => _periods;
+    public string? BeforeSchoolDuty { get; set; }
+    public string? AfterSchoolDuty { get; set; }
 
     public void SetPeriods(IEnumerable<PeriodBase> periods)
     {

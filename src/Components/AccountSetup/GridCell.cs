@@ -1,6 +1,7 @@
 ﻿using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
+using static LessonFlow.Shared.AppConstants;
 
 namespace LessonFlow.Components.AccountSetup;
 
@@ -31,7 +32,7 @@ public record GridCell
         if (oldDuration == newDuration) return;
 
         var rowsCovered = 0;
-        var idx = StartRow - 2;
+        var idx = StartRow - WEEK_PLANNER_GRID_START_ROW_OFFSET - 1;
         var start = StartRow;
         int end;
 
@@ -47,7 +48,7 @@ public record GridCell
                     if (rowsCovered == Period.NumberOfPeriods)
                     {
                         idx = i;
-                        end = templatePeriods[idx].StartPeriod + 2;
+                        end = templatePeriods[idx].StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1;
                         RowSpans.Add((start, end));
                         return;
                     }

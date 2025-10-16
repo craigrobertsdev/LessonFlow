@@ -2,7 +2,9 @@
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
+using static LessonFlow.Shared.AppConstants;
 
 namespace LessonFlow.Components.AccountSetup;
 
@@ -12,10 +14,9 @@ public partial class ScheduleForm
     [Parameter] public Func<Task> SaveChanges { get; set; } = default!;
     [Parameter] public Func<Task> CompleteAccountSetup { get; set; } = default!;
     [Inject] public NavigationManager NavigationManager { get; set; } = default!;
-    WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
-    DayOfWeek[] weekDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday];
+    internal WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
     public List<GridColumn> GridCols = [];
-    GridCell? _selectedCell;
+    private GridCell? _selectedCell;
     public GridCell? SelectedCell
     {
         get => _selectedCell;
@@ -26,13 +27,13 @@ public partial class ScheduleForm
         }
     }
 
-    string _gridRows = string.Empty;
-    const string _gridTemplateCols = "0.8fr repeat(5, 1fr)";
+    private string _gridRows = string.Empty;
+    private const string _gridTemplateCols = "minmax(0, 0.6fr) repeat(5, minmax(0, 1fr))";
 
     protected override void OnInitialized()
     {
         List<DayTemplate> templates = [];
-        foreach (var day in weekDays)
+        foreach (var day in AppConstants.WeekDays)
         {
             var isWorkingDay = State.WorkingDays.Contains(day);
             if (!isWorkingDay)
@@ -73,7 +74,7 @@ public partial class ScheduleForm
                 // -1 because the grid starts at 2 and the periods at 1
                 if (cell.Period.NumberOfPeriods == 1 || cell.Period.PeriodType == PeriodType.Break)
                 {
-                    cell.RowSpans.Add((cell.Period.StartPeriod + 1, cell.Period.StartPeriod + 2));
+                    cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
                     cell.IsFirstCellInBlock = true;
                 }
                 else
@@ -91,18 +92,22 @@ public partial class ScheduleForm
         })
         .ToList();
 
-        _gridRows = "50px";
+        _gridRows = "50px 40px";
         foreach (var period in WeekPlannerTemplate.Periods)
         {
             if (period.PeriodType == PeriodType.Lesson || period.PeriodType == PeriodType.Nit)
             {
-                _gridRows += " 1.5fr";
+                //_gridRows += " minmax(0, 1.5fr)";
+                _gridRows += " 60px";
             }
             else
             {
-                _gridRows += " 1fr";
+                //_gridRows += " minmax(0, 1fr)";
+                _gridRows += " 40px";
             }
         }
+
+        _gridRows += " 40px";
     }
 
     private List<int> GetDurationOptions()

@@ -66,6 +66,12 @@ public class DayTemplateConfiguration : IEntityTypeConfiguration<DayTemplate>
         builder.HasMany(dt => dt.Periods)
             .WithOne();
 
+        builder.Property(dt => dt.BeforeSchoolDuty)
+            .HasMaxLength(50);
+
+        builder.Property(dt => dt.AfterSchoolDuty)
+            .HasMaxLength(50);
+
         builder.Navigation(dt => dt.Periods).AutoInclude();
     }
 }
