@@ -1,5 +1,4 @@
 using LessonFlow.Components.AccountSetup.State;
-using LessonFlow.Database;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
