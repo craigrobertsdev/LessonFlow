@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using LessonFlow.Api.Contracts;
-using LessonFlow.Api.Database.Converters;
+using LessonFlow.Database.Converters;
 using LessonFlow.Domain.Common.Interfaces;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 

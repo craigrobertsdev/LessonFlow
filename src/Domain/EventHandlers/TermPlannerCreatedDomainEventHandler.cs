@@ -1,4 +1,4 @@
-using LessonFlow.Api.Database;
+using LessonFlow.Database;
 using LessonFlow.Domain.TermPlanners.DomainEvents;
 using LessonFlow.Interfaces.Persistence;
 using MediatR;

@@ -1,6 +1,6 @@
-﻿using LessonFlow.Api.Database;
-using LessonFlow.Api.Services;
+﻿using LessonFlow.Api.Services;
 using LessonFlow.Components.AccountSetup;
+using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;

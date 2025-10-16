@@ -1,10 +1,10 @@
 using Asp.Versioning;
-using LessonFlow.Api.Database;
-using LessonFlow.Api.Services;
 using LessonFlow.Api.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Components;
 using LessonFlow.Components.Account;
+using LessonFlow.Database;
 using LessonFlow.DependencyInjection;
+using LessonFlow.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
