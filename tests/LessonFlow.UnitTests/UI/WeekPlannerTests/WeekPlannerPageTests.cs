@@ -543,7 +543,7 @@ public class WeekPlannerPageTests : TestContext
 
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
         appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
-        appState.User = new User();
+        appState.User = new User() { AccountSetupComplete = true };
 
         var weekPlanner = new WeekPlanner(yearData, 2025, 3, 2, new DateOnly(2025, 7, 28));
         weekPlannerRepository.Setup(wp => wp.GetWeekPlanner(yearData.Id, 2025, 3, 2, new CancellationToken()).Result).Returns(weekPlanner);
