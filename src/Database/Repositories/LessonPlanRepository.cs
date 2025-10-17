@@ -36,6 +36,16 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<LessonPlan?> GetByDateAndPeriodStart(YearDataId yearDataId, DateOnly date, int period, CancellationToken cancellationToken)
+    {
+        return await context.LessonPlans
+            .Where(lp => lp.YearData.Id == yearDataId)
+            .Where(lp => lp.LessonDate == date)
+            .Where(lp => lp.StartPeriod == period)
+            .Include(lp => lp.Resources)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public void UpdateLessonPlan(LessonPlan lessonPlan)
     {
         context.Update(lessonPlan);

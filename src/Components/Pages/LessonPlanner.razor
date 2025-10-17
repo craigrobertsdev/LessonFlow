@@ -2,99 +2,57 @@
 @using LessonFlow.Interfaces.Persistence
 @using LessonFlow.Shared
 
-@page "/LessonPlanner"
-@page "/LessonPlanner/{Date:int}-{Month:int}-{Day:int}/{PeriodStart:int}"
-
-@inject ILessonPlanRepository LessonPlanRepository
+@page "/LessonPlanner/{Year:int}-{Month:int}-{Day:int}/{PeriodStart:int}"
 
 <div class="mx-auto max-w-7xl p-4 space-y-6">
-  <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between">
-      <div class="flex items-center gap-2">
-        <label for="subject-selector" class="text-sm font-medium text-gray-700">Subject</label>
-        <select @bind="@SelectedSubject" id="subject-selector" class="block w-48 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-          <option value="math-subject">Mathematics</option>
-          <option value="science-subject">Science</option>
-          <option value="history-subject">History</option>
-        </select>
-      </div>
+    <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div class="flex flex-col gap-4 p-4 md:flex-row md:items-end md:justify-between">
+            <div class="flex items-center gap-2">
+                <label for="subject-selector" class="text-sm font-medium text-gray-700">Subject</label>
+                <select @bind="@SelectedSubject" id="subject-selector" class="block w-48 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="math-subject">Mathematics</option>
+                    <option value="science-subject">Science</option>
+                    <option value="history-subject">History</option>
+                </select>
+            </div>
 
-      <div class="flex items-center gap-2">
-        <label for="lesson-count-selector" class="text-sm font-medium text-gray-700">Number of Lessons</label>
-        <select id="lesson-count-selector" class="block w-28 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-          @foreach (var count in AvailableLessonSlots)
-          {
-            <option value="@count">@count</option>
-          }
-        </select>
-      </div>
+            <div class="flex items-center gap-2">
+                <label for="lesson-count-selector" class="text-sm font-medium text-gray-700">Number of Lessons</label>
+                <select id="lesson-count-selector" class="block w-28 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    @foreach (var count in AvailableLessonSlots)
+                    {
+                        <option value="@count">@count</option>
+                    }
+                </select>
+            </div>
 
-      <div class="flex items-center gap-2 text-sm text-gray-600">
-        <span id="lesson-date-label" class="font-medium">Date</span>
-        <span id="lesson-date">@DateTime.Now.ToShortDateString()</span>
-      </div>
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+                <span id="lesson-date-label" class="font-medium">Date</span>
+                <span id="lesson-date">@DateTime.Now.ToShortDateString()</span>
+            </div>
 
-      <div class="flex items-center gap-2">
-        <button class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                @onclick="PrintLessonText">Save</button>
-        <button class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <div class="lg:col-span-2">
-      <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div class="p-4">
-          <TextEditor OnLessonTextChange="@LessonTextChanged" LessonText="@LessonText" />
+            <div class="flex items-center gap-2">
+                <button class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        @onclick="PrintLessonText">
+                    Save
+                </button>
+                <button class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">Cancel</button>
+            </div>
         </div>
-      </div>
     </div>
 
-    <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 class="mb-2 text-sm font-semibold text-gray-800">Resources</h3>
-      <div class="text-sm text-gray-600">Resources</div>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="lg:col-span-2">
+            <div class="rounded-lg border border-gray-200 bg-white shadow-sm">
+                <div class="p-4">
+                    <TextEditor OnLessonTextChange="@LessonTextChanged" LessonText="@LessonText" />
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <h3 class="mb-2 text-sm font-semibold text-gray-800">Resources</h3>
+            <div class="text-sm text-gray-600">Resources</div>
+        </div>
     </div>
-  </div>
 </div>
-
-@code {
-    [CascadingParameter]
-    public AppState AppState { get; set; } = default!;
-
-    [Parameter] public int Year { get; set; }
-    [Parameter] public int Month { get; set; }
-    [Parameter] public int Day { get; set; }
-    [Parameter] public int PeriodStart { get; set; }
-
-  List<int> AvailableLessonSlots = new List<int> { 1, 2, 3, 4, 5 };
-  public string? SelectedSubject { get; set; }
-  public string? LessonText { get; set; }
-
-  protected override async Task OnInitializedAsync()
-  {
-    var lessonData = await LessonPlanRepository.GetByDate(AppState.CurrentYearData.Id, new DateOnly(2025, 7, 29), CancellationToken.None);
-
-    foreach (var lesson in lessonData)
-    {
-      Console.WriteLine(lessonData);
-    }
-  }
-  protected override void OnInitialized()
-  {
-    SelectedSubject = "math-subject";
-
-    LessonText =
-    @"rthsieanrtsheanrths<div>nrt</div><div>seanrt</div><div>seiarnht</div><div>seia</div><div>nreaih</div><div><br></div>";
-  }
-
-  void LessonTextChanged(string? text)
-  {
-    LessonText = text;
-  }
-
-  void PrintLessonText()
-  {
-    Console.WriteLine($"Lesson Text: {LessonText}");
-  }
-}
