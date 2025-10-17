@@ -10,7 +10,7 @@ using LessonFlow.Database;
 using LessonFlow.Database.Repositories;
 using LessonFlow.Services;
 using LessonFlow.Services.FileStorage;
-using LessonFlow.Services.CurriculumParser.SACurriculum;
+//using LessonFlow.Services.CurriculumParser.SACurriculum;
 
 
 namespace LessonFlow.DependencyInjection;
@@ -72,7 +72,7 @@ public static class Infrastructure
         services.AddSingleton<ICurriculumService, CurriculumService>();
         services.AddSingleton<ITermDatesService, TermDatesService>();
         services.AddTransient<IStorageManager, StorageManager>();
-        services.AddScoped<ICurriculumParser, SACurriculumParser>();
+        //services.AddScoped<ICurriculumParser, SACurriculumParser>();
 
         return services;
     }
@@ -102,7 +102,7 @@ public static class Infrastructure
 
     private static IServiceCollection AddCurriculumParser(this IServiceCollection services)
     {
-        services.AddScoped<ICurriculumParser, SACurriculumParser>();
+        //services.AddScoped<ICurriculumParser, SACurriculumParser>();
         return services;
     }
 

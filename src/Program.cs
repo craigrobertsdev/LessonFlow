@@ -1,5 +1,5 @@
 using Asp.Versioning;
-using LessonFlow.Api.Services.CurriculumParser.SACurriculum;
+//using LessonFlow.Api.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Components;
 using LessonFlow.Components.Account;
 using LessonFlow.Database;
@@ -64,14 +64,14 @@ internal class Program
 
         app.MapAdditionalIdentityEndpoints();
 
-        app.MapPost("api/dev/services/parse-curriculum", async (ApplicationDbContext context) =>
-        {
-            var parser = new SACurriculumParser();
-            var subjects = await parser.ParseCurriculum();
-            context.CurriculumSubjects.AddRange(subjects);
-            await context.SaveChangesAsync();
-            return Results.Ok();
-        });
+        //app.MapPost("api/dev/services/parse-curriculum", async (ApplicationDbContext context) =>
+        //{
+        //    var parser = new SACurriculumParser();
+        //    var subjects = await parser.ParseCurriculum();
+        //    context.CurriculumSubjects.AddRange(subjects);
+        //    await context.SaveChangesAsync();
+        //    return Results.Ok();
+        //});
 
         app.MapPost("api/dev/services/term-dates", SetTermDates.Endpoint);
 
