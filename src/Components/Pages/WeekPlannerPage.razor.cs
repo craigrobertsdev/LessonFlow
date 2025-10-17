@@ -463,7 +463,7 @@ public partial class WeekPlannerPage : ComponentBase
         }
         catch (Exception e)
         {
-            // do something here when I work out what kind of errors might be thrown
+            // TODO: work out what kind of errors might be thrown
         }
         finally
         {
