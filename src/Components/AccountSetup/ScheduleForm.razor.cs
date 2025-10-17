@@ -258,7 +258,7 @@ public partial class ScheduleForm
                     continue;
                 }
                 var newPeriod = new LessonPeriod(string.Empty, templatePeriods[templatePeriodsStartIndex].StartPeriod, 1);
-                var newCell = new GridCell([(nextLessonStartPeriod + 1, nextLessonStartPeriod + 2)], newPeriod, cell.Column);
+                var newCell = new GridCell([(nextLessonStartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, nextLessonStartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1)], newPeriod, cell.Column);
                 nextLessonStartPeriod++;
                 if (cellsStartIdx >= cells.Count)
                 {

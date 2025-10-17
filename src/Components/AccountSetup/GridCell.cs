@@ -60,7 +60,7 @@ public record GridCell
                 }
             }
 
-            end = templatePeriods[idx].StartPeriod + 1;
+            end = templatePeriods[idx].StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET;
             RowSpans.Add((start, end));
 
             idx++;
@@ -69,7 +69,7 @@ public record GridCell
                 idx++;
             }
 
-            start = templatePeriods[idx].StartPeriod + 1;
+            start = templatePeriods[idx].StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET;
         }
     }
 }

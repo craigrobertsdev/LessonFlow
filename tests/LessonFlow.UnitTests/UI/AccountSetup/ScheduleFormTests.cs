@@ -36,9 +36,9 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(3, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 7), col.Cells[0].RowSpans[1]);
-        Assert.Equal((8, 10), col.Cells[0].RowSpans[2]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 8), col.Cells[0].RowSpans[1]);
+        Assert.Equal((9, 11), col.Cells[0].RowSpans[2]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -61,9 +61,9 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(3, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 7), col.Cells[0].RowSpans[1]);
-        Assert.Equal((8, 10), col.Cells[0].RowSpans[2]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 8), col.Cells[0].RowSpans[1]);
+        Assert.Equal((9, 11), col.Cells[0].RowSpans[2]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -86,7 +86,7 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Single(col.Cells[0].RowSpans);
-        Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
+        Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         for (int i = 0; i < day.Periods.Count; i++)
@@ -110,8 +110,8 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(2, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 6), col.Cells[0].RowSpans[1]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[0].RowSpans[1]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
 
@@ -139,13 +139,13 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(2, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 7), col.Cells[0].RowSpans[1]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 8), col.Cells[0].RowSpans[1]);
 
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[2].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[4].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[2].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(5, day.Periods.Count);
@@ -165,8 +165,8 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(2, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 6), col.Cells[0].RowSpans[1]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[0].RowSpans[1]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -193,10 +193,10 @@ public class ScheduleFormTests : TestContext
         var col = component.Instance.GridCols[0];
 
         Assert.Equal(2, col.Cells[0].RowSpans.Count);
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((5, 7), col.Cells[0].RowSpans[1]);
-        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]); 
-        Assert.Equal((9, 10), col.Cells[4].RowSpans[0]); 
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((6, 8), col.Cells[0].RowSpans[1]);
+        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]); 
+        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]); 
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -228,15 +228,15 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(7, col.Cells.Count);
 
         var lesson1 = col.Cells[0];
-        Assert.Equal((2, 3), lesson1.RowSpans[0]);
-        Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
-        Assert.Equal((5, 6), col.Cells[3].RowSpans[0]);
-        Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
+        Assert.Equal((3, 4), lesson1.RowSpans[0]);
+        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[3].RowSpans[0]);
+        Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
 
         var lesson5 = col.Cells[6];
-        Assert.Equal((8, 10), lesson5.RowSpans[0]);
+        Assert.Equal((9, 11), lesson5.RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -262,13 +262,13 @@ public class ScheduleFormTests : TestContext
 
         Assert.Equal(7, col.Cells.Count);
 
-        Assert.Equal((2, 4), col.Cells[0].RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
-        Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
-        Assert.Equal((6, 7), col.Cells[3].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
+        Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
+        Assert.Equal((6, 7), col.Cells[2].RowSpans[0]);
+        Assert.Equal((7, 8), col.Cells[3].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[4].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[5].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[6].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -297,14 +297,14 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(5, col.Cells.Count);
 
         var lesson1 = col.Cells[0];
-        Assert.Equal((2, 4), lesson1.RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+        Assert.Equal((3, 5), lesson1.RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
 
         var lesson3 = col.Cells[2];
-        Assert.Equal((5, 7), lesson3.RowSpans[0]);
-        Assert.Equal((8, 9), lesson3.RowSpans[1]);
-        Assert.Equal((7, 8), col.Cells[3].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[4].RowSpans[0]);
+        Assert.Equal((6, 8), lesson3.RowSpans[0]);
+        Assert.Equal((9, 10), lesson3.RowSpans[1]);
+        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -330,13 +330,13 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(4, col.Cells.Count);
 
         var lesson1 = col.Cells[0];
-        Assert.Equal((2, 4), lesson1.RowSpans[0]);
-        Assert.Equal((5, 7), lesson1.RowSpans[1]);
-        Assert.Equal((8, 9), lesson1.RowSpans[2]);
+        Assert.Equal((3, 5), lesson1.RowSpans[0]);
+        Assert.Equal((6, 8), lesson1.RowSpans[1]);
+        Assert.Equal((9, 10), lesson1.RowSpans[2]);
 
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[3].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[2].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[2].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -360,14 +360,14 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(8, col.Cells.Count);
 
         var lesson3 = col.Cells[3];
-        Assert.Equal((2, 3), col.Cells[0].RowSpans[0]);
-        Assert.Equal((3, 4), col.Cells[1].RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[2].RowSpans[0]);
-        Assert.Equal((5, 6), lesson3.RowSpans[0]);
-        Assert.Equal((6, 7), col.Cells[4].RowSpans[0]);
-        Assert.Equal((7, 8), col.Cells[5].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[6].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[7].RowSpans[0]);
+        Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
+        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+        Assert.Equal((6, 7), lesson3.RowSpans[0]);
+        Assert.Equal((7, 8), col.Cells[4].RowSpans[0]);
+        Assert.Equal((8, 9), col.Cells[5].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[7].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -397,12 +397,12 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(5, col.Cells.Count);
 
         var lesson1 = col.Cells[0];
-        Assert.Equal((2, 4), lesson1.RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
-        Assert.Equal((5, 7), lesson1.RowSpans[1]);
-        Assert.Equal((7, 8), col.Cells[2].RowSpans[0]);
-        Assert.Equal((8, 9), col.Cells[3].RowSpans[0]);
-        Assert.Equal((9, 10), col.Cells[4].RowSpans[0]);
+        Assert.Equal((3, 5), lesson1.RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
+        Assert.Equal((6, 8), lesson1.RowSpans[1]);
+        Assert.Equal((8, 9), col.Cells[2].RowSpans[0]);
+        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -432,12 +432,12 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(4, col.Cells.Count);
 
         var lesson1 = col.Cells[0];
-        Assert.Equal((2, 4), lesson1.RowSpans[0]);
-        Assert.Equal((4, 5), col.Cells[1].RowSpans[0]);
-        Assert.Equal((5, 7), lesson1.RowSpans[1]);
-        Assert.Equal((7, 8), col.Cells[2].RowSpans[0]);
-        Assert.Equal((8, 9), lesson1.RowSpans[2]);
-        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]);
+        Assert.Equal((3, 5), lesson1.RowSpans[0]);
+        Assert.Equal((5, 6), col.Cells[1].RowSpans[0]);
+        Assert.Equal((6, 8), lesson1.RowSpans[1]);
+        Assert.Equal((8, 9), col.Cells[2].RowSpans[0]);
+        Assert.Equal((9, 10), lesson1.RowSpans[2]);
+        Assert.Equal((10, 11), col.Cells[3].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -445,6 +445,4 @@ public class ScheduleFormTests : TestContext
         Assert.Equal(6, day.Periods[2].StartPeriod);
         Assert.Equal(8, day.Periods[3].StartPeriod);
     }
-
 }
-

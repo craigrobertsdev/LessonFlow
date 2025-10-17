@@ -12,8 +12,8 @@ public class GridCellTests
 
         var expected = new List<(int start, int end)>
         {
-            (2, 4),
-            (5, 6)
+            (3, 5),
+            (6, 7)
         };
 
         Assert.Equal(expected, selectedCell.RowSpans);
@@ -31,9 +31,9 @@ public class GridCellTests
 
         var expected = new List<(int start, int end)>
         {
-            (2, 4),
-            (5, 7),
-            (8, 10)
+            (3, 5),
+            (6, 8),
+            (9, 11)
         };
 
         Assert.Equal(expected, selectedCell.RowSpans);
@@ -51,7 +51,7 @@ public class GridCellTests
         selectedCell.SetRowSpans(6, 1, weekPlannerTemplate.Periods);
         var expected = new List<(int start, int end)>
         {
-            (2, 3)
+            (3, 4)
         };
         Assert.Equal(expected, selectedCell.RowSpans);
     } 

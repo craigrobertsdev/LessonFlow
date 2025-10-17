@@ -1,4 +1,4 @@
-﻿using LessonFlow.Api.Services;
+﻿using LessonFlow.Services;
 using LessonFlow.Components.AccountSetup;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
@@ -34,7 +34,7 @@ internal class Helpers
         foreach (var period in periods)
         {
             var cell = new GridCell([], period, col);
-            cell.RowSpans.Add((period.StartPeriod + 1, period.StartPeriod + 2));
+            cell.RowSpans.Add((period.StartPeriod + 2, period.StartPeriod + 3));
             cell.IsFirstCellInBlock = true;
             col.Cells.Add(cell);
         }
