@@ -1,12 +1,21 @@
 ﻿@using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Enums
+@using LessonFlow.Components.Shared
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Domain.PlannerTemplates
 @using LessonFlow.Domain.ValueObjects
 @using LessonFlow.Shared
 
-<div class="mb-4 grid grid-cols-2 gap-4 ">
-    <div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(SelectedCell is null ? "bg-gray-200" : "")">
-        <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none">Number of lessons</div>
+<div class="mb-4 grid grid-rows-[1fr_min-content] grid-cols-2 gap-4">
+    <div class="row-start-1 col-span-full shadow-sm border border-gray-200 rounded-md bg-gray-100 p-3 text-center">
+        <p><span class="font-semibold">For lessons:</span> Click on a lesson slot below to assign a subject and number of periods for that lesson.</p>
+        <p><span class="font-semibold">For breaks:</span> Add the name of any break duties you have throughout the day.</p>
+        <br />
+        <p class="font-semibold">You can change these after your account is set up.</p>
+    </div>
+
+    <div class="row-start-2 flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-200 @(SelectedCell is null ? "bg-gray-200" : "")">
+        <div class="px-4 py-2 flex items-center bg-sage-light text-sm font-medium select-none">Number of lessons</div>
         @if (SelectedCell is null)
         {
             <select disabled class="px-3 flex-grow text-sm focus:outline-none">
@@ -28,8 +37,8 @@
         }
     </div>
 
-    <div class="flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-300 @(SelectedCell is null ? "bg-gray-200" : "")">
-        <div class="px-4 py-2 flex items-center bg-indigo-100 text-gray-700 text-sm font-medium select-none ">Subject</div>
+    <div class="row-start-2 col-start-2 flex items-stretch pr-1 rounded-md overflow-hidden shadow-sm border border-gray-200 @(SelectedCell is null ? "bg-gray-200" : "")">
+        <div class="px-4 py-2 flex items-center bg-sage-light text-sm font-medium select-none">Subject</div>
         @if (SelectedCell is null || SelectedCell.Period.PeriodType == PeriodType.Break)
         {
             <select disabled class="px-3 flex-grow text-sm focus:outline-none">
@@ -51,10 +60,10 @@
     </div>
 </div>
 
-<div style="display:grid; grid-template-rows:@(_gridRows); grid-template-columns:@_gridTemplateCols" class="text-sm">
-    <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-100"></div>
+<div style="display:grid; grid-template-rows: @(_gridRows); grid-template-columns: @_gridTemplateCols" class="row-start-3 text-sm mb-4">
+    <div class="row-start-1 col-start-1 flex justify-center items-center border border-gray-200"></div>
 
-    <div class="row-start-2 col-start-1 flex justify-center items-center border border-gray-100 bg-gray-200 p-1 font-semibold">
+    <div class="row-start-2 col-start-1 flex justify-center items-center border border-gray-200 bg-gray-100 p-1 font-semibold">
         Before School
     </div>
 
@@ -62,17 +71,17 @@
     @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
     {
         var period = WeekPlannerTemplate.Periods[i];
-        <div class="row-start-@(i + 3) col-start-1 flex flex-col justify-center items-center border border-gray-100 p-1 font-semibold @(period.PeriodType== PeriodType.Break ? "bg-gray-200" : "")">
+        <div class="row-start-@(i + 3) col-start-1 flex flex-col justify-center items-center border border-gray-200 p-1 font-semibold @(period.PeriodType == PeriodType.Break ? "bg-gray-100" : "")">
             @period.Name
         </div>
     }
 
     @for (int i = 0; i < AppConstants.WeekDays.Length; i++)
     {
-        <div class="col-start-@(i + 2) row-start-1 border border-gray-100 flex justify-center items-center">@AppConstants.WeekDays[i]</div>
+        <div class="col-start-@(i + 2) row-start-1 border border-gray-200 flex justify-center items-center font-semibold">@AppConstants.WeekDays[i]</div>
     }
 
-    <div class="row-start-[-2] col-start-1 flex justify-center items-center border border-gray-100 bg-gray-200 p-1 font-semibold">
+    <div class="row-start-[-2] col-start-1 flex justify-center items-center border border-gray-200 bg-gray-100 p-1 font-semibold">
         After School
     </div>
 
@@ -90,7 +99,7 @@
         else
         {
             <div style="grid-column:@(col.Col); grid-row: 2/-1"
-                 class="relative border border-gray-100 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
+                 class="relative border border-gray-200 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
             </div>
         }
     }
@@ -98,16 +107,10 @@
 </div>
 
 <div class="flex justify-between">
-    <button type="button" @onclick="HandleBack" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+    <Button OnClick="HandleBack" Type="ButtonType.Back">
         Back
-    </button>
-    <button type="button" @onclick="HandleSubmit" disabled="@State.IsLoading" class="@(State.IsLoading ? "opacity-70 cursor-not-allowed" : "") inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-        @if (State.IsLoading)
-        {
-            <span class="inline-block mr-2">
-                <div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full "></div>
-            </span>
-        }
+    </Button>
+    <Button Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@State.IsLoading">
         Complete Setup
-    </button>
+    </Button>
 </div>

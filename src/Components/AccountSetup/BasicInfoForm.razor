@@ -1,5 +1,7 @@
 @using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Enums
 @using LessonFlow.Components.Pages
+@using LessonFlow.Components.Shared
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Shared
 @inject IJSRuntime JsRuntime
@@ -75,16 +77,9 @@
       }
     </div>
 
-    <button @onclick="HandleSubmit" disabled="@AccountSetupState.IsLoading"
-            class="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-      @if (AccountSetupState.IsLoading)
-      {
-        <span class="mr-2 inline-flex">
-          <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-white"></span>
-        </span>
-      }
+    <Button Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@AccountSetupState.IsLoading">
       Next
-    </button>
+    </Button>
   </div>
 </div>
 

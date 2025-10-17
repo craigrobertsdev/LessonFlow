@@ -5,14 +5,14 @@
 @using LessonFlow.Shared
 @using LessonFlow.Shared.Interfaces
 
-<div class="border border-gray-100 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
+<div class="border border-gray-200 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
          @(Cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
-         @(Cell.IsHovered ? "bg-gray-50" : "")
+         @(Cell.IsHovered ? "bg-gray-200 border-gray-300" : "")
          @(string.IsNullOrEmpty(Period.SubjectName) ? "text-gray-700" : "font-semibold")"
      style="grid-column-start:@Column.Col; grid-row-start:@RowSpan.Start; grid-row-end:@RowSpan.End"
      @onclick="GoToLessonPlanner"
-     @onmouseover="@(() => { Cell.IsHovered = true; })"
-     @onmouseout="@(() => { Cell.IsHovered = false; })"
+     @onmouseover="@(() => Cell.IsHovered = true)"
+     @onmouseout="@(() => Cell.IsHovered = false)"
      @onmousedown="@(() => Cell.IsMouseDown = true)"
      @onmouseup="@(() => Cell.IsMouseDown = false)">
 
@@ -34,7 +34,8 @@
     {
         if (Cell.Period.PeriodType == PeriodType.Break) throw new InvalidOperationException("Break periods should not use WeekPlannerCell component.");
 
-        CellText = string.IsNullOrEmpty(Period.SubjectName) ? "No subject planned" : Period.SubjectName;
+        // CellText = string.IsNullOrEmpty(Period.SubjectName) ? "No subject planned" : Period.SubjectName;
+        CellText = string.IsNullOrEmpty(Period.SubjectName) ? "" : Period.SubjectName;
     }
 
     private string GetCellColour(GridCell cell)

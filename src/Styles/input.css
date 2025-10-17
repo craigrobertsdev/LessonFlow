@@ -13,3 +13,20 @@
 @source inline("row-start-13");
 @source inline("row-start-14");
 @source inline("row-start-15");
+
+@theme {
+
+  --color-sage-light: #d5e0e2;
+  --color-sage: #90aeb2;
+  --color-english: #5a8fc7;
+  --color-mathematics: #059669;
+  --color-languages: #9cb85c;
+  --color-arts: #8a74ab;
+  --color-humanities: #5ba9c7;
+  --color-health: #e19d57;
+  --color-science: #7fa5ad;
+  --color-technologies: #6e899a;
+  --color-nit: #eed9c4;
+
+  --color-light-text: #dddddd;
+}

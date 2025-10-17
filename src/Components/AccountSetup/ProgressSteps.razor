@@ -1,7 +1,7 @@
 @rendermode InteractiveServer
 @using LessonFlow.Components.AccountSetup.State
 
-<div class="w-full">
+<div class="w-full bg-gray-50">
     <div class="flex items-center justify-between w-full">
         <div class="flex flex-col items-center relative">
             <div class="@GetStepNumberClass(AccountSetupStep.BasicInfo)">1</div>
@@ -37,7 +37,7 @@
         {
             "w-8 h-8 rounded-full flex items-center justify-center font-semibold",
             IsActive(step) ? "bg-blue-500 text-white" :
-            IsCompleted(step) ? "bg-emerald-500 text-white" :
+            IsCompleted(step) ? "bg-emerald-600 text-white" :
             "bg-gray-200 text-gray-500"
         });
 

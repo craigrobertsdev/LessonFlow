@@ -3,19 +3,18 @@
 @using LessonFlow.Domain.WeekPlanners
 @using LessonFlow.Shared
 
-
-<div class="row-start-2 flex justify-center items-center border border-gray-100 bg-gray-200 p-1">
+<div class="row-start-2 flex justify-center items-center border border-gray-200 bg-gray-100 p-1">
     <input id=@($"before-school-duty-{Column.Col}") @bind="DayTemplate.BeforeSchoolDuty" placeholder="Duty name"
-           class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1" />
+           class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1" />
 </div>
 
 @foreach (var cell in Column.Cells)
 {
     if (cell.Period.PeriodType == PeriodType.Break)
     {
-        <div class="flex justify-center items-center border border-gray-100 bg-gray-200 p-1" style="grid-column:@cell.Column.Col; grid-row-start:@cell.RowSpans[0].Start;">
+        <div class="flex justify-center items-center border border-gray-200 bg-gray-100 p-1" style="grid-column: @cell.Column.Col; grid-row-start: @cell.RowSpans[0].Start;">
             <input @bind="@(((BreakPeriod)cell.Period).BreakDuty)"
-                   class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+                   class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                    placeholder="Duty name" />
         </div>
     }
@@ -25,7 +24,7 @@
         {
             var cellText = string.IsNullOrEmpty(((LessonPeriod)cell.Period).SubjectName) ? "Select subject" : ((LessonPeriod)cell.Period).SubjectName;
 
-            <div class="border border-gray-300 flex justify-center items-center @(cell.IsHovered ? "outline outline-gray-500 -outline-offset-1 z-100 opacity-80" : "") @(IsSelected(cell) ? "outline outline-2 outline-gray-500 -outline-offset-1 z-100" : "")
+            <div class="border border-gray-200 flex justify-center items-center @(cell.IsHovered ? "outline outline-gray-500 -outline-offset-1 z-100 opacity-80" : "") @(IsSelected(cell) ? "outline outline-2 outline-gray-500 -outline-offset-1 z-100" : "")
                                          @(IsSelected(cell) && !cell.IsFirstCellInBlock ? "border-t-0" : "") @GetCellColour(cell) select-none @(cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
                                          @(string.IsNullOrEmpty(((LessonPeriod)cell.Period).SubjectName) ? "text-gray-700" : "font-semibold")"
                  style="grid-column:@cell.Column.Col; grid-row-start:@span.Start; grid-row-end:@span.End"
@@ -40,9 +39,9 @@
     }
 }
 
-<div class="row-start-[-2] border border-gray-100 bg-gray-200 flex justify-center items-center p-1">
-    <input id=@($"before-school-duty-{Column.Col}") @bind="DayTemplate.BeforeSchoolDuty"
-           class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+<div class="row-start-[-2] border border-gray-200 bg-gray-100 flex justify-center items-center p-1">
+    <input id=@($"before-school-duty-{Column.Col}") @bind="DayTemplate.AfterSchoolDuty"
+           class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white text-black rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
            placeholder="Duty name" />
 </div>
 

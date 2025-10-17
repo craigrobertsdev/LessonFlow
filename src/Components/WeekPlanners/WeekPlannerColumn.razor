@@ -8,7 +8,7 @@
 <div class="grid grid-rows-subgrid grid-cols-subgrid row-span-full @(IsCurrentWeekday() ? "border border-gray-400" : "")"
      style="grid-column:@Column.Col">
 
-    <div class="row-start-1 border border-gray-100 flex flex-col justify-center items-center @(IsCurrentWeekday() ? "border-gray-400 bg-gray-400" : "")">
+    <div class="row-start-1 border border-gray-200 flex flex-col justify-center items-center @(IsCurrentWeekday() ? "border-gray-400 bg-gray-400" : "")">
         <p class="font-bold">
             @DayPlan.DayOfWeek
         </p>
@@ -17,11 +17,11 @@
         </p>
     </div>
 
-    <div class="row-start-2 flex justify-center items-center border border-gray-100 bg-gray-200">
+    <div class="row-start-2 flex justify-center items-center border border-gray-300 bg-gray-200 p-1">
         @if (WeekPlanner.EditingDuties)
         {
             <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleBeforeSchoolDutyChanged)"
-                   class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+                   class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                    placeholder="Duty name" />
         }
         else
@@ -34,13 +34,13 @@
     {
         if (cell.Period.PeriodType == PeriodType.Break)
         {
-            <div class="border border-gray-100 bg-gray-200 text-center"
+            <div class="border border-gray-300 bg-gray-200 text-center"
                  style="grid-column-start:@Column.Col; grid-row-start:@cell.RowSpans[0].Start">
                 <div class="w-full h-full p-1 flex justify-center items-center">
                     @if (WeekPlanner.EditingDuties)
                     {
                         <input id=@($"break-duty-{Column.Col}-{cell.PeriodNumber}") value="@GetBreakPeriodDutyName(cell)" @onchange="@(e => HandleBreakDutyChanged(e, cell))"
-                               class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+                               class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                                placeholder="Duty name" />
                     }
                     else
@@ -63,11 +63,11 @@
         }
     }
 
-    <div class="row-start-[-1] border border-gray-100 bg-gray-200 flex justify-center items-center">
+    <div class="row-start-[-1] border border-gray-300 bg-gray-200 flex justify-center items-center p-1">
         @if (WeekPlanner.EditingDuties)
         {
             <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleAfterSchoolDutyChanged)"
-                   class="h-full box-border border-2 focus:ring-0 border-gray-100 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
+                   class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                    placeholder="Duty name" />
         }
         else

@@ -57,6 +57,11 @@ public partial class WeekPlannerPage : ComponentBase
                 NavigationManager.NavigateTo("/Account/Login", replace: true);
                 return;
             }
+            else if (!AppState.User.AccountSetupComplete)
+            {
+                NavigationManager.NavigateTo("/AccountSetup", replace: true);
+                return;
+            }
             else
             {
                 User = AppState.User;

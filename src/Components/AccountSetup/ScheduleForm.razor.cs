@@ -68,9 +68,9 @@ public partial class ScheduleForm
         GridCols = WeekPlannerTemplate.DayTemplates.Select((day, i) =>
         {
             var col = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
-            for (int j = 2; j < day.Periods.Count + 2; j++)
+            for (int j = WEEK_PLANNER_GRID_START_ROW_OFFSET + 1; j < day.Periods.Count + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1; j++)
             {
-                var cell = new GridCell([], day.Periods[j - 2], col);
+                var cell = new GridCell([], day.Periods[j - WEEK_PLANNER_GRID_START_ROW_OFFSET - 1], col);
                 // -1 because the grid starts at 2 and the periods at 1
                 if (cell.Period.NumberOfPeriods == 1 || cell.Period.PeriodType == PeriodType.Break)
                 {
@@ -92,7 +92,7 @@ public partial class ScheduleForm
         })
         .ToList();
 
-        _gridRows = "50px 40px";
+        _gridRows = "40px 40px";
         foreach (var period in WeekPlannerTemplate.Periods)
         {
             if (period.PeriodType == PeriodType.Lesson || period.PeriodType == PeriodType.Nit)
