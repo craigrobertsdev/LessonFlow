@@ -1,3 +1,13 @@
-<div class="flex items-center justify-center">
-    <div class="h-10 w-10 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+<div class="absolute top-[50%] left-[50%]">
+    <div class="text-center">
+        <div class="flex items-center justify-center">
+            <div class="h-10 w-10 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600"></div>
+        </div>
+
+        <p class="text-sm text-gray-600 mt-2">@Message</p>
+    </div>
 </div>
+
+@code {
+    [Parameter] public string? Message { get; set; } = "Loading...";
+}

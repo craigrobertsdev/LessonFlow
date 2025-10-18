@@ -13,22 +13,21 @@
         <h3 class="text-xl font-semibold mb-4">Select Subjects You Teach</h3>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            @if (Subjects.Any())
+            @if (!Subjects.Any())
             {
-                @foreach (var subject in Subjects)
-                {
-                    <label for="@subject" class="flex items-center gap-3 rounded-md border border-gray-200 px-4 py-3 cursor-pointer hover:border-blue-400">
-                        <input id="@subject" type="checkbox"
-                               @onchange="e => ToggleSubject(subject, e.Value as bool? ?? false)"
-                               checked="@State.SubjectsTaught.Contains(subject)"
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                        <span class="text-sm text-gray-800">@subject</span>
-                    </label>
-                }
+                <LoadingSpinner Message="Loading subjects" />
+                return;
             }
-            else
+
+            @foreach (var subject in Subjects)
             {
-                <div class="text-sm text-gray-500">Loading subjects...</div>
+                <label for="@subject" class="flex items-center gap-3 rounded-md border border-gray-200 px-4 py-3 cursor-pointer hover:border-blue-400">
+                    <input id="@subject" type="checkbox"
+                           @onchange="e => ToggleSubject(subject, e.Value as bool? ?? false)"
+                           checked="@State.SubjectsTaught.Contains(subject)"
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                    <span class="text-sm text-gray-800">@subject</span>
+                </label>
             }
         </div>
     </div>

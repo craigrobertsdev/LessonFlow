@@ -4,30 +4,22 @@
 
 @using LessonFlow.Components.AccountSetup
 @using LessonFlow.Components.AccountSetup.State
+@using LessonFlow.Components.Shared
 @using Microsoft.AspNetCore.Authorization
 
 <PageTitle>Account Setup</PageTitle>
 
 @if (User is null || _initialLoading)
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <div class="text-center">
-            <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
-            <p class="text-sm text-gray-600">Loading your account...</p>
-        </div>
-    </div>
+    <LoadingSpinner Message="Loading your account" />
 }
 else if (_redirectToLogin)
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <p class="text-sm text-gray-600">Redirecting to login...</p>
-    </div>
+    <LoadingSpinner Message="Redirecting to login..." />
 }
 else if (_redirectToWeekPlanner)
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <p class="text-sm text-gray-600">Redirecting to week planner...</p>
-    </div>
+    <LoadingSpinner Message="Redirecting to week planner..." />
 }
 else if (AccountSetupState is not null)
 {
@@ -71,7 +63,5 @@ else if (AccountSetupState is not null)
 }
 else
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <p class="text-sm text-gray-600">Setting up your account...</p>
-    </div>
+    <LoadingSpinner Message="Setting up your account..." />
 }

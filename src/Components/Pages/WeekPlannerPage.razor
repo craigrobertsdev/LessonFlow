@@ -15,162 +15,149 @@
     <div>
         <p class="text-red-500 text-lg">@_error</p>
     </div>
+    return;
 }
 
 else if (AppState.User?.AccountSetupComplete == false)
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <div class="text-center">
-            <LoadingSpinner />
-
-            <p class="text-sm text-gray-600">Redirecting to account setup...</p>
-        </div>
-    </div>
+    <LoadingSpinner Message="Redirecting to account setup..." />
+    return;
 }
 
 else if (AppState.CurrentYearData?.WeekPlannerTemplate == null)
 {
-    <div class="flex min-h-[40vh] items-center justify-center">
-        <div class="text-center">
-            <LoadingSpinner />
-
-            <p class="text-sm text-gray-600">Loading week planner...</p>
-        </div>
-    </div>
+    <LoadingSpinner Message="Loading week planner..." />
+    return;
 }
-else
+
+@if (_loading)
 {
-    if (_loading)
-    {
-        <div class="absolute top-[50%] left-[50%]">
-            <LoadingSpinner />
+    <LoadingSpinner />
+    return;
+}
+
+<div class="flex flex-col border-gray-200 bg-gray-50">
+    <div class="grid grid-cols-[max-content_1fr_repeat(3,_max-content)] w-full border border-gray-200 items-center pr-4">
+        <div class="col-start-1 flex items-center">
+            <button id="previous-week" @onclick="HandleGoToPreviousWeek" disabled="@(!_canNavigateToPreviousWeek)" title="Go to previous week"
+                    class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToPreviousWeek ? "" : "text-gray-400 hover:bg-transparent")">
+                <LeftArrow />
+            </button>
+
+            <button id="next-week" @onclick="HandleGoToNextWeek" disabled="@(!_canNavigateToNextWeek)" title="Go to next week"
+                    class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToNextWeek ? "" : "text-gray-400 hover:bg-transparent")">
+                <RightArrow />
+            </button>
         </div>
-        return;
-    }
 
-    <div class="flex flex-col border-gray-200 bg-gray-50">
-        <div class="grid grid-cols-[max-content_1fr_repeat(3,_max-content)] w-full border border-gray-200 items-center pr-4">
-            <div class="col-start-1 flex items-center">
-                <button id="previous-week" @onclick="HandleGoToPreviousWeek" disabled="@(!_canNavigateToPreviousWeek)" title="Go to previous week"
-                        class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToPreviousWeek ? "" : "text-gray-400 hover:bg-transparent")">
-                    <LeftArrow />
-                </button>
+        <div class="col-start-3">
+            <div class="grid grid-cols-4 ml-auto items-center justify-start">
+                <div class="col-start-1 ml-auto flex gap-2 justify-center items-center font-semibold">
+                    <p class="font-semibold">Year</p>
+                    <select id="year-selector" @onchange="SelectedYearChanged" class="border-b border-gray-300 p-1 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                        @foreach (var year in TermDatesService.AvailableYears)
+                        {
+                            <option value="@year" selected="@(year == SelectedYear)">@year</option>
+                        }
+                    </select>
+                </div>
 
-                <button id="next-week" @onclick="HandleGoToNextWeek" disabled="@(!_canNavigateToNextWeek)" title="Go to next week"
-                        class="p-2 transition duration-150 ease-in-ease-out hover:scale-[1.08] hover:bg-gray-200 @(_canNavigateToNextWeek ? "" : "text-gray-400 hover:bg-transparent")">
-                    <RightArrow />
-                </button>
-            </div>
+                <div class="col-start-2 flex gap-2 justify-center items-center font-semibold my-1">
+                    <p class="font-semibold">Term</p>
+                    <select id="term-selector" @onchange="SelectedTermChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                        @foreach (var term in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year].Keys.Max()))
+                        {
+                            <option value="@term" selected="@(term == SelectedTerm)">@term</option>
+                        }
+                    </select>
+                </div>
 
-            <div class="col-start-3">
-                <div class="grid grid-cols-4 ml-auto items-center justify-start">
-                    <div class="col-start-1 ml-auto flex gap-2 justify-center items-center font-semibold">
-                        <p class="font-semibold">Year</p>
-                        <select id="year-selector" @onchange="SelectedYearChanged" class="border-b border-gray-300 p-1 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
-                            @foreach (var year in TermDatesService.AvailableYears)
-                            {
-                                <option value="@year" selected="@(year == SelectedYear)">@year</option>
-                            }
-                        </select>
-                    </div>
+                <div class="col-start-3 flex gap-2 justify-center items-center font-semibold my-1">
+                    <p class="font-semibold">Week</p>
+                    <select id="week-selector" @onchange="SelectedWeekChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
+                        @foreach (var week in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year][SelectedTerm]))
+                        {
+                            <option value="@week" selected="@(week == SelectedWeek)">@week</option>
+                        }
+                    </select>
+                </div>
 
-                    <div class="col-start-2 flex gap-2 justify-center items-center font-semibold my-1">
-                        <p class="font-semibold">Term</p>
-                        <select id="term-selector" @onchange="SelectedTermChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
-                            @foreach (var term in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year].Keys.Max()))
-                            {
-                                <option value="@term" selected="@(term == SelectedTerm)">@term</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-start-3 flex gap-2 justify-center items-center font-semibold my-1">
-                        <p class="font-semibold">Week</p>
-                        <select id="week-selector" @onchange="SelectedWeekChanged" class="border-b border-gray-300 py-1 px-2 hover:bg-gray-100 hover:rounded-md transition duration-150 ease-in-ease-out ">
-                            @foreach (var week in Enumerable.Range(1, TermDatesService.TermWeekNumbers[Year][SelectedTerm]))
-                            {
-                                <option value="@week" selected="@(week == SelectedWeek)">@week</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-start-4 flex justify-center">
-                        <Button Id="go-to-week" Class="" OnClick="@HandleGoToSelectedDateClicked" Type="ButtonType.Submit">Go To Date</Button>
-                    </div>
+                <div class="col-start-4 flex justify-center">
+                    <Button Id="go-to-week" Class="" OnClick="@HandleGoToSelectedDateClicked" Type="ButtonType.Submit">Go To Date</Button>
                 </div>
             </div>
+        </div>
 
-            <div class="col-start-4 px-2">
-                <Button Type="ButtonType.Submit" OnClick="@(() => { })" Class="">&#xFF0B; Add Event</Button>
+        <div class="col-start-4 px-2">
+            <Button Type="ButtonType.Submit" OnClick="@(() => { })" Class="">&#xFF0B; Add Event</Button>
+        </div>
+
+        <div class="col-start-5 px-2">
+            @if (!_editingBreaks)
+            {
+                <Button id="edit-week-planner" Type="ButtonType.Submit" OnClick="HandleToggleEditBreaks" Class="">Edit breaks</Button>
+            }
+            else
+            {
+                <Button Id="save-changes" Type="ButtonType.Submit" OnClick="HandleSaveChanges" Class="">Save Changes</Button>
+                <Button Id="cancel-editing" Type="ButtonType.Cancel" OnClick="HandleCancelChanges" Class="">Cancel</Button>
+            }
+        </div>
+    </div>
+
+    <div class="row-start-2">
+        <div style="display:grid; grid-template-rows:@(_gridRows); grid-template-columns:@(_gridTemplateCols); overflow:hidden;" class="text-sm">
+            <div class="row-start-1 col-start-1 flex flex-col justify-center items-center border border-gray-200 font-semibold">
+                <div>@Year</div>
+                <div>Term @TermNumber Week @WeekNumber</div>
             </div>
 
-            <div class="col-start-5 px-2">
-                @if (!_editingBreaks)
+            @* Lesson and break headers *@
+            <div class="row-start-2 col-start-1 flex flex-col justify-center items-center border border-gray-200 bg-gray-100 p-1 font-semibold">
+                Before School
+            </div>
+
+            @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
+            {
+                var period = WeekPlannerTemplate.Periods[i];
+                <div class="row-start-@(i + 3) col-start-1 flex flex-col justify-center items-center border border-gray-200 @(period.PeriodType == PeriodType.Break ? "bg-gray-200" : "") p-1 font-semibold">
+                    @period.Name
+                </div>
+            }
+
+            <div class="row-start-[-2] col-start-1 flex flex-col justify-center items-center border border-gray-200 bg-gray-200 p-1 font-semibold">
+                After School
+            </div>
+
+            @for (int i = 0; i < GridCols.Count; i++)
+            {
+                var col = GridCols[i];
+                var dayIncrement = i;
+                var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
+                var date = WeekPlanner.WeekStart.AddDays(dayIncrement);
+                var dayPlan = WeekPlanner.DayPlans.FirstOrDefault(wp => wp.Date == date);
+                if (col.IsWorkingDay)
                 {
-                    <Button id="edit-week-planner" Type="ButtonType.Submit" OnClick="HandleToggleEditBreaks" Class="">Edit breaks</Button>
+                    <CascadingValue Value="this">
+                        <WeekPlannerColumn Column="col" DayPlan="@dayPlan" />
+                    </CascadingValue>
+
                 }
                 else
                 {
-                    <Button Id="save-changes" Type="ButtonType.Submit" OnClick="HandleSaveChanges" Class="">Save Changes</Button>
-                    <Button Id="cancel-editing" Type="ButtonType.Cancel" OnClick="HandleCancelChanges" Class="">Cancel</Button>
-                }
-            </div>
-        </div>
-
-        <div class="row-start-2">
-            <div style="display:grid; grid-template-rows:@(_gridRows); grid-template-columns:@(_gridTemplateCols); overflow:hidden;" class="text-sm">
-                <div class="row-start-1 col-start-1 flex flex-col justify-center items-center border border-gray-200 font-semibold">
-                    <div>@Year</div>
-                    <div>Term @TermNumber Week @WeekNumber</div>
-                </div>
-
-                @* Lesson and break headers *@
-                <div class="row-start-2 col-start-1 flex flex-col justify-center items-center border border-gray-200 bg-gray-100 p-1 font-semibold">
-                    Before School
-                </div>
-
-                @for (int i = 0; i < WeekPlannerTemplate.Periods.Count; i++)
-                {
-                    var period = WeekPlannerTemplate.Periods[i];
-                    <div class="row-start-@(i + 3) col-start-1 flex flex-col justify-center items-center border border-gray-200 @(period.PeriodType == PeriodType.Break ? "bg-gray-200" : "") p-1 font-semibold">
-                        @period.Name
+                    <div class="col-start-@(i + 2) row-start-1 border border-gray-200 flex flex-col justify-center items-center">
+                        <p class="font-bold">
+                            @dayOfWeek
+                        </p>
+                        <p>
+                            @date.ToString("MMM d")
+                        </p>
+                    </div>
+                    <div style="grid-column :@(col.Col); grid-row: 2/-1;"
+                         class="relative border border-gray-200 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
                     </div>
                 }
-
-                <div class="row-start-[-2] col-start-1 flex flex-col justify-center items-center border border-gray-200 bg-gray-200 p-1 font-semibold">
-                    After School
-                </div>
-
-                @for (int i = 0; i < GridCols.Count; i++)
-                {
-                    var col = GridCols[i];
-                    var dayIncrement = i;
-                    var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
-                    var date = WeekPlanner.WeekStart.AddDays(dayIncrement);
-                    var dayPlan = WeekPlanner.DayPlans.FirstOrDefault(wp => wp.Date == date);
-                    if (col.IsWorkingDay)
-                    {
-                        <CascadingValue Value="this">
-                            <WeekPlannerColumn Column="col" DayPlan="@dayPlan" />
-                        </CascadingValue>
-
-                    }
-                    else
-                    {
-                        <div class="col-start-@(i + 2) row-start-1 border border-gray-200 flex flex-col justify-center items-center">
-                            <p class="font-bold">
-                                @dayOfWeek
-                            </p>
-                            <p>
-                                @date.ToString("MMM d")
-                            </p>
-                        </div>
-                        <div style="grid-column :@(col.Col); grid-row: 2/-1;"
-                             class="relative border border-gray-200 bg-[repeating-linear-gradient(-45deg,#f3f4f6_0px,#f3f4f6_12px,#e5e7eb_12px,#e5e7eb_24px)]">
-                        </div>
-                    }
-                }
-            </div>
+            }
         </div>
     </div>
-}
+</div>

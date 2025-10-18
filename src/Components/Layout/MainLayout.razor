@@ -1,4 +1,5 @@
-﻿@using LessonFlow.Shared
+﻿@using LessonFlow.Components.Shared
+@using LessonFlow.Shared
 @using Radzen.Blazor
 @inherits LayoutComponentBase
 
@@ -6,12 +7,7 @@
 
 @if (_isInitializing)
 {
-    <div class="min-h-screen flex items-center justify-center">
-        <div class="text-center">
-            <div class="mb-4 inline-block h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-transparent align-[-0.125em]"></div>
-            <p class="text-sm text-gray-600">Loading...</p>
-        </div>
-    </div>
+    <LoadingSpinner Message="Initialising application" />
 }
 else
 {
@@ -51,18 +47,13 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("MainLayout OnInitializedAsync called. HasInitialized: {HasInitialized}, AppState.IsInitialised: {AppStateInitialized}", 
-            _hasInitialized, AppState.IsInitialised);
-
         if (_hasInitialized) 
         {
-            Logger.LogInformation("MainLayout already initialized, skipping");
             _isInitializing = false;
             return;
         }
 
         _hasInitialized = true;
-        Logger.LogInformation("Starting MainLayout initialization");
 
         try
         {
