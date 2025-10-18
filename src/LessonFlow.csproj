@@ -97,13 +97,6 @@
 		<AdditionalFiles Include="Components\Pages\Error.razor" />
 		<AdditionalFiles Include="Components\Pages\Home.razor" />
 		<AdditionalFiles Include="Components\Pages\LessonPlanner.razor" />
-		<AdditionalFiles Include="Components\Pages\TextEditor.razor" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Update="Components\Pages\TextEditor.razor.js">
-			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</None>
 	</ItemGroup>
 
 </Project>
