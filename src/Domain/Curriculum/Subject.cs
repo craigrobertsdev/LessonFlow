@@ -11,6 +11,7 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
     public string Name { get; } = string.Empty;
     public List<YearLevel> YearLevels { get; private set; } = [];
     public string Description { get; private set; } = string.Empty;
+    public static Subject Nit => _nitSubject;
 
     public void AddYearLevel(YearLevel yearLevel)
     {
@@ -46,6 +47,8 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
 
         return redactedYearLevels;
     }
+
+    private static readonly Subject _nitSubject = new Subject("NIT", [], "Non-Instructional Time");
 
     public Subject(List<YearLevel> yearLevels, string name)
     {
