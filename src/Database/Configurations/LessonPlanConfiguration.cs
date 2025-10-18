@@ -32,5 +32,13 @@ public class LessonPlanConfiguration : IEntityTypeConfiguration<LessonPlan>
             lcb.Property<Guid>("Id");
             lcb.HasKey("Id", "LessonPlanId");
         });
+
+        builder.OwnsMany(lp => lp.ToDos, ltd =>
+        {
+            ltd.ToTable("ToDoItem");
+            ltd.WithOwner().HasForeignKey("LessonPlanId");
+            ltd.Property<Guid>("Id");
+            ltd.HasKey("Id", "LessonPlanId");
+        });
     }
 }

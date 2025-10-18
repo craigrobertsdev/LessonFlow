@@ -6,6 +6,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
+using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Shared.Interfaces;
 
@@ -16,7 +17,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     public YearData YearData { get; private set; }
     public Subject Subject { get; private set; }
     public PeriodType PeriodType { get; private set; }
-    public string PlanningNotesHtml { get; private set; }
+    public string PlanningNotesHtml { get; internal set; }
     public DateOnly LessonDate { get; private set; }
     public int NumberOfPeriods { get; private set; }
     public int StartPeriod { get; private set; }
@@ -25,6 +26,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     public List<Resource> Resources { get; private set; } = [];
     public List<LessonComment> Comments { get; private set; } = [];
     public string SubjectName => Subject.Name;
+    public List<ToDoItem> ToDos { get; private set; } = [];
 
     public void AddResource(Resource resource)
     {
@@ -35,14 +37,14 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
         }
     }
 
-    public void SetNumberOfLessons(int newNumberOfLessons)
+    public void SetNumberOfPeriods(int newNumberOfPeriods)
     {
-        if (newNumberOfLessons == NumberOfPeriods)
+        if (newNumberOfPeriods == NumberOfPeriods)
         {
             return;
         }
 
-        NumberOfPeriods = newNumberOfLessons;
+        NumberOfPeriods = newNumberOfPeriods;
         UpdatedDateTime = DateTime.UtcNow;
     }
 
@@ -97,6 +99,20 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
         return resources.Where(Resources.Contains);
     }
 
+    public LessonPlan Clone()
+    {
+        return new LessonPlan(
+            Id,
+            YearData,
+            Subject,
+            PeriodType,
+            PlanningNotesHtml,
+            NumberOfPeriods,
+            StartPeriod,
+            LessonDate,
+            [.. Resources]);
+    }
+
     public LessonPlan(
         YearData yearData,
         Subject subject,
@@ -126,6 +142,18 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private LessonPlan()
     {
+    }
+
+    private LessonPlan(LessonPlanId id, YearData yearData, Subject subject, PeriodType periodType, string planningNotesHtml, int numberOfPeriods, int startPeriod, DateOnly lessonDate, List<Resource> resources) : base(id)
+    {
+        YearData = yearData;
+        Subject = subject;
+        PeriodType = periodType;
+        PlanningNotesHtml = planningNotesHtml;
+        NumberOfPeriods = numberOfPeriods;
+        StartPeriod = startPeriod;
+        LessonDate = lessonDate;
+        Resources = resources;
     }
 }
 
