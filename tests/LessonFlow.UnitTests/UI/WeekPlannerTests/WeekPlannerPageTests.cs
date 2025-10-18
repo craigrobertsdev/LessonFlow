@@ -26,7 +26,6 @@ public class WeekPlannerPageTests : TestContext
     {
         _appState = CreateAppState(2025);
         JSInterop.SetupVoid("Radzen.preventArrows", _ => true);
-        JSInterop.SetupVoid("Radzen.createDatePicker", _ => true);
     }
 
     [Fact]

@@ -8,6 +8,7 @@ using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using LessonFlow.Domain.Curriculum;
 
 namespace LessonFlow.UnitTests;
 internal class Helpers
@@ -139,5 +140,18 @@ internal class Helpers
             service.SetTermDates(year, terms);
         }
         return service;
+    }
+
+    internal static ICurriculumService CreateCurriculumService()
+    {
+        var curriculumService = new Mock<ICurriculumService>();
+        curriculumService.Setup(s => s.CurriculumSubjects).Returns(new List<Subject>
+        {
+            new Subject([], "English"),
+            new Subject([], "Mathematics"),
+            new Subject([], "Science"),
+        });
+
+        return curriculumService.Object;
     }
 }
