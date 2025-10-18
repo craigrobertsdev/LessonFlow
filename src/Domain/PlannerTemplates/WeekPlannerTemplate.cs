@@ -96,6 +96,14 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         }
     }
 
+    public PeriodBase? GetTemplatePeriod(DayOfWeek dayOfWeek, int startPeriod)
+    {
+        var dayTemplate = DayTemplates.Find(dt => dt.DayOfWeek == dayOfWeek);
+        if (dayTemplate == null || !dayTemplate.IsWorkingDay) return null;
+
+        return dayTemplate.Periods.Find(p => p.StartPeriod == startPeriod);
+    }
+
     public void SortPeriods()
     {
         Periods.Sort((a, b) => a.StartTime.CompareTo(b.StartTime));
