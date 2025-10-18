@@ -1,5 +1,4 @@
 using System.Text.Json;
-using LessonFlow.Interfaces.Curriculum;
 using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Components.Account;

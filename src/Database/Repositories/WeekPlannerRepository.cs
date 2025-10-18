@@ -1,9 +1,7 @@
-using LessonFlow.Database;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System.Runtime.Intrinsics.Arm;
 
 namespace LessonFlow.Database.Repositories;
 

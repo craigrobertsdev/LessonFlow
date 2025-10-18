@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using LessonFlow.Database;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Exceptions;

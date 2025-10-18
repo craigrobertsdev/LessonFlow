@@ -1,6 +1,5 @@
 using LessonFlow.Api.Contracts.PlannerTemplates;
 using LessonFlow.Domain.Enums;
-using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.ValueObjects;
 
