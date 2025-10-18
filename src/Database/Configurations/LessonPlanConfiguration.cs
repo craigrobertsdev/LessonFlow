@@ -35,7 +35,7 @@ public class LessonPlanConfiguration : IEntityTypeConfiguration<LessonPlan>
 
         builder.OwnsMany(lp => lp.ToDos, ltd =>
         {
-            ltd.ToTable("ToDoItem");
+            ltd.ToTable("TodoItem");
             ltd.WithOwner().HasForeignKey("LessonPlanId");
             ltd.Property<Guid>("Id");
             ltd.HasKey("Id", "LessonPlanId");

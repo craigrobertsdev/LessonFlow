@@ -1285,7 +1285,7 @@ namespace LessonFlow.Api.Database.Migrations
                                 .HasForeignKey("LessonPlanId");
                         });
 
-                    b.OwnsMany("LessonFlow.Domain.ValueObjects.ToDoItem", "ToDos", b1 =>
+                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "ToDos", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
@@ -1305,7 +1305,7 @@ namespace LessonFlow.Api.Database.Migrations
 
                             b1.HasIndex("LessonPlanId");
 
-                            b1.ToTable("ToDoItem", (string)null);
+                            b1.ToTable("TodoItem", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("LessonPlanId");

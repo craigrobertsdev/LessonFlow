@@ -12,7 +12,7 @@ namespace LessonFlow.Api.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "ToDoItem",
+                name: "TodoItem",
                 columns: table => new
                 {
                     LessonPlanId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -33,7 +33,7 @@ namespace LessonFlow.Api.Database.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_ToDoItem_LessonPlanId",
-                table: "ToDoItem",
+                table: "TodoItem",
                 column: "LessonPlanId");
         }
 
@@ -41,7 +41,7 @@ namespace LessonFlow.Api.Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "ToDoItem");
+                name: "TodoItem");
         }
     }
 }
