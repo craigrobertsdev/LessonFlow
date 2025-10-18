@@ -1,0 +1,11 @@
+# Owners for source code
+/src/ @craigrobertsdev
+
+# Owners for docs
+/docs/ @craigrobertsdev
+
+# Owners for build or tooling scripts (example other user)
+/tools/ @other-user
+
+# Fallback owner for anything else
+* @craigrobertsdev
