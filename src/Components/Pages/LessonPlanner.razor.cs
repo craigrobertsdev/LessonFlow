@@ -25,10 +25,11 @@ public partial class LessonPlanner
 
     internal LessonPlan LessonPlan { get; set; } = default!;
     internal DateOnly Date => new DateOnly(Year, Month, Day);
-    internal List<int> AvailableLessonSlots = new List<int> { 1, 2, 3, 4, 5 };
+    internal List<int> AvailableLessonSlots = [];
     internal string? SelectedSubject { get; set; }
     internal string? LessonText { get; set; }
     internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData.WeekPlannerTemplate;
+    internal List<Subject> SubjectsTaught => AppState.CurrentYearData.SubjectsTaught;
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
 
@@ -43,6 +44,7 @@ public partial class LessonPlanner
         {
             _loading = true;
             LessonPlan = await LoadLessonPlan();
+            AvailableLessonSlots = GetAvailableLessonSlots();
         }
         catch (Exception ex)
         {
@@ -111,7 +113,13 @@ public partial class LessonPlanner
 
         return lessonPlan;
     }
-    
+
+    private List<int> GetAvailableLessonSlots()
+    {
+        var periodsToEndOfDay = WeekPlannerTemplate.GetLessonPeriodCount(StartPeriod);
+        return [.. Enumerable.Range(1, periodsToEndOfDay)];
+    }
+
     private void EditLessonPlan()
     {
         EditingLessonPlan = LessonPlan.Clone();
@@ -126,7 +134,11 @@ public partial class LessonPlanner
 
     private void SaveChanges()
     {
-        throw new NotImplementedException();
+        if (EditingLessonPlan is null) return;
+
+        LessonPlan = EditingLessonPlan;
+        IsInEditMode = false;
+        EditingLessonPlan = null;
     }
 
     void LessonTextChanged(string? text)
@@ -139,4 +151,23 @@ public partial class LessonPlanner
         Console.WriteLine($"Lesson Text: {LessonText}");
     }
 
+    private void HandleSubjectTaughtChanged(ChangeEventArgs args)
+    {
+        if (EditingLessonPlan is null) return;
+
+        var subject = CurriculumService.GetSubjectByName(args.Value!.ToString()!);
+        if (subject != null)
+        {
+            EditingLessonPlan.UpdateSubject(subject);
+        }
+    }
+
+    private void HandleLessonDurationChange(ChangeEventArgs args)
+    {
+        if (EditingLessonPlan is null) return;
+        if (int.TryParse(args.Value?.ToString(), out var duration))
+        {
+            EditingLessonPlan.SetNumberOfPeriods(duration);
+        }
+    }
 }

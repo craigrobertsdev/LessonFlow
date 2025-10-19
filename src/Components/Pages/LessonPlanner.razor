@@ -20,10 +20,12 @@
                 @if (IsInEditMode)
                 {
                     <label for="subject-name" class="text-sm font-medium text-gray-700">Subject</label>
-                    <select id="subject-name" @bind="SelectedSubject" class="block w-48 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="math-subject">Mathematics</option>
-                        <option value="science-subject">Science</option>
-                        <option value="history-subject">History</option>
+                    <select id="subject-name" value="@EditingLessonPlan!.SubjectName" @onchange="HandleSubjectTaughtChanged" class="block w-48 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        @foreach (var subject in SubjectsTaught)
+                        {
+                            <option value="@subject.Name">@subject.Name</option>
+                        }
+                        <option value="nit">NIT</option>
                     </select>
                 }
                 else
@@ -36,7 +38,7 @@
                 @if (IsInEditMode)
                 {
                     <label for="number-of-periods" class="text-sm font-medium text-gray-700">Number of Periods</label>
-                    <select id="number-of-periods" class="block w-28 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select id="number-of-periods" value="@EditingLessonPlan!.NumberOfPeriods" @onchange="HandleLessonDurationChange" class="block w-28 rounded-md border-gray-300 bg-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @foreach (var count in AvailableLessonSlots)
                         {
                             <option value="@count">@count</option>

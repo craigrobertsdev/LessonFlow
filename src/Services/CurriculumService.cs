@@ -28,9 +28,14 @@ public sealed class CurriculumService : ICurriculumService
         return CurriculumSubjects.Select(x => x.Name).ToList();
     }
 
-    public List<Subject> GetSubjectsByName(IEnumerable<string> names)
+    public List<Subject> GetSubjectsByNames(IEnumerable<string> names)
     {
         return CurriculumSubjects.Where(x => names.Contains(x.Name)).ToList();
+    }
+
+    public Subject? GetSubjectByName(string name)
+    {
+        return CurriculumSubjects.FirstOrDefault(x => name == x.Name);
     }
 
     public List<Subject> GetSubjectsByYearLevel(YearLevelValue yearLevel)

@@ -145,12 +145,18 @@ internal class Helpers
     internal static ICurriculumService CreateCurriculumService()
     {
         var curriculumService = new Mock<ICurriculumService>();
-        curriculumService.Setup(s => s.CurriculumSubjects).Returns(new List<Subject>
+        var subjects = new List<Subject>
         {
-            new Subject([], "English"),
-            new Subject([], "Mathematics"),
-            new Subject([], "Science"),
-        });
+            new Subject("English", [], ""),
+            new Subject("Mathematics", [], ""),
+            new Subject("Science", [], "")
+        };
+        curriculumService.Setup(s => s.CurriculumSubjects).Returns(subjects);
+
+        foreach (var subject in subjects)
+        {
+            curriculumService.Setup(s => s.GetSubjectByName(subject.Name)).Returns(subject);
+        }
 
         return curriculumService.Object;
     }

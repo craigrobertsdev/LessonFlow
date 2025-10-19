@@ -111,6 +111,11 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         DayTemplates.ForEach(dt => dt.Periods.Sort((a, b) => a.StartPeriod.CompareTo(b.StartPeriod)));
     }
 
+    public int GetLessonPeriodCount(int startPeriod)
+    {
+        return Periods.Count(p => p.StartPeriod >= startPeriod && p.PeriodType == PeriodType.Lesson);
+    }
+
     public WeekPlannerTemplate(List<TemplatePeriod> periods, List<DayTemplate> dayTemplates,
         Guid userId)
     {

@@ -10,7 +10,8 @@ public interface ICurriculumService
     string GetSubjectName(SubjectId subjectId);
     List<string> GetSubjectNames();
     List<Subject> GetSubjectsByYearLevel(YearLevelValue yearLevel);
-    List<Subject> GetSubjectsByName(IEnumerable<string> names);
+    List<Subject> GetSubjectsByNames(IEnumerable<string> names);
+    Subject? GetSubjectByName(string name);
 
     List<Subject> GetSubjectsByYearLevels(IEnumerable<SubjectId> subjectIds,
         IEnumerable<YearLevelValue> yearLevelValues);

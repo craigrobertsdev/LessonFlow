@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Radzen;
+using Radzen.Blazor.Rendering;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
 public class LessonPlannerTests : TestContext
@@ -141,7 +142,7 @@ public class LessonPlannerTests : TestContext
 
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
         var lessonPlan = new LessonPlan(appState.CurrentYearData, Subject.Nit, PeriodType.Nit, "", 2, 1, new DateOnly(2025, 1, 31), []);
-        var todoItem = new ToDoItem(lessonPlan.Id, "Test");
+        var todoItem = new TodoItem(lessonPlan.Id, "Test");
         lessonPlan.ToDos.Add(todoItem);
         lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), 1, default))
            .ReturnsAsync(lessonPlan);
@@ -265,13 +266,120 @@ public class LessonPlannerTests : TestContext
         Assert.Equal(updatedTime, component.Instance.LessonPlan.UpdatedDateTime);
     }
 
-    private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int periodStart)
+    [Theory]
+    [InlineData(1, 6)]
+    [InlineData(2, 5)]
+    [InlineData(4, 4)]
+    [InlineData(5, 3)]
+    [InlineData(7, 2)]
+    [InlineData(8, 1)]
+    public void AvailableLessonDurations_ShouldMatchWeekPlannerTemplate(int startPeriod, int expectedCount)
+    {
+        var appstate = CreateAppState();
+        var component = RenderLessonPlanner(appstate, 2025, 1, 29, startPeriod);
+
+        Assert.Equal(expectedCount, component.Instance.AvailableLessonSlots.Count);
+        Assert.Equal([.. Enumerable.Range(1, expectedCount)], component.Instance.AvailableLessonSlots);
+    }
+
+    [Fact]
+    public void ChangeLessonDuration_ShouldUpdateEditingLessonPlanAndDisplayCorrectValue()
+    {
+        var component = RenderLessonPlanner(_appState, 2025, 1, 29, 1);
+        component.Find("#edit-lesson-plan").Click();
+        var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        selectNumberOfPeriods.Change("3");
+        var editingLessonPlan = component.Instance.EditingLessonPlan;
+        Assert.NotNull(editingLessonPlan);
+        Assert.Equal(3, editingLessonPlan.NumberOfPeriods);
+        Assert.Equal("3", selectNumberOfPeriods.GetAttribute("value"));
+    }
+
+    [Fact]
+    public void SubjectsDropdown_ShouldContainAllTaughtSubjectsAndNit()
+    {
+        var appState = CreateAppState();
+        AddThreeSubjectsToYearData(appState.CurrentYearData);
+        var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+        component.Find("#edit-lesson-plan").Click();
+        var selectSubject = component.Find("select#subject-name");
+        var options = selectSubject.GetElementsByTagName("option");
+
+        var taughtSubjects = appState.CurrentYearData.SubjectsTaught;
+        Assert.Equal(taughtSubjects.Count + 1, options.Length);
+        foreach (var subject in taughtSubjects)
+        {
+            Assert.Contains(options, o => o.InnerHtml == subject.Name || o.InnerHtml == "NIT");
+        }
+    }
+
+    [Fact]
+    public void ChangeSelectedSubject_ShouldUpdateEditingLessonPlanAndDisplayCorrectValue()
+    {
+        var component = RenderLessonPlanner(_appState, 2025, 1, 29, 1);
+        component.Find("#edit-lesson-plan").Click();
+        var selectSubject = component.Find("select#subject-name");
+        selectSubject.Change("Mathematics");
+        var editingLessonPlan = component.Instance.EditingLessonPlan;
+        Assert.NotNull(editingLessonPlan);
+        Assert.Equal("Mathematics", editingLessonPlan.Subject.Name);
+        Assert.Equal("Mathematics", selectSubject.GetAttribute("value"));
+    }
+
+    [Fact]
+    public void SaveLessonPlan_ShouldPersistChangesAndExitEditMode()
+    {
+        var appState = CreateAppState();
+        AddThreeSubjectsToYearData(appState.CurrentYearData);
+        var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+
+        component.Find("#edit-lesson-plan").Click();
+        var selectSubject = component.Find("select#subject-name");
+        selectSubject.Change("Mathematics");
+        var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        selectNumberOfPeriods.Change("2");
+        component.Find("#save-lesson-plan").Click();
+
+        Assert.False(component.Instance.IsInEditMode);
+        Assert.NotNull(component.Find("p#subject-name"));
+        Assert.NotNull(component.Find("p#number-of-periods"));
+        Assert.NotNull(component.Find("#edit-lesson-plan"));
+        Assert.Throws<ElementNotFoundException>(() => component.Find("#save-lesson-plan"));
+        Assert.Throws<ElementNotFoundException>(() => component.Find("#cancel-editing"));
+        Assert.Throws<ElementNotFoundException>(() => component.Find("select#subject-name"));
+        Assert.Throws<ElementNotFoundException>(() => component.Find("select#number-of-periods"));
+
+        var lessonPlan = component.Instance.LessonPlan;
+        Assert.Null(component.Instance.EditingLessonPlan);
+        Assert.Equal("Mathematics", lessonPlan.Subject.Name);
+        Assert.Equal(2, lessonPlan.NumberOfPeriods);
+    }
+
+    [Fact]
+    public void SaveLessonPlan_WhenChangesOverlapLaterPlannedLesson_ShouldConfirmOverwrite()
+    {
+        //var appState = CreateAppState();
+        //var lessonPlanRepository = new Mock<ILessonPlanRepository>();
+        //lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), 2, default))
+        //   .ReturnsAsync(new LessonPlan(appState.CurrentYearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 2, new DateOnly(2025, 1, 29), []));
+        //Services.AddScoped(sp => lessonPlanRepository.Object);
+        //var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+        //component.Find("#edit-lesson-plan").Click();
+        //var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        //selectNumberOfPeriods.Change("2");
+        //component.Find("#save-lesson-plan").Click();
+        //var overwriteDialog = component.FindComponent<Radzen.Dialog>();
+        //Assert.NotNull(overwriteDialog);
+        //Assert.Contains("The changes you made will overwrite an existing lesson plan.", overwriteDialog.Markup);
+    }
+
+    private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
     {
         var component = RenderComponent<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
             .Add(p => p.Month, month)
             .Add(p => p.Day, day)
-            .Add(p => p.StartPeriod, periodStart)
+            .Add(p => p.StartPeriod, startPeriod)
             .Add(p => p.AppState, appState));
 
         return component;
@@ -296,6 +404,7 @@ public class LessonPlannerTests : TestContext
         accountSetupState.SetCalendarYear(2025);
 
         var yearData = new YearData(Guid.NewGuid(), accountSetupState);
+
         var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
 
         appState.User = new User();
@@ -319,5 +428,15 @@ public class LessonPlannerTests : TestContext
 
         appState.GetType().GetProperty(nameof(appState.IsInitialised))!.SetValue(appState, true);
         return appState;
+    }
+
+    private static void AddThreeSubjectsToYearData(YearData yearData)
+    {
+        var mathSubject = new Subject("Mathematics", [], "");
+        var engSubject = new Subject("English", [], "");
+        var sciSubject = new Subject("Science", [], "");
+        yearData.SubjectsTaught.Add(mathSubject);
+        yearData.SubjectsTaught.Add(engSubject);
+        yearData.SubjectsTaught.Add(sciSubject);
     }
 }
