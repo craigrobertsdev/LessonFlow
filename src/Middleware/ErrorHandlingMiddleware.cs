@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text.Json;
-using LessonFlow.Exceptions;
+using LessonFlow.Shared.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LessonFlow.Middleware;

@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class StrandCreationException() : BaseException("Either substrands or contentDescriptions must be provided",
     400,

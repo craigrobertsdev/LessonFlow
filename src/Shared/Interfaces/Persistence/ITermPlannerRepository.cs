@@ -1,7 +1,7 @@
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.TermPlanners;
 
-namespace LessonFlow.Interfaces.Persistence;
+namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface ITermPlannerRepository
 {

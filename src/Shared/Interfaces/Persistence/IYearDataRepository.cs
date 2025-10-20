@@ -2,7 +2,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.YearDataRecords;
 
-namespace LessonFlow.Interfaces.Persistence;
+namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface IYearDataRepository : IRepository<YearData>
 {

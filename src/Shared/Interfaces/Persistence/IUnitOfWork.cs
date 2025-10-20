@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace LessonFlow.Interfaces.Persistence;
+namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface IUnitOfWork
 {

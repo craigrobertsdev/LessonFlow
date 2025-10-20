@@ -5,7 +5,7 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Extensions;
+using LessonFlow.Shared.Extensions;
 
 namespace LessonFlow.Domain.WeekPlanners;
 

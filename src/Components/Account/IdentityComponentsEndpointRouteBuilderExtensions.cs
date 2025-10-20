@@ -10,7 +10,7 @@ using LessonFlow.Components.Account.Pages;
 using LessonFlow.Components.Account.Pages.Manage;
 using LessonFlow.Domain.Users;
 
-namespace Microsoft.AspNetCore.Routing;
+namespace LessonFlow.Components.Account;
 
 internal static class IdentityComponentsEndpointRouteBuilderExtensions
 {

@@ -2,7 +2,7 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 
-namespace LessonFlow.Interfaces.Persistence;
+namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface ILessonPlanRepository
 {

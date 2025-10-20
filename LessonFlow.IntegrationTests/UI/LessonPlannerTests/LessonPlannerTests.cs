@@ -2,8 +2,8 @@
 using Bunit.TestDoubles;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
-using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared;
+using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;

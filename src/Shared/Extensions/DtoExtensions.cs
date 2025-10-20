@@ -5,8 +5,9 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Shared.Extensions;
 
-namespace LessonFlow.Extensions;
+namespace LessonFlow.Shared.Extensions;
 
 public static class DtoExtensions
 {
@@ -16,7 +17,7 @@ public static class DtoExtensions
         return dayPlans.Select(dp => new DayPlanDto(
                 dp.Date,
                 dp.LessonPlans.ToDtos(resources, subjects),
-                ToDtos((IEnumerable<SchoolEvent>)dp.SchoolEvents),
+                dp.SchoolEvents.ToDtos(),
                 dp.BreakDutyOverrides?.ToDictionary()))
             .ToList();
     }

@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class InvalidCredentialsException()
     : BaseException("Invalid credentials", 401, "Authentication.InvalidCredentials");

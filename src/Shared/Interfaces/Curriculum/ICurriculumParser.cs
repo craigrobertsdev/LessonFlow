@@ -1,6 +1,6 @@
 using LessonFlow.Domain.Curriculum;
 
-namespace LessonFlow.Interfaces.Curriculum;
+namespace LessonFlow.Shared.Interfaces.Curriculum;
 
 public interface ICurriculumParser
 {

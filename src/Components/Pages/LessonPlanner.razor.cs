@@ -3,8 +3,8 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared;
+using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 

@@ -1,4 +1,4 @@
-namespace LessonFlow.Extensionss;
+namespace LessonFlow.Shared.Extensions;
 
 public static class EnumerableExtensions
 {

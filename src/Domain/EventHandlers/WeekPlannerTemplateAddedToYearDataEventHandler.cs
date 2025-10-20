@@ -1,7 +1,7 @@
 using LessonFlow.Database;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords.DomainEvents;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

@@ -16,7 +16,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
+namespace LessonFlow.IntegrationTests.UI.WeekPlannerTests;
 public class WeekPlannerPageTests : TestContext
 {
 }

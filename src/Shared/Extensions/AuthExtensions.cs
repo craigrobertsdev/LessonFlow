@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using LessonFlow.Domain.StronglyTypedIds;
 
-namespace LessonFlow.Extensions;
+namespace LessonFlow.Shared.Extensions;
 
 public static class AuthExtensions
 {

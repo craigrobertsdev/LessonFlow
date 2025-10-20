@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class LessonPlansNotFoundException() : BaseException("No lesson plans were found", 500, "LessonPlanner.NotFound");
 

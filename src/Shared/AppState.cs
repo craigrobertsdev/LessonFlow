@@ -1,7 +1,7 @@
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Exceptions;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace LessonFlow.Shared;

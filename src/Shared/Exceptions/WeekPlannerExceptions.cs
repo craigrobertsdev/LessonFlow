@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class TooManyDayPlansInWeekPlannerException()
     : BaseException("A week planner can only have 5 day plans", 400, "WeekPlanner.TooManyDayPlans");

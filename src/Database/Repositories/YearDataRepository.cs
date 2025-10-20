@@ -1,7 +1,7 @@
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.YearDataRecords;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;

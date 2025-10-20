@@ -1,6 +1,6 @@
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.TermPlanners;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;

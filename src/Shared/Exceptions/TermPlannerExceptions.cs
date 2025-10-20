@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class TermPlannerCreationException()
     : BaseException("TermPlanners must have either one year level or a list of year levels", 400,

@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class WeekPlannerTemplateNotFoundException() : BaseException(
     "No WeekPlannerTemplate was found with the requested id",

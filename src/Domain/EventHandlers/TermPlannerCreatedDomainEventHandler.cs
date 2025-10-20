@@ -1,6 +1,6 @@
 using LessonFlow.Database;
 using LessonFlow.Domain.TermPlanners.DomainEvents;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

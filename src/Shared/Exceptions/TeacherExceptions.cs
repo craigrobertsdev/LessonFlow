@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class UserNotFoundException() : BaseException("No user found with those details", 500, "Users.NotFound");
 

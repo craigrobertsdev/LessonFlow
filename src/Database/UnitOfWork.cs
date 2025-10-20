@@ -1,4 +1,4 @@
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LessonFlow.Database;

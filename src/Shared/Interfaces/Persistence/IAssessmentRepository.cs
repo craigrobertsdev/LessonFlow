@@ -1,7 +1,7 @@
 using LessonFlow.Domain.Assessments;
 using LessonFlow.Domain.StronglyTypedIds;
 
-namespace LessonFlow.Interfaces.Persistence;
+namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface IAssessmentRepository : IRepository<Assessment>
 {

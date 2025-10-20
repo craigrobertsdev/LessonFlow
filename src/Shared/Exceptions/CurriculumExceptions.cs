@@ -1,4 +1,4 @@
-namespace LessonFlow.Exceptions;
+namespace LessonFlow.Shared.Exceptions;
 
 public class NoSubjectsFoundException() : BaseException("No subjects were found in the database", 404,
     "AustralianCurriculum.NotFound");
