@@ -636,7 +636,7 @@ public class WeekPlannerPageTests : TestContext
         dayTemplates[0].Periods.RemoveAt(3);
         dayTemplates[0].Periods[2].NumberOfPeriods = 2;
 
-        var template = new WeekPlannerTemplate(periods, dayTemplates, Guid.NewGuid());
+        var template = new WeekPlannerTemplate(Guid.NewGuid(), periods, dayTemplates);
         return template;
     }
 }

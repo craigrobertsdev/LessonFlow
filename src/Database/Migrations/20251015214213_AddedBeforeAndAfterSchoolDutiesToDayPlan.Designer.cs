@@ -200,7 +200,7 @@ namespace LessonFlow.Api.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CurriculumSubjects");
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>

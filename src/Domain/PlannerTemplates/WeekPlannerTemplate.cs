@@ -116,8 +116,8 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         return Periods.Count(p => p.StartPeriod >= startPeriod && p.PeriodType == PeriodType.Lesson);
     }
 
-    public WeekPlannerTemplate(List<TemplatePeriod> periods, List<DayTemplate> dayTemplates,
-        Guid userId)
+    public WeekPlannerTemplate(Guid userId, List<TemplatePeriod> periods,
+        List<DayTemplate> dayTemplates)
     {
         Id = new WeekPlannerTemplateId(Guid.NewGuid());
         Periods = periods;
@@ -125,7 +125,7 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         UserId = userId;
     }
 
-    public WeekPlannerTemplate(List<TemplatePeriod> periods, Guid userId)
+    public WeekPlannerTemplate(Guid userId, List<TemplatePeriod> periods)
     {
         Id = new WeekPlannerTemplateId(Guid.NewGuid());
         Periods = periods;

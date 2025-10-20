@@ -32,7 +32,7 @@ public class TermPlannerRepository(ApplicationDbContext context) : ITermPlannerR
             .SelectMany(sl => sl.Select(s => s.Id))
             .ToList();
 
-        var subjects = await context.CurriculumSubjects
+        var subjects = await context.Subjects
             .Where(s => subjectIds.Contains(s.Id))
             .AsNoTracking()
             .ToListAsync(cancellationToken);

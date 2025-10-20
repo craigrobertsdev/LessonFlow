@@ -33,7 +33,7 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     {
     }
 
-    public virtual DbSet<Subject> CurriculumSubjects { get; set; } = null!;
+    public virtual DbSet<Subject> Subjects { get; set; } = null!;
     public virtual DbSet<Resource> Resources { get; set; } = null!;
     public virtual DbSet<Student> Students { get; set; } = null!;
     public virtual DbSet<Assessment> Assessments { get; set; } = null!;

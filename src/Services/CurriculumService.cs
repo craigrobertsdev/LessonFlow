@@ -95,7 +95,7 @@ public sealed class CurriculumService : ICurriculumService
     {
         using var scope = _serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var subjects = context.CurriculumSubjects
+        var subjects = context.Subjects
             .Include(c => c.YearLevels)
             .ThenInclude(yl => yl.ConceptualOrganisers)
             .ThenInclude(s => s.ContentDescriptions)

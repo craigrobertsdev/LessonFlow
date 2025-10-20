@@ -86,14 +86,14 @@ namespace LessonFlow.Api.Database.Migrations
                 name: "FK_AccountSetupScheduleConfig_ScheduleSlots_CurriculumSubjects~",
                 table: "AccountSetupScheduleConfig_ScheduleSlots",
                 column: "SubjectId",
-                principalTable: "CurriculumSubjects",
+                principalTable: "Subjects",
                 principalColumn: "Id");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_AccountSetupScheduleGrid_ScheduleSlots_CurriculumSubjects_S~",
                 table: "AccountSetupScheduleGrid_ScheduleSlots",
                 column: "SubjectId",
-                principalTable: "CurriculumSubjects",
+                principalTable: "Subjects",
                 principalColumn: "Id");
         }
     }

@@ -70,7 +70,7 @@ namespace LessonFlow.Api.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CurriculumSubjects",
+                name: "Subjects",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -264,7 +264,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Resources_CurriculumSubjects_SubjectId",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -283,7 +283,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_YearLevels_CurriculumSubjects_SubjectId",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -351,7 +351,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_SubjectYearData_CurriculumSubjects_SubjectsTaughtId",
                         column: x => x.SubjectsTaughtId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -542,7 +542,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Assessments_CurriculumSubjects_SubjectId",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -575,7 +575,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_Reports_CurriculumSubjects_SubjectId",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Reports_Students_StudentId",
@@ -744,7 +744,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_SubjectTermPlan_CurriculumSubjects_SubjectsId",
                         column: x => x.SubjectsId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -801,7 +801,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_LessonPlans_CurriculumSubjects_SubjectId",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -1193,7 +1193,7 @@ namespace LessonFlow.Api.Database.Migrations
                 name: "TermPlanners");
 
             migrationBuilder.DropTable(
-                name: "CurriculumSubjects");
+                name: "Subjects");
 
             migrationBuilder.DropTable(
                 name: "WeekPlanners");

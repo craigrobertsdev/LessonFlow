@@ -103,7 +103,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_AccountSetupScheduleConfig_ScheduleSlots_CurriculumSubjects~",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id");
                 });
 
@@ -132,7 +132,7 @@ namespace LessonFlow.Api.Database.Migrations
                     table.ForeignKey(
                         name: "FK_AccountSetupScheduleGrid_ScheduleSlots_CurriculumSubjects_S~",
                         column: x => x.SubjectId,
-                        principalTable: "CurriculumSubjects",
+                        principalTable: "Subjects",
                         principalColumn: "Id");
                 });
 

@@ -12,7 +12,7 @@ public class SubjectRepository(ApplicationDbContext context) : ISubjectRepositor
     public async Task<List<Subject>> GetCurriculumSubjects(
         CancellationToken cancellationToken)
     {
-        return await GetSubjects(cancellationToken);
+        return await GetSubjectsWithoutTracking(cancellationToken);
     }
 
     public async Task<List<Subject>> GetSubjectsById(
@@ -21,14 +21,14 @@ public class SubjectRepository(ApplicationDbContext context) : ISubjectRepositor
     {
         Expression<Func<Subject, bool>> filter = s => subjects.Contains(s.Id);
 
-        return await GetSubjects(cancellationToken, filter);
+        return await GetSubjectsWithoutTracking(cancellationToken, filter);
     }
 
-    private async Task<List<Subject>> GetSubjects(
+    private async Task<List<Subject>> GetSubjectsWithoutTracking(
         CancellationToken cancellationToken,
         Expression<Func<Subject, bool>>? filter = null)
     {
-        var subjectsQuery = context.CurriculumSubjects
+        var subjectsQuery = context.Subjects
             .AsNoTracking();
 
         if (filter != null)
@@ -54,4 +54,5 @@ public class SubjectRepository(ApplicationDbContext context) : ISubjectRepositor
 
         return subjects;
     }
+
 }

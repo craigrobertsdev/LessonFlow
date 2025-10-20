@@ -148,7 +148,7 @@ public class AccountSetupState
             )
             ];
 
-        WeekPlannerTemplate = new WeekPlannerTemplate(periods, userId);
+        WeekPlannerTemplate = new WeekPlannerTemplate(userId, periods);
         StartTime = new TimeOnly(9, 10);
         EndTime = new TimeOnly(15, 10);
     }
