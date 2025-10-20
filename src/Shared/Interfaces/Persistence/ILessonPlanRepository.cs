@@ -14,7 +14,8 @@ public interface ILessonPlanRepository
         CancellationToken cancellationToken);
 
     Task<List<LessonPlan>> GetByDate(YearDataId yearDataId, DateOnly date, CancellationToken cancellationToken);
-    void UpdateLessonPlan(LessonPlan lessonPlan);
+    Task AddLessonPlan(LessonPlan lessonPlan, CancellationToken cancellationToken);
+    bool UpdateLessonPlan(LessonPlan lessonPlan);
     void DeleteLessonPlans(IEnumerable<LessonPlan> lessonPlans);
 
     Task<LessonPlan?> GetByYearDataAndDateAndPeriod(YearDataId yearDataId, DateOnly date, int period,

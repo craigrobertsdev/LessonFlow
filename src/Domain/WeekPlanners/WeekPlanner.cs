@@ -91,7 +91,7 @@ public static class WeekPlannerExtensions
 
     public static WeekPlannerTemplate FromDto(this WeekPlannerTemplateDto weekPlannerTemplate, Guid userId)
     {
-        return new WeekPlannerTemplate(weekPlannerTemplate.Periods.FromDtos(), weekPlannerTemplate.DayTemplates.FromDtos(), userId);
+        return new WeekPlannerTemplate(userId, weekPlannerTemplate.Periods.FromDtos(), weekPlannerTemplate.DayTemplates.FromDtos());
     }
 
     public static WeekPlannerDto ToDto(this WeekPlanner weekPlanner, WeekPlannerTemplate weekPlannerTemplate,

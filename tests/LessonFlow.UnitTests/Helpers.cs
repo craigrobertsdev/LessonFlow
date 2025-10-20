@@ -11,7 +11,7 @@ using Moq;
 using LessonFlow.Domain.Curriculum;
 
 namespace LessonFlow.UnitTests;
-internal class Helpers
+public class Helpers
 {
     public static GridColumn GenerateGridColumn()
     {
@@ -43,7 +43,7 @@ internal class Helpers
         return col;
     }
 
-    internal static WeekPlannerTemplate GenerateWeekPlannerTemplate()
+    public static WeekPlannerTemplate GenerateWeekPlannerTemplate()
     {
         var periods = new List<TemplatePeriod>
         {
@@ -71,7 +71,7 @@ internal class Helpers
                 }
             }).ToList(), day, DayType.Working));
         }
-        var template = new WeekPlannerTemplate(periods, dayTemplates, Guid.NewGuid());
+        var template = new WeekPlannerTemplate(Guid.NewGuid(), periods, dayTemplates);
         return template;
     }
 

@@ -48,6 +48,7 @@ public class YearDataConfiguration : IEntityTypeConfiguration<YearData>
         builder.Navigation(yd => yd.WeekPlannerTemplate).AutoInclude();
         builder.Navigation(yd => yd.Students).AutoInclude();
         builder.Navigation(yd => yd.SubjectsTaught).AutoInclude();
+        builder.Navigation(yd => yd.WeekPlanners).AutoInclude();
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
         builder.Property(yd => yd.WorkingDays)

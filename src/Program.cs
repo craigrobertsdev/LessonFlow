@@ -8,7 +8,7 @@ using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
 
-internal class Program
+public class Program
 {
     private static void Main(string[] args)
     {
@@ -67,7 +67,7 @@ internal class Program
         //{
         //    var parser = new SACurriculumParser();
         //    var subjects = await parser.ParseCurriculum();
-        //    context.CurriculumSubjects.AddRange(subjects);
+        //    context.Subjects.AddRange(subjects);
         //    await context.SaveChangesAsync();
         //    return Results.Ok();
         //});

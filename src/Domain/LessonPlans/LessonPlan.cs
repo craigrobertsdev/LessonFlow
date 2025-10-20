@@ -61,16 +61,11 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
 
     public void UpdateSubject(Subject subject)
     {
-        if (Subject.Id == subject.Id)
-        {
-            return;
-        }
-
         Subject = subject;
         UpdatedDateTime = DateTime.UtcNow;
     }
 
-    public void SetPlanningNotes(string newPlanningNotes, string newPlanningNotesHtml)
+    public void SetPlanningNotes(string newPlanningNotesHtml)
     {
         PlanningNotesHtml = newPlanningNotesHtml;
     }
@@ -113,6 +108,13 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
             [.. Resources]);
     }
 
+    public void UpdateValuesFrom(LessonPlan other)
+    {
+        UpdateSubject(other.Subject);
+        SetNumberOfPeriods(other.NumberOfPeriods);
+        UpdateResources(other.Resources);
+    }
+
     public LessonPlan(
         YearData yearData,
         Subject subject,
@@ -134,8 +136,8 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
         NumberOfPeriods = numberOfPeriods;
         StartPeriod = startPeriod;
         LessonDate = lessonDate;
-        CreatedDateTime = DateTime.Now;
-        UpdatedDateTime = DateTime.Now;
+        CreatedDateTime = DateTime.UtcNow;
+        UpdatedDateTime = DateTime.UtcNow;
         Resources = resources ?? [];
     }
 

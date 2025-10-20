@@ -11,6 +11,7 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="LessonFlow.UnitTests" />
+		<InternalsVisibleTo Include="LessonFlow.IntegrationTests" />
 	</ItemGroup>
 
 	<ItemGroup>

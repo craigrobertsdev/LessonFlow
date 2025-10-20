@@ -45,9 +45,40 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public void UpdateLessonPlan(LessonPlan lessonPlan)
+    public async Task AddLessonPlan(LessonPlan lessonPlan, CancellationToken cancellationToken)
     {
-        context.Update(lessonPlan);
+        await context.LessonPlans.AddAsync(lessonPlan, cancellationToken);
+        var subject = context.Subjects.First(s => s.Id == lessonPlan.Subject.Id);
+        lessonPlan.UpdateSubject(subject);
+
+        if (lessonPlan.Resources is { Count: > 0 })
+        {
+            var resources = lessonPlan.Resources
+                .Select(r => context.Resources.First(dbR => dbR.Id == r.Id))
+                .ToList();
+
+            lessonPlan.UpdateResources(resources);
+        }
+
+        context.LessonPlans.Add(lessonPlan);
+    }
+
+    public bool UpdateLessonPlan(LessonPlan lessonPlan)
+    {
+        var existingLessonPlan = context.LessonPlans
+            .Include(lp => lp.Resources)
+            .Include(lp => lp.Subject)
+            .FirstOrDefault(lp => lp.Id == lessonPlan.Id);
+
+        if (existingLessonPlan is not null)
+        {
+            context.Entry(existingLessonPlan).CurrentValues.SetValues(lessonPlan);
+            existingLessonPlan.UpdateResources(lessonPlan.Resources);
+            context.Update(lessonPlan);
+            return true;
+        }
+
+        return false;
     }
 
     public async Task<List<LessonPlan>?> GetLessonsByYearDataId(YearDataId yearDataId,

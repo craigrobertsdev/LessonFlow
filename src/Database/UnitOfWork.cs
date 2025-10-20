@@ -21,4 +21,9 @@ public sealed class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
     {
         return context.Database.BeginTransaction();
     }
+
+    public async Task CommitTransaction(CancellationToken cancellationToken)
+    {
+        await context.Database.CommitTransactionAsync(cancellationToken);
+    }
 }

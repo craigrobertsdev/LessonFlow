@@ -1,8 +1,8 @@
-﻿using LessonFlow.Components.Shared;
-using LessonFlow.Domain.Curriculum;
+﻿using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Interfaces.Persistence;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Services;
@@ -20,15 +20,19 @@ public partial class LessonPlanner
 
     [Inject] public ILessonPlanRepository LessonPlanRepository { get; set; } = default!;
     [Inject] public ICurriculumService CurriculumService { get; set; } = default!;
+    [Inject] public IYearDataRepository YearDataRepository { get; set; } = default!;
+    [Inject] public ICurriculumRepository CurriculumRepository { get; set; } = default!;
+    [Inject] public IUnitOfWork UnitOfWork { get; set; } = default!;
 
     private bool _loading = false;
 
     internal LessonPlan LessonPlan { get; set; } = default!;
-    internal DateOnly Date => new DateOnly(Year, Month, Day);
-    internal List<int> AvailableLessonSlots = [];
+    internal DateOnly Date => new(Year, Month, Day);
+    internal List<int> AvailableLessonSlots { get; set; } = [];
     internal string? SelectedSubject { get; set; }
     internal string? LessonText { get; set; }
     internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData.WeekPlannerTemplate;
+    internal DayPlan DayPlan => AppState.CurrentYearData.GetDayPlan(Date);
     internal List<Subject> SubjectsTaught => AppState.CurrentYearData.SubjectsTaught;
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
@@ -132,11 +136,33 @@ public partial class LessonPlanner
         EditingLessonPlan = null;
     }
 
-    private void SaveChanges()
+    private async Task SaveChanges()
     {
         if (EditingLessonPlan is null) return;
+        var cancellationToken = new CancellationToken();
 
-        LessonPlan = EditingLessonPlan;
+        LessonPlan.UpdateValuesFrom(EditingLessonPlan);
+
+        UnitOfWork.BeginTransaction();
+
+        var lessonPlanExists = LessonPlanRepository.UpdateLessonPlan(LessonPlan);
+        if (!lessonPlanExists)
+        {
+            var subject = await CurriculumRepository.GetSubjectById(LessonPlan.Subject.Id, cancellationToken);
+            if (subject is null)
+            {
+                throw new InvalidOperationException("Subject not found in curriculum.");
+            }
+
+            LessonPlan.UpdateSubject(subject);
+            DayPlan.AddLessonPlan(LessonPlan);
+            await UnitOfWork.SaveChangesAsync(cancellationToken);
+            LessonPlanRepository.Add(LessonPlan);
+        }
+
+        await UnitOfWork.SaveChangesAsync(cancellationToken);
+        await UnitOfWork.CommitTransaction(cancellationToken);
+
         IsInEditMode = false;
         EditingLessonPlan = null;
     }

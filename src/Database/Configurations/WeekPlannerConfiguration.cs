@@ -20,5 +20,7 @@ public class WeekPlannerConfiguration : IEntityTypeConfiguration<WeekPlanner>
 
         builder.HasOne(wp => wp.YearData)
             .WithMany(yd => yd.WeekPlanners);
+
+        builder.Navigation(wp => wp.DayPlans).AutoInclude();
     }
 }

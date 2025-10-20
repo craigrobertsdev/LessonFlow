@@ -109,7 +109,24 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
     {
         WeekPlanners.Add(weekPlanner);
     }
-    
+
+    public DayPlan GetDayPlan(DateOnly date)
+    {
+        var weekPlanner = WeekPlanners.Find(wp =>
+            wp.WeekStart <= date && wp.WeekStart.AddDays(4) >= date);
+        if (weekPlanner is null)
+        {
+            throw new DayPlanNotFoundException(date);
+        }
+
+        var dayPlan = weekPlanner.DayPlans.Find(dp => dp.Date == date);
+        if (dayPlan is null)
+        {
+            throw new DayPlanNotFoundException(date);
+        }
+        return dayPlan;
+    }
+
     public YearData(Guid userId, WeekPlannerTemplate weekPlannerTemplate, string schoolName,
         int calendarYear)
     {

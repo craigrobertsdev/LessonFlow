@@ -11,28 +11,28 @@ public class CurriculumRepository(ApplicationDbContext context) : ICurriculumRep
     public async Task AddCurriculum(List<Subject> subjects, CancellationToken cancellationToken)
     {
         // clear existing curriculum subjects
-        var curriculumSubjects = await context.CurriculumSubjects
+        var curriculumSubjects = await context.Subjects
             .ToListAsync(cancellationToken);
 
-        context.CurriculumSubjects.RemoveRange(curriculumSubjects);
+        context.Subjects.RemoveRange(curriculumSubjects);
         await context.SaveChangesAsync(cancellationToken);
 
         // add new subjects
         foreach (var subject in subjects)
         {
-            context.CurriculumSubjects.Add(subject);
+            context.Subjects.Add(subject);
         }
     }
 
     public async Task<List<Subject>> GetAllSubjects(CancellationToken cancellationToken)
     {
-        return await context.CurriculumSubjects.ToListAsync(cancellationToken);
+        return await context.Subjects.ToListAsync(cancellationToken);
     }
 
     public async Task<List<Subject>> GetSubjectsById(List<SubjectId> subjectIds,
         CancellationToken cancellationToken)
     {
-        return await context.CurriculumSubjects
+        return await context.Subjects
             .Where(s => subjectIds.Contains(s.Id))
             .ToListAsync(cancellationToken);
     }
@@ -40,16 +40,25 @@ public class CurriculumRepository(ApplicationDbContext context) : ICurriculumRep
     public async Task<List<Subject>> GetSubjectsByName(List<string> subjectNames,
         CancellationToken cancellationToken)
     {
-        return await context.CurriculumSubjects
+        return await context.Subjects
             .Where(s => subjectNames.Contains(s.Name))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Subject?> GetSubjectById(SubjectId subjectId, CancellationToken cancellationToken)
+    {
+        var subject = await context.Subjects
+            .Where(s => s.Id == subjectId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return subject;
     }
 
     public async Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevelValue> yearLevels,
         CancellationToken cancellationToken)
     {
         {
-            var subjects = await context.CurriculumSubjects
+            var subjects = await context.Subjects
                 .Include(s => s.YearLevels)
                 .ThenInclude(yl => yl.ConceptualOrganisers)
                 .ThenInclude(c => c.ContentDescriptions)
