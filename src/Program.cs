@@ -1,12 +1,16 @@
 using Asp.Versioning;
-//using LessonFlow.Api.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Components;
 using LessonFlow.Components.Account;
+using LessonFlow.Database;
 using LessonFlow.DependencyInjection;
 using LessonFlow.Services;
+using LessonFlow.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Radzen;
+
+namespace LessonFlow;
 
 public class Program
 {
@@ -18,8 +22,8 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents(o => o.DetailedErrors = true);
 #else
-        builder.Services.AddRazorComponents()
-            .AddInteractiveServerComponents();
+    builder.Services.AddRazorComponents()
+        .AddInteractiveServerComponents();
 #endif
 
         builder.Services.AddCascadingAuthenticationState();
@@ -47,7 +51,6 @@ public class Program
 
         var app = builder.Build();
 
-        // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -63,17 +66,17 @@ public class Program
 
         app.MapAdditionalIdentityEndpoints();
 
-        //app.MapPost("api/dev/services/parse-curriculum", async (ApplicationDbContext context) =>
-        //{
-        //    var parser = new SACurriculumParser();
-        //    var subjects = await parser.ParseCurriculum();
-        //    context.Subjects.AddRange(subjects);
-        //    await context.SaveChangesAsync();
-        //    return Results.Ok();
-        //});
+        app.MapPost("api/dev/services/parse-curriculum", async (ApplicationDbContext context, string directory) =>
+        {
+            var parser = new SACurriculumParser();
+            var subjects = await parser.ParseCurriculum(directory);
+            context.Subjects.AddRange(subjects);
+            await context.SaveChangesAsync();
+            return Results.Ok();
+        });
 
         app.MapPost("api/dev/services/term-dates", SetTermDates.Endpoint);
 
-        app.Run(); 
+        app.Run();
     }
 }

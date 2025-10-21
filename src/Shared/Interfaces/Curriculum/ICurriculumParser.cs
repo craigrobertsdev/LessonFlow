@@ -4,5 +4,5 @@ namespace LessonFlow.Shared.Interfaces.Curriculum;
 
 public interface ICurriculumParser
 {
-    Task<List<Subject>> ParseCurriculum();
+    Task<List<Subject>> ParseCurriculum(string subjectDirectory);
 }
