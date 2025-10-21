@@ -4,7 +4,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.TermPlanners.DomainEvents;
-using LessonFlow.Exceptions;
+using LessonFlow.Shared.Exceptions;
 
 namespace LessonFlow.Domain.TermPlanners;
 

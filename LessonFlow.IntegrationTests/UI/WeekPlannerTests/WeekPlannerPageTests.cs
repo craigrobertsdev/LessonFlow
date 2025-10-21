@@ -10,7 +10,7 @@ using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
-using LessonFlow.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,5 +1,5 @@
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Exceptions;
+using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using LessonFlow.Database;

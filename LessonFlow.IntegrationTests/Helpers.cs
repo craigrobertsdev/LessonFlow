@@ -1,10 +1,21 @@
-﻿using LessonFlow.Domain.Enums;
+﻿using LessonFlow.Components.AccountSetup.State;
+using LessonFlow.Database;
+using LessonFlow.Domain.Curriculum;
+using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Domain.YearDataRecords;
 
 namespace LessonFlow.IntegrationTests;
 internal static class Helpers
 {
+    internal readonly static int TestYear = 2025;
+    internal readonly static int FirstMonthOfSchool = 1;
+    internal readonly static int FirstDayOfSchool = 29;
+    internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
+
     internal static WeekPlannerTemplate GenerateWeekPlannerTemplate(Guid userId)
     {
         var periods = new List<TemplatePeriod>
@@ -35,5 +46,49 @@ internal static class Helpers
         }
         var template = new WeekPlannerTemplate(userId, periods, dayTemplates);
         return template;
+    }
+
+    internal static void SeedDbContext(ApplicationDbContext dbContext)
+    {
+        var accountSetupState = new AccountSetupState(Guid.NewGuid());
+        accountSetupState.SetCalendarYear(TestYear);
+
+        var user = new User
+        {
+            AccountSetupState = accountSetupState,
+            Email = "test@test.com",
+            UserName = "testuser",
+            LastSelectedYear = TestYear
+        };
+        user.CompleteAccountSetup();
+        dbContext.Users.Add(user);
+        dbContext.SaveChanges();
+
+        user = dbContext.Users.First();
+
+        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate(user.Id);
+        var yearData = new YearData(user.Id, weekPlannerTemplate, "Test School", TestYear);
+        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, FirstDateOfSchool);
+        var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
+        weekPlanner.UpdateDayPlan(dayPlan);
+        yearData.AddWeekPlanner(weekPlanner);
+        dbContext.YearData.Add(yearData);
+        dbContext.SaveChanges();
+
+        user.AddYearData(yearData);
+        dbContext.SaveChanges();
+
+        var subjects = new List<Subject>
+        {
+            new([], "Mathematics"),
+            new([], "Science"),
+            new([], "English"),
+        };
+
+        dbContext.Subjects.AddRange(subjects);
+        dbContext.SaveChanges();
+
+        yearData.AddSubjects(subjects);
+        dbContext.SaveChanges();
     }
 }

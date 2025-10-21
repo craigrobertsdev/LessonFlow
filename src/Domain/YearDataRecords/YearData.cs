@@ -10,7 +10,7 @@ using LessonFlow.Domain.Students;
 using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords.DomainEvents;
-using LessonFlow.Exceptions;
+using LessonFlow.Shared.Exceptions;
 
 namespace LessonFlow.Domain.YearDataRecords;
 

@@ -2,6 +2,8 @@
 using Bunit.TestDoubles;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
+using LessonFlow.Domain.Enums;
+using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
@@ -11,9 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
 using System.Security.Claims;
+using static LessonFlow.IntegrationTests.Helpers;
 
 namespace LessonFlow.IntegrationTests.UI.LessonPlannerTests;
-public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
+public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime, IDisposable
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly CustomWebApplicationFactory _factory;
@@ -34,7 +37,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>());
         Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddSingleton(scope.ServiceProvider.GetRequiredService<IYearDataRepository>());
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ICurriculumRepository>());
+        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
         Services.AddSingleton(scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
         Services.AddScoped<DialogService>();
         Services.AddScoped<NotificationService>();
@@ -50,10 +53,10 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
     }
 
     [Fact]
-    public async Task SaveLessonPlan_WhenNoPreExistingLessonPlan_ShouldPersistNewLessonPlanAndExitEditMode()
+    public async Task SaveLessonPlan_WhenNoPreExistingLessonPlan_ShouldPersistNewLessonPlan()
     {
         var appState = await CreateAppState();
-        var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
 
         component.WaitForElement("#edit-lesson-plan").Click();
         var selectSubject = component.Find("select#subject-name");
@@ -73,9 +76,48 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
     }
 
+    [Fact]
+    public async Task SaveLessonPlan_WhenPreExistingLesson_ShouldUpdateExistingLessonPlan()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var yearData = db.YearData.First(yd => yd.CalendarYear == 2025);
+        var subject = db.Subjects.First(s => s.Name == "English");
+
+        var startPeriod = 3;
+
+        var lessonPlan = new LessonPlan(yearData, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool, []);
+        yearData.WeekPlanners.First(wp => wp.WeekStart == FirstDateOfSchool).DayPlans.First(dp => dp.Date == FirstDateOfSchool).AddLessonPlan(lessonPlan);
+        db.LessonPlans.Add(lessonPlan);
+        db.SaveChanges();
+
+        var lessonPlanId = lessonPlan.Id;
+
+        var appState = await CreateAppState();
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
+
+        component.WaitForElement("#edit-lesson-plan").Click();
+        var selectSubject = component.WaitForElement("select#subject-name");
+        selectSubject.Change("Mathematics");
+        var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        selectNumberOfPeriods.Change("2");
+        component.Find("#save-lesson-plan").Click();
+
+        using var newScope = _factory.Services.CreateScope();
+        var dbContext = newScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var savedLessonPlan = dbContext.LessonPlans
+            .Include(lp => lp.Subject)
+            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+
+        Assert.NotNull(savedLessonPlan);
+        Assert.Equal(lessonPlanId, savedLessonPlan.Id);
+        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+    }
+
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
     {
-        
+
         return RenderComponent<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
             .Add(p => p.Month, month)
@@ -98,4 +140,11 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         _dbContext?.Dispose();
         base.Dispose();
     }
+
+    public async Task InitializeAsync()
+    {
+        await _factory.InitializeAsync();
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 }

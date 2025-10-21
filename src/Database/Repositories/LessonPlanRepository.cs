@@ -50,16 +50,6 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
         await context.LessonPlans.AddAsync(lessonPlan, cancellationToken);
         var subject = context.Subjects.First(s => s.Id == lessonPlan.Subject.Id);
         lessonPlan.UpdateSubject(subject);
-
-        if (lessonPlan.Resources is { Count: > 0 })
-        {
-            var resources = lessonPlan.Resources
-                .Select(r => context.Resources.First(dbR => dbR.Id == r.Id))
-                .ToList();
-
-            lessonPlan.UpdateResources(resources);
-        }
-
         context.LessonPlans.Add(lessonPlan);
     }
 
@@ -72,9 +62,10 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
 
         if (existingLessonPlan is not null)
         {
-            context.Entry(existingLessonPlan).CurrentValues.SetValues(lessonPlan);
-            existingLessonPlan.UpdateResources(lessonPlan.Resources);
-            context.Update(lessonPlan);
+            existingLessonPlan.UpdateValuesFrom(lessonPlan);
+            var subject = context.Subjects.First(s => s.Id == lessonPlan.Subject.Id);
+            existingLessonPlan.UpdateSubject(subject);
+
             return true;
         }
 
@@ -103,6 +94,17 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
         return await context.Resources
             .Where(r => lessonPlan.Resources.ToList().Contains(r))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateResources(LessonPlan lessonPlan, CancellationToken cancellationToken)
+    {
+        var existingResources = await context.Resources
+            .Where(r => lessonPlan.Resources.Contains(r))
+            .ToListAsync(cancellationToken);
+
+        throw new NotImplementedException();
+
+        // lessonPlan.UpdateResources(existingResources);  <-- need to work out whether the current implementation correctly tracks changes
     }
 
     public void DeleteLessonPlans(IEnumerable<LessonPlan> lessonPlans)

@@ -4,6 +4,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
+using static LessonFlow.IntegrationTests.Helpers;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
+using Respawn;
 
 namespace LessonFlow.IntegrationTests;
 
@@ -20,6 +22,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
         .WithImage("postgres:15-alpine")
         .WithUsername("lessonflow_user")
         .Build();
+
+    private Respawner? _respawner;
 
     public Task InitializeAsync()
     {
@@ -34,7 +38,6 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
-
         {
             var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
             if (dbContextDescriptor is not null)
@@ -52,7 +55,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
                 options.UseNpgsql(csb.ConnectionString);
             });
 
-            var dbContext = services.BuildServiceProvider().GetRequiredService<ApplicationDbContext>();
+            using var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             dbContext.Database.EnsureCreated();
             SeedDbContext(dbContext);
 
@@ -64,51 +69,26 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
             services.AddAuthentication(TestAuthHandler.AuthScheme)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.AuthScheme, options => { });
-
         });
     }
 
-    private void SeedDbContext(ApplicationDbContext dbContext)
+    public async Task ResetDatabaseAsync()
     {
-        var accountSetupState = new AccountSetupState(Guid.NewGuid());
-        accountSetupState.SetCalendarYear(2025);
+        await using var conn = new NpgsqlConnection(_postgres.GetConnectionString());
+        await conn.OpenAsync();
 
-        var user = new User
+        _respawner ??= await Respawner.CreateAsync(conn, new RespawnerOptions
         {
-            AccountSetupState = accountSetupState,
-            Email = "test@test.com",
-            UserName = "testuser",
-            LastSelectedYear = 2025
-        };
-        user.CompleteAccountSetup();
-        dbContext.Users.Add(user);
-        dbContext.SaveChanges();
+            DbAdapter = DbAdapter.Postgres,
+            SchemasToInclude = new[] { "public" },
+            WithReseed = true
+        });
 
-        user = dbContext.Users.First();
+        await _respawner.ResetAsync(conn);
 
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate(user.Id);
-        var yearData = new YearData(user.Id, weekPlannerTemplate, "Test School", 2025);
-        var weekPlanner = new WeekPlanner(yearData, 2025, 1, 1, new DateOnly(2025, 1, 27));
-        var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(2025, 1, 29), [], []);
-        weekPlanner.UpdateDayPlan(dayPlan);
-        yearData.AddWeekPlanner(weekPlanner);
-        dbContext.YearData.Add(yearData);
-        dbContext.SaveChanges();
-
-        user.AddYearData(yearData);
-        dbContext.SaveChanges();
-
-        var subjects = new List<Subject>
-        {
-            new([], "Mathematics"),
-            new([], "Science"),
-            new([], "English"),
-        };
-
-        dbContext.Subjects.AddRange(subjects);
-        dbContext.SaveChanges();
-
-        yearData.AddSubjects(subjects);
-        dbContext.SaveChanges();
+        // Re-seed to the known baseline state for each test
+        using var scope = Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        SeedDbContext(db);
     }
 }

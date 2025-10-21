@@ -9,6 +9,7 @@ public interface ILessonPlanRepository
     void Add(LessonPlan lesson);
     Task<List<LessonPlan>?> GetLessonsByYearDataId(YearDataId yearDataId, CancellationToken cancellationToken);
     Task<List<Resource>> GetResources(LessonPlan lessonPlan, CancellationToken cancellationToken);
+    Task UpdateResources(LessonPlan lessonPlan, CancellationToken cancellationToken);
     Task<LessonPlan?> GetByDateAndPeriodStart(YearDataId yearDataId, DateOnly date, int period, CancellationToken cancellationToken);
     Task<List<LessonPlan>> GetByYearDataAndDate(YearDataId yearDataId, DateOnly date,
         CancellationToken cancellationToken);
@@ -17,7 +18,6 @@ public interface ILessonPlanRepository
     Task AddLessonPlan(LessonPlan lessonPlan, CancellationToken cancellationToken);
     bool UpdateLessonPlan(LessonPlan lessonPlan);
     void DeleteLessonPlans(IEnumerable<LessonPlan> lessonPlans);
-
     Task<LessonPlan?> GetByYearDataAndDateAndPeriod(YearDataId yearDataId, DateOnly date, int period,
         CancellationToken cancellationToken);
 }

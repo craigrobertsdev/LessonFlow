@@ -1,7 +1,6 @@
-using System.Linq.Expressions;
 using LessonFlow.Domain.Curriculum;
+using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Exceptions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,50 +8,63 @@ namespace LessonFlow.Database.Repositories;
 
 public class SubjectRepository(ApplicationDbContext context) : ISubjectRepository
 {
-    public async Task<List<Subject>> GetCurriculumSubjects(
+    public async Task AddCurriculum(List<Subject> subjects, CancellationToken cancellationToken)
+    {
+        var curriculumSubjects = await context.Subjects
+            .ToListAsync(cancellationToken);
+
+        context.Subjects.RemoveRange(curriculumSubjects);
+        await context.SaveChangesAsync(cancellationToken);
+
+        foreach (var subject in subjects)
+        {
+            context.Subjects.Add(subject);
+        }
+    }
+
+    public async Task<List<Subject>> GetAllSubjects(CancellationToken cancellationToken)
+    {
+        return await context.Subjects.ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<Subject>> GetSubjectsById(List<SubjectId> subjectIds,
         CancellationToken cancellationToken)
     {
-        return await GetSubjectsWithoutTracking(cancellationToken);
+        return await context.Subjects
+            .Where(s => subjectIds.Contains(s.Id))
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<Subject>> GetSubjectsById(
-        List<SubjectId> subjects,
+    public async Task<List<Subject>> GetSubjectsByName(List<string> subjectNames,
         CancellationToken cancellationToken)
     {
-        Expression<Func<Subject, bool>> filter = s => subjects.Contains(s.Id);
-
-        return await GetSubjectsWithoutTracking(cancellationToken, filter);
+        return await context.Subjects
+            .Where(s => subjectNames.Contains(s.Name))
+            .ToListAsync(cancellationToken);
     }
 
-    private async Task<List<Subject>> GetSubjectsWithoutTracking(
-        CancellationToken cancellationToken,
-        Expression<Func<Subject, bool>>? filter = null)
+    public async Task<Subject?> GetSubjectById(SubjectId subjectId, CancellationToken cancellationToken)
     {
-        var subjectsQuery = context.Subjects
-            .AsNoTracking();
+        var subject = await context.Subjects
+            .Where(s => s.Id == subjectId)
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (filter != null)
-        {
-            subjectsQuery = subjectsQuery.Where(filter);
-        }
-
-        subjectsQuery = subjectsQuery
-            .Include(s => s.YearLevels)
-            .ThenInclude(yl => yl.ConceptualOrganisers)
-            .ThenInclude(s => s.ContentDescriptions)
-            .Include(s => s.YearLevels)
-            .ThenInclude(yl => yl.Dispositions)
-            .Include(s => s.YearLevels)
-            .ThenInclude(yl => yl.Capabilities);
-
-        var subjects = await subjectsQuery.ToListAsync(cancellationToken);
-
-        if (subjects.Count == 0)
-        {
-            throw new NoSubjectsFoundException();
-        }
-
-        return subjects;
+        return subject;
     }
 
+    public async Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevelValue> yearLevels,
+        CancellationToken cancellationToken)
+    {
+        {
+            var subjects = await context.Subjects
+                .Include(s => s.YearLevels)
+                .ThenInclude(yl => yl.ConceptualOrganisers)
+                .ThenInclude(c => c.ContentDescriptions)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            return subjects.Select(s =>
+                new Subject(s.Name, s.RemoveYearLevelsNotTaught(yearLevels), s.Description)).ToList();
+        }
+    }
 }

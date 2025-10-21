@@ -21,7 +21,7 @@ public partial class LessonPlanner
     [Inject] public ILessonPlanRepository LessonPlanRepository { get; set; } = default!;
     [Inject] public ICurriculumService CurriculumService { get; set; } = default!;
     [Inject] public IYearDataRepository YearDataRepository { get; set; } = default!;
-    [Inject] public ICurriculumRepository CurriculumRepository { get; set; } = default!;
+    [Inject] public ISubjectRepository SubjectRepository { get; set; } = default!;
     [Inject] public IUnitOfWork UnitOfWork { get; set; } = default!;
 
     private bool _loading = false;
@@ -78,6 +78,8 @@ public partial class LessonPlanner
                     StartPeriod,
                     new DateOnly(Year, Month, Day),
                     []);
+
+                EditingLessonPlan = lessonPlan.Clone();
 
                 IsInEditMode = true;
             }
@@ -148,7 +150,7 @@ public partial class LessonPlanner
         var lessonPlanExists = LessonPlanRepository.UpdateLessonPlan(LessonPlan);
         if (!lessonPlanExists)
         {
-            var subject = await CurriculumRepository.GetSubjectById(LessonPlan.Subject.Id, cancellationToken);
+            var subject = await SubjectRepository.GetSubjectById(LessonPlan.Subject.Id, cancellationToken);
             if (subject is null)
             {
                 throw new InvalidOperationException("Subject not found in curriculum.");

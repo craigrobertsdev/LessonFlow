@@ -1,5 +1,5 @@
 using LessonFlow.Domain.Curriculum;
-using LessonFlow.Exceptions;
+using LessonFlow.Shared.Exceptions;
 
 namespace LessonFlow.Domain.TermPlanners;
 
