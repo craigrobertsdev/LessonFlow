@@ -50,7 +50,7 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         {
             if (!dayTemplate.IsWorkingDay) continue;
 
-            var newPeriod = new LessonPeriod(string.Empty, dayTemplate.Periods[^1].StartPeriod + 1, 1);
+            var newPeriod = new LessonTemplate(string.Empty, dayTemplate.Periods[^1].StartPeriod + 1, 1);
             dayTemplate.AddPeriod(newPeriod);
         }
     }
@@ -81,14 +81,14 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
                 var existingPeriod = dayTemplate.Periods[idx];
                 if (existingPeriod.PeriodType != period.PeriodType)
                 {
-                    PeriodBase newPeriod;
+                    PeriodTemplateBase newPeriod;
                     if (period.PeriodType == PeriodType.Break)
                     {
-                        newPeriod = new BreakPeriod(period.Name ?? "Break", existingPeriod.StartPeriod, 1);
+                        newPeriod = new BreakTemplate(period.Name ?? "Break", existingPeriod.StartPeriod, 1);
                     }
                     else
                     {
-                        newPeriod = new LessonPeriod(string.Empty, existingPeriod.StartPeriod, 1);
+                        newPeriod = new LessonTemplate(string.Empty, existingPeriod.StartPeriod, 1);
                     }
                     dayTemplate.Periods[idx] = newPeriod;
                 }
@@ -96,7 +96,7 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         }
     }
 
-    public PeriodBase? GetTemplatePeriod(DayOfWeek dayOfWeek, int startPeriod)
+    public PeriodTemplateBase? GetTemplatePeriod(DayOfWeek dayOfWeek, int startPeriod)
     {
         var dayTemplate = DayTemplates.Find(dt => dt.DayOfWeek == dayOfWeek);
         if (dayTemplate == null || !dayTemplate.IsWorkingDay) return null;

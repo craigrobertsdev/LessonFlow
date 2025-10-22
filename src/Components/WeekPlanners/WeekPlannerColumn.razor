@@ -88,7 +88,7 @@
     {
         if (!Column.IsWorkingDay) return;
 
-        if (e.Value is string newValue && cell.Period is BreakPeriod period)
+        if (e.Value is string newValue && cell.Period is BreakTemplate period)
         {
             WeekPlanner.HandleBreakNameChanged(DayPlan.DayOfWeek, period, newValue);
         }
@@ -114,7 +114,7 @@
 
     private string GetBreakPeriodDutyName(GridCell cell)
     {
-        if (cell.Period is not BreakPeriod period) return string.Empty;
+        if (cell.Period is not BreakTemplate period) return string.Empty;
 
         DayPlan.BreakDutyOverrides.TryGetValue(cell.PeriodNumber, out var overrideName);
         return overrideName ?? period.BreakDuty ?? string.Empty;

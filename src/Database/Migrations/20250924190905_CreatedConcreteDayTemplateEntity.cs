@@ -15,7 +15,7 @@ namespace LessonFlow.Api.Database.Migrations
                 table: "DayTemplates");
 
             migrationBuilder.CreateTable(
-                name: "BreakPeriod",
+                name: "BreakTemplate",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -37,7 +37,7 @@ namespace LessonFlow.Api.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LessonPeriod",
+                name: "LessonTemplate",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -59,7 +59,7 @@ namespace LessonFlow.Api.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "NitPeriod",
+                name: "NitTemplatePeriod",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -81,17 +81,17 @@ namespace LessonFlow.Api.Database.Migrations
 
             migrationBuilder.CreateIndex(
                 name: "IX_BreakPeriod_DayTemplateId",
-                table: "BreakPeriod",
+                table: "BreakTemplate",
                 column: "DayTemplateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LessonPeriod_DayTemplateId",
-                table: "LessonPeriod",
+                table: "LessonTemplate",
                 column: "DayTemplateId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NitPeriod_DayTemplateId",
-                table: "NitPeriod",
+                table: "NitTemplatePeriod",
                 column: "DayTemplateId");
         }
 
@@ -99,13 +99,13 @@ namespace LessonFlow.Api.Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "BreakPeriod");
+                name: "BreakTemplate");
 
             migrationBuilder.DropTable(
-                name: "LessonPeriod");
+                name: "LessonTemplate");
 
             migrationBuilder.DropTable(
-                name: "NitPeriod");
+                name: "NitTemplatePeriod");
 
             migrationBuilder.AddColumn<string>(
                 name: "Periods",

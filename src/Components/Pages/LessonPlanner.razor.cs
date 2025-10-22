@@ -4,6 +4,7 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Shared;
+using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
@@ -85,7 +86,7 @@ public partial class LessonPlanner
             }
             else
             {
-                if (templatePeriod is NitPeriod n)
+                if (templatePeriod is NitTemplatePeriod n)
                 {
                     lessonPlan = new LessonPlan(
                         AppState.CurrentYearData,
@@ -98,7 +99,7 @@ public partial class LessonPlanner
                         []);
                 }
 
-                else if (templatePeriod is LessonPeriod p)
+                else if (templatePeriod is LessonTemplate p)
                 {
                     lessonPlan = new LessonPlan(
                         AppState.CurrentYearData,
@@ -153,7 +154,7 @@ public partial class LessonPlanner
             var subject = await SubjectRepository.GetSubjectById(LessonPlan.Subject.Id, cancellationToken);
             if (subject is null)
             {
-                throw new InvalidOperationException("Subject not found in curriculum.");
+                throw new SubjectNotFoundException(LessonPlan.Subject.Name);
             }
 
             LessonPlan.UpdateSubject(subject);

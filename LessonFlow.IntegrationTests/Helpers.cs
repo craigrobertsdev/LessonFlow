@@ -32,15 +32,15 @@ internal static class Helpers
         var dayTemplates = new List<DayTemplate>();
         foreach (var day in Enum.GetValues<DayOfWeek>().Where(d => d != DayOfWeek.Saturday && d != DayOfWeek.Sunday))
         {
-            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodBase>((p, i) =>
+            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodTemplateBase>((p, i) =>
             {
                 if (p.PeriodType == PeriodType.Lesson)
                 {
-                    return new LessonPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new LessonTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
                 else
                 {
-                    return new BreakPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new BreakTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
             }).ToList(), day, DayType.Working));
         }

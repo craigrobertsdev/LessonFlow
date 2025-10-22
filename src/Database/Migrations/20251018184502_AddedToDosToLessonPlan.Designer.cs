@@ -300,7 +300,7 @@ namespace LessonFlow.Api.Database.Migrations
                     b.ToTable("DayTemplates", (string)null);
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.PeriodBase", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -934,32 +934,32 @@ namespace LessonFlow.Api.Database.Migrations
                     b.ToTable("SubjectYearData");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.BreakPeriod", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.BreakTemplate", b =>
                 {
-                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodBase");
+                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase");
 
                     b.Property<string>("BreakDuty")
                         .HasColumnType("text");
 
-                    b.ToTable("BreakPeriod");
+                    b.ToTable("BreakTemplate");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.LessonPeriod", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.LessonTemplate", b =>
                 {
-                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodBase");
+                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase");
 
                     b.Property<string>("SubjectName")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.ToTable("LessonPeriod");
+                    b.ToTable("LessonTemplate");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.NitPeriod", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.NitTemplatePeriod", b =>
                 {
-                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodBase");
+                    b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase");
 
-                    b.ToTable("NitPeriod");
+                    b.ToTable("NitTemplatePeriod");
                 });
 
             modelBuilder.Entity("CalendarSchoolEvent", b =>
@@ -1329,7 +1329,7 @@ namespace LessonFlow.Api.Database.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.PeriodBase", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase", b =>
                 {
                     b.HasOne("LessonFlow.Domain.PlannerTemplates.DayTemplate", null)
                         .WithMany("Periods")

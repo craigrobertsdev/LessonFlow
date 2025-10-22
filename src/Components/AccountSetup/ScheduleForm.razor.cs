@@ -50,12 +50,12 @@ public partial class ScheduleForm
             }
 
             int periodCount = 1;
-            var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodBase>(p =>
+            var periods = WeekPlannerTemplate.Periods.Select<TemplatePeriod, PeriodTemplateBase>(p =>
             {
                 return p.PeriodType switch
                 {
-                    PeriodType.Lesson => new LessonPeriod(string.Empty, periodCount++, 1),
-                    PeriodType.Break => new BreakPeriod(string.Empty, periodCount++, 1),
+                    PeriodType.Lesson => new LessonTemplate(string.Empty, periodCount++, 1),
+                    PeriodType.Break => new BreakTemplate(string.Empty, periodCount++, 1),
                     _ => throw new ArgumentOutOfRangeException()
                 };
             }).ToList();
@@ -257,7 +257,7 @@ public partial class ScheduleForm
                     cellsStartIdx++;
                     continue;
                 }
-                var newPeriod = new LessonPeriod(string.Empty, templatePeriods[templatePeriodsStartIndex].StartPeriod, 1);
+                var newPeriod = new LessonTemplate(string.Empty, templatePeriods[templatePeriodsStartIndex].StartPeriod, 1);
                 var newCell = new GridCell([(nextLessonStartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, nextLessonStartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1)], newPeriod, cell.Column);
                 nextLessonStartPeriod++;
                 if (cellsStartIdx >= cells.Count)

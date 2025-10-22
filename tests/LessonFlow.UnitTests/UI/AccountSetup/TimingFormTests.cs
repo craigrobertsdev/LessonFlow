@@ -23,7 +23,7 @@ public class TimingFormTests : TestContext
         foreach (var dayTemplate in component.Instance.State.WeekPlannerTemplate.DayTemplates)
         {
             var period = dayTemplate.Periods.First(p => p.StartPeriod == updated.StartPeriod);
-            Assert.IsType<BreakPeriod>(period);
+            Assert.IsType<BreakTemplate>(period);
         }
     }
 }

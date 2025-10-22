@@ -25,16 +25,16 @@ public class Helpers
             IsWorkingDay = true
         };
 
-        var periods = new List<PeriodBase>
+        var periods = new List<PeriodTemplateBase>
         {
-            new LessonPeriod("", 1, 1),
-            new LessonPeriod("", 2, 1),
-            new BreakPeriod("Recess", 3, 1),
-            new LessonPeriod("", 4, 1),
-            new LessonPeriod("", 5, 1),
-            new BreakPeriod("Lunch", 6, 1),
-            new LessonPeriod("", 7, 1),
-            new LessonPeriod("", 8, 1)
+            new LessonTemplate("", 1, 1),
+            new LessonTemplate("", 2, 1),
+            new BreakTemplate("Recess", 3, 1),
+            new LessonTemplate("", 4, 1),
+            new LessonTemplate("", 5, 1),
+            new BreakTemplate("Lunch", 6, 1),
+            new LessonTemplate("", 7, 1),
+            new LessonTemplate("", 8, 1)
         };
 
         foreach (var period in periods)
@@ -64,15 +64,15 @@ public class Helpers
         var dayTemplates = new List<DayTemplate>();
         foreach (var day in Enum.GetValues<DayOfWeek>().Where(d => d != DayOfWeek.Saturday && d != DayOfWeek.Sunday))
         {
-            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodBase>((p, i) =>
+            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodTemplateBase>((p, i) =>
             {
                 if (p.PeriodType == PeriodType.Lesson)
                 {
-                    return new LessonPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new LessonTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
                 else
                 {
-                    return new BreakPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new BreakTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
             }).ToList(), day, DayType.Working));
         }

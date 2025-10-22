@@ -76,9 +76,9 @@ public class DayTemplateConfiguration : IEntityTypeConfiguration<DayTemplate>
     }
 }
 
-public class PeriodBaseConfiguration : IEntityTypeConfiguration<PeriodBase>
+public class PeriodBaseConfiguration : IEntityTypeConfiguration<PeriodTemplateBase>
 {
-    public void Configure(EntityTypeBuilder<PeriodBase> builder)
+    public void Configure(EntityTypeBuilder<PeriodTemplateBase> builder)
     {
         builder.UseTpcMappingStrategy();
         builder.Property<Guid>("Id");
@@ -98,25 +98,25 @@ public class PeriodDto
     public string? SubjectName { get; init; }
     public string? BreakDuty { get; init; }
 
-    public static PeriodDto PeriodToDto(PeriodBase period)
+    public static PeriodDto PeriodToDto(PeriodTemplateBase period)
     {
         return period switch
         {
-            LessonPeriod lesson => new PeriodDto
+            LessonTemplate lesson => new PeriodDto
             {
                 Type = PeriodType.Lesson,
                 StartPeriod = lesson.StartPeriod,
                 NumberOfPeriods = lesson.NumberOfPeriods,
                 SubjectName = lesson.SubjectName,
             },
-            BreakPeriod breakPeriod => new PeriodDto
+            BreakTemplate breakPeriod => new PeriodDto
             {
                 Type = PeriodType.Break,
                 StartPeriod = breakPeriod.StartPeriod,
                 NumberOfPeriods = breakPeriod.NumberOfPeriods,
                 BreakDuty = breakPeriod.BreakDuty
             },
-            NitPeriod nit => new PeriodDto
+            NitTemplatePeriod nit => new PeriodDto
             {
                 Type = PeriodType.Nit,
                 StartPeriod = nit.StartPeriod,
@@ -126,14 +126,14 @@ public class PeriodDto
         };
     }
 
-    public static PeriodBase DtoToPeriod(PeriodDto periodDto)
+    public static PeriodTemplateBase DtoToPeriod(PeriodDto periodDto)
     {
         return periodDto.Type switch
         {
-            PeriodType.Lesson => new LessonPeriod(periodDto.SubjectName!, periodDto.StartPeriod,
+            PeriodType.Lesson => new LessonTemplate(periodDto.SubjectName!, periodDto.StartPeriod,
                 periodDto.NumberOfPeriods),
-            PeriodType.Break => new BreakPeriod(periodDto.BreakDuty, periodDto.StartPeriod, periodDto.NumberOfPeriods),
-            PeriodType.Nit => new NitPeriod(periodDto.StartPeriod, periodDto.NumberOfPeriods),
+            PeriodType.Break => new BreakTemplate(periodDto.BreakDuty, periodDto.StartPeriod, periodDto.NumberOfPeriods),
+            PeriodType.Nit => new NitTemplatePeriod(periodDto.StartPeriod, periodDto.NumberOfPeriods),
             _ => throw new ArgumentException($"Unknown period type: {nameof(periodDto)}"),
         };
     }

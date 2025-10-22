@@ -48,7 +48,7 @@
         else
         {
             <select class="px-3 mr-1 flex-grow text-sm focus:outline-none" id="subject-selector"
-                    @bind="@(((LessonPeriod)SelectedCell!.Period).SubjectName)">
+                    @bind="@(((LessonTemplate)SelectedCell!.Period).SubjectName)">
                 <option value="">Select subject</option>
                 @foreach (var subject in State.SubjectsTaught)
                 {

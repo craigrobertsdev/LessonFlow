@@ -11,34 +11,34 @@ namespace LessonFlow.Domain.PlannerTemplates;
 /// </summary>
 public class DayTemplate
 {
-    private readonly List<PeriodBase> _periods = [];
+    private readonly List<PeriodTemplateBase> _periods = [];
 
     public DayOfWeek DayOfWeek { get; private set; }
     public DayType Type { get; private set; }
     public bool IsWorkingDay => Type == DayType.Working;
-    public List<PeriodBase> Periods => _periods;
+    public List<PeriodTemplateBase> Periods => _periods;
     public string? BeforeSchoolDuty { get; set; }
     public string? AfterSchoolDuty { get; set; }
 
-    public void SetPeriods(IEnumerable<PeriodBase> periods)
+    public void SetPeriods(IEnumerable<PeriodTemplateBase> periods)
     {
         _periods.Clear();
         _periods.AddRange(periods);
     }
 
-    public void RemovePeriods(IEnumerable<PeriodBase> periods)
+    public void RemovePeriods(IEnumerable<PeriodTemplateBase> periods)
     {
         foreach (var period in periods)
             _periods.Remove(period);
     }
 
-    public void AddPeriod(PeriodBase period)
+    public void AddPeriod(PeriodTemplateBase period)
     {
         _periods.Add(period);
         _periods.Sort((a, b) => a.StartPeriod.CompareTo(b.StartPeriod));
     }
 
-    public DayTemplate(List<PeriodBase> periods, DayOfWeek dayOfWeek, DayType type)
+    public DayTemplate(List<PeriodTemplateBase> periods, DayOfWeek dayOfWeek, DayType type)
     {
         _periods = periods;
         DayOfWeek = dayOfWeek;

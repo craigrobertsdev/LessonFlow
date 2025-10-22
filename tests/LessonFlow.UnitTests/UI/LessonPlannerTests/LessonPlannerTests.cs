@@ -77,7 +77,7 @@ public class LessonPlannerTests : TestContext
            .ReturnsAsync(new LessonPlan(appState.CurrentYearData, new Subject([], subjectName), PeriodType.Lesson, "", numberOfPeriods, periodStart, date, []));
 
         Services.AddScoped(sp => lessonPlanRepository.Object);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[1].Periods[0] = new LessonPeriod(subjectName, periodStart, numberOfPeriods);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[1].Periods[0] = new LessonTemplate(subjectName, periodStart, numberOfPeriods);
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, day, periodStart);
         // Act
         var lessonPlan = component.Instance.LessonPlan;
@@ -108,7 +108,7 @@ public class LessonPlannerTests : TestContext
     public void Initialise_WhenNoLessonPlannedAndNitPeriodInWeekPlannerTemplate_ShouldCreateBlankNitPeriod()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitPeriod(1, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplatePeriod(1, 2);
         var day = 31;
         var periodStart = 1;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, day, periodStart);
@@ -138,7 +138,7 @@ public class LessonPlannerTests : TestContext
         lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), 1, default))
            .ReturnsAsync(lessonPlan);
         Services.AddScoped(sp => lessonPlanRepository.Object);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitPeriod(1, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplatePeriod(1, 2);
 
         var day = 31;
         var periodStart = 1;
@@ -171,7 +171,7 @@ public class LessonPlannerTests : TestContext
     public void CanEditLessonPlan_WhenNoLessonPlanExistsButSubjectPlannedInWeekPlannerTemplate_ShouldNotLoadIntoEditMode()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[3].Periods[0] = new LessonPeriod("Mathematics", 1, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[3].Periods[0] = new LessonTemplate("Mathematics", 1, 2);
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, 30, 1);
 
         var subjectName = component.Find("p#subject-name");
