@@ -10,11 +10,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace LessonFlow.Api.Database.Migrations
+namespace LessonFlow.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251015214213_AddedBeforeAndAfterSchoolDutiesToDayPlan")]
-    partial class AddedBeforeAndAfterSchoolDutiesToDayPlan
+    [Migration("20251027194250_ChangeLessonPlanRelationship")]
+    partial class ChangeLessonPlanRelationship
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -93,6 +93,9 @@ namespace LessonFlow.Api.Database.Migrations
                         .HasColumnType("character varying(256)")
                         .HasColumnName("SubjectsTaught");
 
+                    b.Property<Guid>("WeekPlannerTemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("WorkingDays")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -106,6 +109,9 @@ namespace LessonFlow.Api.Database.Migrations
                         .HasColumnName("YearLevelsTaught");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("WeekPlannerTemplateId")
+                        .IsUnique();
 
                     b.ToTable("AccountSetupState");
                 });
@@ -256,16 +262,11 @@ namespace LessonFlow.Api.Database.Migrations
                     b.Property<DateTime>("UpdatedDateTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("YearDataId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DayPlanId");
 
                     b.HasIndex("SubjectId");
-
-                    b.HasIndex("YearDataId");
 
                     b.ToTable("LessonPlans");
                 });
@@ -275,6 +276,14 @@ namespace LessonFlow.Api.Database.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<string>("AfterSchoolDuty")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("BeforeSchoolDuty")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("DayOfWeek")
                         .HasColumnType("integer");
@@ -324,9 +333,6 @@ namespace LessonFlow.Api.Database.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("AccountSetupStateId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
@@ -334,9 +340,6 @@ namespace LessonFlow.Api.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AccountSetupStateId")
-                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -947,11 +950,11 @@ namespace LessonFlow.Api.Database.Migrations
                     b.ToTable("LessonTemplate");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.NitTemplatePeriod", b =>
+            modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.NitTemplate", b =>
                 {
                     b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase");
 
-                    b.ToTable("NitTemplatePeriod");
+                    b.ToTable("NitTemplate");
                 });
 
             modelBuilder.Entity("CalendarSchoolEvent", b =>
@@ -991,6 +994,14 @@ namespace LessonFlow.Api.Database.Migrations
                         .HasForeignKey("LessonFlow.Components.AccountSetup.State.AccountSetupState", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "WeekPlannerTemplate")
+                        .WithOne()
+                        .HasForeignKey("LessonFlow.Components.AccountSetup.State.AccountSetupState", "WeekPlannerTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("WeekPlannerTemplate");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Assessments.Assessment", b =>
@@ -1233,12 +1244,6 @@ namespace LessonFlow.Api.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", "YearData")
-                        .WithMany("LessonPlans")
-                        .HasForeignKey("YearDataId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.OwnsMany("LessonFlow.Domain.LessonPlans.LessonComment", "Comments", b1 =>
                         {
                             b1.Property<Guid>("Id")
@@ -1277,11 +1282,37 @@ namespace LessonFlow.Api.Database.Migrations
                                 .HasForeignKey("LessonPlanId");
                         });
 
+                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "ToDos", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("LessonPlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<bool>("IsComplete")
+                                .HasColumnType("boolean");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id", "LessonPlanId");
+
+                            b1.HasIndex("LessonPlanId");
+
+                            b1.ToTable("TodoItem", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("LessonPlanId");
+                        });
+
                     b.Navigation("Comments");
 
                     b.Navigation("Subject");
 
-                    b.Navigation("YearData");
+                    b.Navigation("ToDos");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.DayTemplate", b =>
@@ -1303,10 +1334,6 @@ namespace LessonFlow.Api.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", b =>
                 {
-                    b.HasOne("LessonFlow.Components.AccountSetup.State.AccountSetupState", null)
-                        .WithOne("WeekPlannerTemplate")
-                        .HasForeignKey("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "AccountSetupStateId");
-
                     b.HasOne("LessonFlow.Domain.Users.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -1602,12 +1629,6 @@ namespace LessonFlow.Api.Database.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("LessonFlow.Components.AccountSetup.State.AccountSetupState", b =>
-                {
-                    b.Navigation("WeekPlannerTemplate")
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Subject", b =>
                 {
                     b.Navigation("YearLevels");
@@ -1656,8 +1677,6 @@ namespace LessonFlow.Api.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.YearDataRecords.YearData", b =>
                 {
-                    b.Navigation("LessonPlans");
-
                     b.Navigation("Students");
 
                     b.Navigation("TermPlanner");

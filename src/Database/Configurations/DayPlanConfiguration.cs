@@ -17,7 +17,7 @@ public class DayPlanConfiguration : IEntityTypeConfiguration<DayPlan>
 
         builder.HasMany(dp => dp.LessonPlans)
             .WithOne()
-            .HasForeignKey("DayPlanId")
+            .HasForeignKey(lp => lp.DayPlanId)
             .IsRequired();
 
         builder.HasMany(dp => dp.SchoolEvents)

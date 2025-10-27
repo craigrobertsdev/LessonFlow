@@ -17,7 +17,6 @@ public class YearDataRepository(ApplicationDbContext context) : IYearDataReposit
             .Include(yd => yd.SubjectsTaught)
             .Include(yd => yd.Students)
             .Include(yd => yd.WeekPlanners)
-            .Include(yd => yd.LessonPlans)
             .Include(yd => yd.WeekPlannerTemplate)
             .ThenInclude(wp => wp.DayTemplates)
             .Include(yd => yd.WeekPlannerTemplate)

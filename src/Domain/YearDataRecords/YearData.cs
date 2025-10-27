@@ -24,7 +24,6 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
     public List<Student> Students { get; private set; } = [];
     public List<YearLevelValue> YearLevelsTaught { get; private set; } = [];
     public List<Subject> SubjectsTaught { get; private set; } = [];
-    public List<LessonPlan> LessonPlans { get; private set; } = [];
     public List<WeekPlanner> WeekPlanners { get; private set; } = [];
     public List<DayOfWeek> WorkingDays { get; private set; } = [];
 

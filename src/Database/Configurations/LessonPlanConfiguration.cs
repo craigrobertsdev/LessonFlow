@@ -1,5 +1,6 @@
 using LessonFlow.Database.Converters;
 using LessonFlow.Domain.LessonPlans;
+using LessonFlow.Domain.WeekPlanners;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -15,8 +16,9 @@ public class LessonPlanConfiguration : IEntityTypeConfiguration<LessonPlan>
             .HasColumnName("Id")
             .HasConversion(new StronglyTypedIdConverter.LessonPlanIdConverter());
 
-        builder.HasOne(lp => lp.YearData)
+        builder.HasOne<DayPlan>()
             .WithMany(yd => yd.LessonPlans)
+            .HasForeignKey(lp => lp.DayPlanId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(lp => lp.Subject)

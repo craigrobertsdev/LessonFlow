@@ -14,7 +14,7 @@ namespace LessonFlow.Domain.LessonPlans;
 
 public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPeriod, IPlannerPeriod
 {
-    public YearData YearData { get; private set; }
+    public DayPlanId DayPlanId { get; private set; }
     public Subject Subject { get; private set; }
     public PeriodType PeriodType { get; private set; }
     public string PlanningNotesHtml { get; internal set; }
@@ -98,7 +98,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     {
         return new LessonPlan(
             Id,
-            YearData,
+            DayPlanId,
             Subject,
             PeriodType,
             PlanningNotesHtml,
@@ -116,7 +116,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     }
 
     public LessonPlan(
-        YearData yearData,
+        DayPlanId dayPlanId,
         Subject subject,
         PeriodType periodType,
         string planningNotesHtml,
@@ -129,7 +129,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(startPeriod);
 
         Id = new LessonPlanId(Guid.NewGuid());
-        YearData = yearData;
+        DayPlanId = dayPlanId;
         Subject = subject;
         PeriodType = periodType;
         PlanningNotesHtml = planningNotesHtml;
@@ -146,9 +146,9 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     {
     }
 
-    private LessonPlan(LessonPlanId id, YearData yearData, Subject subject, PeriodType periodType, string planningNotesHtml, int numberOfPeriods, int startPeriod, DateOnly lessonDate, List<Resource> resources) : base(id)
+    private LessonPlan(LessonPlanId id, DayPlanId dayPlanId, Subject subject, PeriodType periodType, string planningNotesHtml, int numberOfPeriods, int startPeriod, DateOnly lessonDate, List<Resource> resources) : base(id)
     {
-        YearData = yearData;
+        DayPlanId = dayPlanId;
         Subject = subject;
         PeriodType = periodType;
         PlanningNotesHtml = planningNotesHtml;

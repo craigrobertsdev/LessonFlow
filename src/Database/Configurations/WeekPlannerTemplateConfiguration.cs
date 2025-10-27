@@ -1,3 +1,4 @@
+using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
@@ -15,8 +16,9 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
         builder.Property(dp => dp.Id)
             .HasConversion(new WeekPlannerTemplateId.StronglyTypedIdEfValueConverter());
 
-        // Add shadow property for the foreign key to AccountSetupState
-        builder.Property<Guid?>("AccountSetupStateId");
+
+        //builder.HasOne<AccountSetupState>()
+        //    .WithOne(a => a.WeekPlannerTemplate);
 
         builder.HasOne<User>()
             .WithMany()
@@ -116,7 +118,7 @@ public class PeriodDto
                 NumberOfPeriods = breakPeriod.NumberOfPeriods,
                 BreakDuty = breakPeriod.BreakDuty
             },
-            NitTemplatePeriod nit => new PeriodDto
+            NitTemplate nit => new PeriodDto
             {
                 Type = PeriodType.Nit,
                 StartPeriod = nit.StartPeriod,
@@ -133,7 +135,7 @@ public class PeriodDto
             PeriodType.Lesson => new LessonTemplate(periodDto.SubjectName!, periodDto.StartPeriod,
                 periodDto.NumberOfPeriods),
             PeriodType.Break => new BreakTemplate(periodDto.BreakDuty, periodDto.StartPeriod, periodDto.NumberOfPeriods),
-            PeriodType.Nit => new NitTemplatePeriod(periodDto.StartPeriod, periodDto.NumberOfPeriods),
+            PeriodType.Nit => new NitTemplate(periodDto.StartPeriod, periodDto.NumberOfPeriods),
             _ => throw new ArgumentException($"Unknown period type: {nameof(periodDto)}"),
         };
     }
