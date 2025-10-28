@@ -13,36 +13,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
 using System.Security.Claims;
-using static LessonFlow.IntegrationTests.Helpers;
+using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
-namespace LessonFlow.IntegrationTests.UI.LessonPlannerTests;
-public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime, IDisposable
+namespace LessonFlow.IntegrationTests.UI;
+
+[CollectionDefinition("Non-ParallelTests", DisableParallelization = true)]
+[Collection("Non-ParallelTests")]
+public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly CustomWebApplicationFactory _factory;
-    private readonly IUserRepository _userRepository;
-    private readonly ILogger<AppState> _logger;
+    private readonly IServiceScope _scope;
 
     public LessonPlannerTests(CustomWebApplicationFactory factory)
     {
-        var scope = factory.Services.CreateScope();
-        _dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         _factory = factory;
-
-        _userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
-        _logger = scope.ServiceProvider.GetRequiredService<ILogger<AppState>>();
-
-        Services.AddSingleton(_userRepository);
-        Services.AddSingleton(_logger);
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>());
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ICurriculumService>());
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<IYearDataRepository>());
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
-        Services.AddSingleton(scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        _scope = _factory.Services.CreateScope();
+        _dbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ICurriculumService>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IYearDataRepository>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
         Services.AddScoped<DialogService>();
         Services.AddScoped<NotificationService>();
         Services.AddScoped<TooltipService>();
         Services.AddScoped<ContextMenuService>();
+        SeedDbContext(_dbContext);
 
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
@@ -59,15 +56,13 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
 
         component.WaitForElement("#edit-lesson-plan").Click();
-        var selectSubject = component.Find("select#subject-name");
+        var selectSubject = component.WaitForElement("select#subject-name");
         selectSubject.Change("Mathematics");
         var selectNumberOfPeriods = component.Find("select#number-of-periods");
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        using var scope = _factory.Services.CreateScope();
-        using var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var savedLessonPlan = dbContext.LessonPlans
+        var savedLessonPlan = _dbContext.LessonPlans
             .Include(lp => lp.Subject)
             .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
@@ -79,21 +74,23 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
     [Fact]
     public async Task SaveLessonPlan_WhenPreExistingLesson_ShouldUpdateExistingLessonPlan()
     {
-        using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var yearData = db.YearData.First(yd => yd.CalendarYear == 2025);
-        var subject = db.Subjects.First(s => s.Name == "English");
+        var user = _dbContext.Users.First(u => u.Email == "test@test.com");
+        var dayPlan = _dbContext.Users.First(u => u.Email == "test@test.com")
+            .YearDataHistory.First(yd => yd.CalendarYear == TestYear)
+                .WeekPlanners.First().DayPlans.First();
+        var subject = _dbContext.Subjects.First(s => s.Name == "English");
 
         var startPeriod = 3;
 
-        var lessonPlan = new LessonPlan(yearData, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool, []);
-        yearData.WeekPlanners.First(wp => wp.WeekStart == FirstDateOfSchool).DayPlans.First(dp => dp.Date == FirstDateOfSchool).AddLessonPlan(lessonPlan);
-        db.LessonPlans.Add(lessonPlan);
-        db.SaveChanges();
+        var lessonPlan = new LessonPlan(dayPlan.Id, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool, []);
+        dayPlan.AddLessonPlan(lessonPlan);
+        _dbContext.LessonPlans.Add(lessonPlan);
+        _dbContext.SaveChanges();
 
         var lessonPlanId = lessonPlan.Id;
 
         var appState = await CreateAppState();
+        appState.CurrentYearData.WeekPlanners.First().DayPlans[0] = dayPlan;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
 
         component.WaitForElement("#edit-lesson-plan").Click();
@@ -103,9 +100,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        using var newScope = _factory.Services.CreateScope();
-        var dbContext = newScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var savedLessonPlan = dbContext.LessonPlans
+        var savedLessonPlan = _dbContext.LessonPlans
             .Include(lp => lp.Subject)
             .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
@@ -117,7 +112,6 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
     {
-
         return RenderComponent<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
             .Add(p => p.Month, month)
@@ -128,8 +122,11 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
 
     private async Task<AppState> CreateAppState()
     {
+        using var scope = _factory.Services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppState>>();
+        var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
         var authStateProvider = Services.GetRequiredService<AuthenticationStateProvider>();
-        var appState = new AppState(authStateProvider, _userRepository, _logger);
+        var appState = new AppState(authStateProvider, userRepository, logger);
         await appState.InitialiseAsync();
 
         return appState;
@@ -137,14 +134,9 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
 
     public new void Dispose()
     {
+        GC.SuppressFinalize(this);
         _dbContext?.Dispose();
+        _scope?.Dispose();
         base.Dispose();
     }
-
-    public async Task InitializeAsync()
-    {
-        await _factory.InitializeAsync();
-    }
-
-    public Task DisposeAsync() => Task.CompletedTask;
 }
