@@ -152,17 +152,27 @@ public partial class WeekPlannerPage : ComponentBase
                 }
                 else
                 {
-                    cell.RowSpans.Add((j, j + 2));
+                    cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
                     cell.SetRowSpans(1, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
                 }
 
                 gridCol.Cells.Add(cell);
 
-                for (int k = 0; k < lessonPlan.NumberOfPeriods; k++)
+                var cellsFilled = 0;
+                var idx = WeekPlannerTemplate.Periods.FindIndex(p => p.StartPeriod == lessonPlan.StartPeriod);
+                for (int k = idx; k < WeekPlannerTemplate.Periods.Count; k++)
                 {
-                    if (lessonPlan.StartPeriod - 1 + k < WeekPlannerTemplate.Periods.Count)
+                    if (cellsFilled == lessonPlan.NumberOfPeriods) break;
+
+                    if (WeekPlannerTemplate.Periods[k].PeriodType != PeriodType.Break)
                     {
-                        filledGridCells[i, lessonPlan.StartPeriod - 1 + k] = true;
+                        filledGridCells[i, k] = true;
+                        cellsFilled++;
+                    }
+                    while (k < WeekPlannerTemplate.Periods.Count - 1 && WeekPlannerTemplate.Periods[k + 1].StartPeriod > lessonPlan.StartPeriod + 1 && cellsFilled < lessonPlan.NumberOfPeriods)
+                    {
+                        filledGridCells[i, k + 1] = true;
+                        cellsFilled++;
                     }
                 }
             }
@@ -184,9 +194,10 @@ public partial class WeekPlannerPage : ComponentBase
                     var templatePeriod = WeekPlannerTemplate.Periods.First(p => p.StartPeriod == j + 1);
                     period = templatePeriod.PeriodType switch
                     {
-                        PeriodType.Lesson => new LessonPeriod("", templatePeriod.StartPeriod, 1),
-                        PeriodType.Break => new BreakPeriod(templatePeriod.Name, templatePeriod.StartPeriod, 1),
-                        _ => new LessonPeriod("", templatePeriod.StartPeriod, 1),
+                        PeriodType.Lesson => new LessonTemplate("", templatePeriod.StartPeriod, 1),
+                        PeriodType.Break => new BreakTemplate(templatePeriod.Name, templatePeriod.StartPeriod, 1),
+                        PeriodType.Nit => new NitTemplate(templatePeriod.StartPeriod, 1),
+                        _ => new LessonTemplate("", templatePeriod.StartPeriod, 1),
                     };
                 }
 
@@ -204,12 +215,41 @@ public partial class WeekPlannerPage : ComponentBase
                 }
                 else
                 {
-                    GridCols[i].Cells.Insert(j, cell);
+                    int idx = j;
+                    for (int k = 0; k < GridCols[i].Cells.Count - 1; k++)
+                    {
+                        if (GridCols[i].Cells[k].Period.StartPeriod < period.StartPeriod && GridCols[i].Cells[k + 1].Period.StartPeriod > period.StartPeriod)
+                        {
+                            idx = k + 1;
+                            break;
+                        }
+                    }
+                    GridCols[i].Cells.Insert(idx, cell);
                 }
 
-                for (int k = 0; k < cell.Period.NumberOfPeriods; k++)
+                if (cell.Period.NumberOfPeriods == 1)
                 {
-                    filledGridCells[i, j + k] = true;
+                    filledGridCells[i, j] = true;
+                }
+                else
+                {
+                    var cellsFilled = 0;
+                    for (int k = j; k < dayTemplate.Periods.Count; k++)
+                    {
+                        if (cellsFilled == period.NumberOfPeriods) break;
+
+                        if (dayTemplate.Periods[k].PeriodType == PeriodType.Lesson || dayTemplate.Periods[k].PeriodType == PeriodType.Nit)
+                        {
+                            filledGridCells[i, k] = true;
+                            cellsFilled++;
+                        }
+
+                        while (k < dayTemplate.Periods.Count - 1 && dayTemplate.Periods[k + 1].StartPeriod > period.StartPeriod + 1 && cellsFilled < period.NumberOfPeriods)
+                        {
+                            filledGridCells[i, k + 1] = true;
+                            cellsFilled++;
+                        }
+                    }
                 }
             }
         }
@@ -219,12 +259,10 @@ public partial class WeekPlannerPage : ComponentBase
         {
             if (period.PeriodType == PeriodType.Lesson || period.PeriodType == PeriodType.Nit)
             {
-                //_gridRows += " minmax(0, 1.5fr)";
                 _gridRows += " 60px";
             }
             else
             {
-                //_gridRows += " minmax(0, 1fr)";
                 _gridRows += " 40px";
             }
         }
@@ -407,7 +445,7 @@ public partial class WeekPlannerPage : ComponentBase
         _editingBreaks = false;
     }
 
-    internal void HandleBreakNameChanged(DayOfWeek day, BreakPeriod breakPeriod, string newName)
+    internal void HandleBreakNameChanged(DayOfWeek day, BreakTemplate breakPeriod, string newName)
     {
         if (EditingWeekPlanner is null) return;
 
