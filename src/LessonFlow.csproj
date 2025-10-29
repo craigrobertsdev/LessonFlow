@@ -10,6 +10,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Content Remove="appsettings.test.json" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<InternalsVisibleTo Include="LessonFlow.UnitTests" />
 		<InternalsVisibleTo Include="LessonFlow.IntegrationTests" />
 	</ItemGroup>
@@ -98,6 +102,14 @@
 		<AdditionalFiles Include="Components\Pages\Error.razor" />
 		<AdditionalFiles Include="Components\Pages\Home.razor" />
 		<AdditionalFiles Include="Components\Pages\LessonPlanner.razor" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Database\Migrations\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="appsettings.test.json" />
 	</ItemGroup>
 
 </Project>
