@@ -1,0 +1,9 @@
+*** AccountSetup *** 
+I get an error when trying to save the accountsetup data at the end of the process to the database. Something about the key 2025 not being found in the dictionary.
+Another error appears to be that neither before nor after school duties are saved
+
+*** LessonPlanner ***
+There is an error when running the app that the only subject shown is NIT but the exception suggests that the subject Mathematics is not found
+
+*** WeekPlanner *** 
+Initial loading into page doesn't take you to current week, rather takes you to week 1, term 1, year current

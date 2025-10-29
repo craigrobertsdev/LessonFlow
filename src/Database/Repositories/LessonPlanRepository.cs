@@ -10,47 +10,42 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
 {
     public void Add(LessonPlan lessonPlan)
     {
+        var subject = context.Subjects.First(s => s.Name == lessonPlan.Subject.Name);
+        lessonPlan.UpdateSubject(subject);
         context.Add(lessonPlan);
     }
 
-    public async Task<List<LessonPlan>> GetByYearDataAndDate(YearDataId yearDataId, DateOnly date,
+    public async Task<List<LessonPlan>> GetByDayPlanAndDate(DayPlanId dayPlanId, DateOnly date,
         CancellationToken cancellationToken)
     {
         var lessonPlans = await context.LessonPlans
-            .Where(lp => lp.YearData.Id == yearDataId && lp.LessonDate == date)
+            .Where(lp => lp.DayPlanId == dayPlanId && lp.LessonDate == date)
             .Include(lp => lp.Resources)
             .ToListAsync(cancellationToken);
 
         return lessonPlans;
     }
 
-    public async Task<LessonPlan?> GetByYearDataAndDateAndPeriod(YearDataId yearDataId, DateOnly date, int period,
+    public async Task<LessonPlan?> GetByDayPlanAndDateAndPeriod(DayPlanId dayPlanId, DateOnly date, int period,
         CancellationToken cancellationToken)
     {
         return await context.LessonPlans
-            .Where(lp => lp.YearData.Id == yearDataId)
+            .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .Where(lp => lp.StartPeriod == period)
             .Include(lp => lp.Resources)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<LessonPlan?> GetByDateAndPeriodStart(YearDataId yearDataId, DateOnly date, int period, CancellationToken cancellationToken)
+    public async Task<LessonPlan?> GetByDateAndPeriodStart(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken cancellationToken)
     {
         return await context.LessonPlans
-            .Where(lp => lp.YearData.Id == yearDataId)
+            .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .Where(lp => lp.StartPeriod == period)
             .Include(lp => lp.Resources)
+            .Include(lp => lp.Subject)
             .FirstOrDefaultAsync(cancellationToken);
-    }
-
-    public async Task AddLessonPlan(LessonPlan lessonPlan, CancellationToken cancellationToken)
-    {
-        await context.LessonPlans.AddAsync(lessonPlan, cancellationToken);
-        var subject = context.Subjects.First(s => s.Id == lessonPlan.Subject.Id);
-        lessonPlan.UpdateSubject(subject);
-        context.LessonPlans.Add(lessonPlan);
     }
 
     public bool UpdateLessonPlan(LessonPlan lessonPlan)
@@ -72,19 +67,19 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
         return false;
     }
 
-    public async Task<List<LessonPlan>?> GetLessonsByYearDataId(YearDataId yearDataId,
+    public async Task<List<LessonPlan>?> GetLessonsByDayPlanId(DayPlanId dayPlanId,
         CancellationToken cancellationToken)
     {
         return await context.LessonPlans
-            .Where(lessonPlan => lessonPlan.YearData.Id == yearDataId)
+            .Where(lessonPlan => lessonPlan.DayPlanId == dayPlanId)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<List<LessonPlan>> GetByDate(YearDataId yearDataId, DateOnly date,
+    public async Task<List<LessonPlan>> GetByDate(DayPlanId dayPlanId, DateOnly date,
         CancellationToken cancellationToken)
     {
         return await context.LessonPlans
-            .Where(lp => lp.YearData.Id == yearDataId)
+            .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .ToListAsync(cancellationToken);
     }
