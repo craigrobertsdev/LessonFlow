@@ -22,12 +22,33 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
 
     public async Task<User?> GetByEmail(string email, CancellationToken cancellationToken)
     {
-        return await context.Users
-            .Where(u => u.Email == email)
-            .Include(u => u.AccountSetupState)
-            .Include(u => u.Resources)
-            .Include(u => u.YearDataHistory)
-            .SingleOrDefaultAsync(cancellationToken);
+        try
+        {
+            var user = await context.Users
+                .Where(u => u.Email == email)
+                .Include(u => u.AccountSetupState)
+                .Include(u => u.Resources)
+                .Include(u => u.YearDataHistory)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (user is null) return null;
+
+            user.YearDataHistory.ForEach(yd =>
+            {
+                foreach (var subject in yd.SubjectsTaught)
+                {
+                    context.Entry(subject).State = EntityState.Detached;
+                }
+            });
+
+            return user;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            return null;
+        }
     }
 
     public async Task<AccountSetupState?> GetAccountSetupState(Guid userId,
@@ -141,6 +162,8 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         return await context.YearData
             .Where(y => y.UserId == userId && y.CalendarYear == calendarYear)
             .Include(yd => yd.WeekPlannerTemplate)
+            .Include(yd => yd.SubjectsTaught)
+            .AsNoTracking()
             .FirstOrDefaultAsync(cancellationToken);
     }
 
