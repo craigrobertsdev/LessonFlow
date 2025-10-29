@@ -87,7 +87,6 @@ public class AppState
 
             _logger.LogInformation("Starting AppState initialization");
             Initialising = true;
-            OnStateChanged?.Invoke();
 
             var authState = await _authStateProvider.GetAuthenticationStateAsync();
             if (authState.User.Identity?.IsAuthenticated ?? false)

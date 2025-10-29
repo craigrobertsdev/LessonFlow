@@ -3,7 +3,6 @@ using LessonFlow.Domain.Common.Interfaces;
 using LessonFlow.Domain.Common.Primatives;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Students;

@@ -11,11 +11,11 @@ using Moq;
 using LessonFlow.Domain.Curriculum;
 
 namespace LessonFlow.UnitTests;
-public class Helpers
+public class UnitTestHelpers
 {
     internal readonly static int TestYear = 2025;
     internal readonly static int FirstMonthOfSchool = 1;
-    internal readonly static int FirstDayOfSchool = 29;
+    internal readonly static int FirstDayOfSchool = 27;
     internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
 
     public static GridColumn GenerateGridColumn()

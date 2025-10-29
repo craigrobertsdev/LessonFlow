@@ -7,7 +7,7 @@ namespace LessonFlow.Components.AccountSetup;
 
 public record GridCell
 {
-    public GridCell(List<(int start, int end)> rowSpans, PeriodBase period, GridColumn column)
+    public GridCell(List<(int start, int end)> rowSpans, PeriodTemplateBase period, GridColumn column)
     {
         Period = period;
         Column = column;
@@ -19,7 +19,7 @@ public record GridCell
     public bool IsHovered { get; set; }
     public bool IsMouseDown { get; set; }
     public bool IsFirstCellInBlock { get; set; }
-    public PeriodBase Period { get; set; }
+    public PeriodTemplateBase Period { get; set; }
     public List<(int Start, int End)> RowSpans { get; set; } = [];
 
     public void SetRowSpans(int oldDuration, int newDuration, List<TemplatePeriod> templatePeriods)

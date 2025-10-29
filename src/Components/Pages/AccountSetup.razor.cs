@@ -4,7 +4,6 @@ using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Exceptions;
 
@@ -12,14 +11,10 @@ namespace LessonFlow.Components.Pages;
 
 public partial class AccountSetup : ComponentBase, IDisposable
 {
-    [Parameter] public string? Step { get; set; }
     [Inject] public AppState AppState { get; set; } = null!;
     [Inject] NavigationManager NavigationManager { get; set; } = null!;
-    [Inject] ITermDatesService TermDatesService { get; set; } = null!;
     [Inject] ICurriculumService CurriculumService { get; set; } = null!;
     [Inject] IUserRepository UserRepository { get; set; } = null!;
-    [Inject] IUnitOfWork UnitOfWork { get; set; } = null!;
-    [Inject] IJSRuntime JSRuntime { get; set; } = null!;
     [Inject] ILogger<AccountSetup> Logger { get; set; } = null!;
 
     public AccountSetupState AccountSetupState { get; set; } = null!;
@@ -131,12 +126,7 @@ public partial class AccountSetup : ComponentBase, IDisposable
         var yearData = new YearData(User.Id, AccountSetupState);
 
         await UserRepository.CompleteAccountSetup(AppState.User.Id, yearData);
-    }
-
-    private void Logout()
-    {
-
-        NavigationManager.NavigateTo("/auth/login");
+        AppState.YearDataByYear.Add(yearData.CalendarYear, yearData);
     }
 
     public void Dispose()

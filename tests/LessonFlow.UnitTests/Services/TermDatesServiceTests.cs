@@ -8,7 +8,7 @@ public class TermDatesServiceTests
 
     public TermDatesServiceTests()
     {
-        _termDatesService = Helpers.CreateTermDatesService();
+        _termDatesService = UnitTestHelpers.CreateTermDatesService();
     }
 
     [Fact]

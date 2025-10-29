@@ -50,9 +50,9 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     {
         modelBuilder.Ignore<UserId>();
 
-        modelBuilder.Entity<LessonPeriod>().HasBaseType<PeriodBase>();
-        modelBuilder.Entity<BreakPeriod>().HasBaseType<PeriodBase>();
-        modelBuilder.Entity<NitPeriod>().HasBaseType<PeriodBase>();
+        modelBuilder.Entity<LessonTemplate>().HasBaseType<PeriodTemplateBase>();
+        modelBuilder.Entity<BreakTemplate>().HasBaseType<PeriodTemplateBase>();
+        modelBuilder.Entity<NitTemplate>().HasBaseType<PeriodTemplateBase>();
 
         modelBuilder
             .Ignore<List<IDomainEvent>>()

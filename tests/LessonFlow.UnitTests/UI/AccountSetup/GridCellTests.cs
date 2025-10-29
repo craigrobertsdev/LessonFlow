@@ -4,8 +4,8 @@ public class GridCellTests
     [Fact]
     public void GridCell_SetRowSpans_IncreasesRowsCorrectly_1_3()
     {
-        var col = Helpers.GenerateGridColumn();
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var col = UnitTestHelpers.GenerateGridColumn();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var selectedCell = col.Cells[0];
         selectedCell.Period.NumberOfPeriods = 3;
         selectedCell.SetRowSpans(1, 3, weekPlannerTemplate.Periods);
@@ -22,8 +22,8 @@ public class GridCellTests
     [Fact]
     public void GridCell_SetRowSpans_IncreasesRowsCorrectly_1_6()
     {
-        var col = Helpers.GenerateGridColumn();
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var col = UnitTestHelpers.GenerateGridColumn();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var selectedCell = col.Cells[0];
         selectedCell.Period.NumberOfPeriods = 6;
 
@@ -42,8 +42,8 @@ public class GridCellTests
     [Fact]
     public void GridCell_SetRowSpans_DecreasesRowsCorrectly_6_1()
     {
-        var col = Helpers.GenerateGridColumn();
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var col = UnitTestHelpers.GenerateGridColumn();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var selectedCell = col.Cells[0];
         selectedCell.Period.NumberOfPeriods = 6;
         selectedCell.SetRowSpans(1, 6, weekPlannerTemplate.Periods);

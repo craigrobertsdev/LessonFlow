@@ -96,6 +96,7 @@ public class AccountSetupState
 
     public AccountSetupState(Guid userId)
     {
+        Id = Guid.NewGuid();
         List<TemplatePeriod> periods = [
 
             new TemplatePeriod

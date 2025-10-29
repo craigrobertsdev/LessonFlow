@@ -10,7 +10,7 @@ public class TimingFormTests : TestContext
     [Fact]
     public void ChangePeriodType_CorrectlyUpdatesWeekPlannerTemplate()
     {
-        var weekPlanner = Helpers.GenerateWeekPlannerTemplate();
+        var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
         var component = RenderComponent<TimingForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 

@@ -83,7 +83,7 @@ public static class WeekPlannerExtensions
                         ? throw new ArgumentException("Lesson template does not have a SubjectName")
                         : new LessonTemplate(l.SubjectName, l.StartPeriod, l.NumberOfPeriods),
                     PeriodType.Break => new BreakTemplate(l.BreakDuty, l.StartPeriod, l.NumberOfPeriods),
-                    PeriodType.Nit => new NitTemplatePeriod(l.StartPeriod, l.NumberOfPeriods),
+                    PeriodType.Nit => new NitTemplate(l.StartPeriod, l.NumberOfPeriods),
                     _ => throw new Exception($"Unknown period type: {l.PeriodType}")
                 }))
             .ToList();
