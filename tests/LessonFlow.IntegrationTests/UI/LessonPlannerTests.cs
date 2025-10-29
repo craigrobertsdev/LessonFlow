@@ -17,7 +17,6 @@ using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.UI;
 
-[CollectionDefinition("Non-ParallelTests", DisableParallelization = true)]
 [Collection("Non-ParallelTests")]
 public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
