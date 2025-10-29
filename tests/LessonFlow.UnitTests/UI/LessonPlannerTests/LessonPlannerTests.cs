@@ -10,7 +10,7 @@ using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Domain.YearDataRecords;
-using static LessonFlow.UnitTests.Helpers;
+using static LessonFlow.UnitTests.UnitTestHelpers;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
@@ -73,8 +73,8 @@ public class LessonPlannerTests : TestContext
         var date = new DateOnly(TestYear, FirstMonthOfSchool, day);
         var appState = CreateAppState();
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
-        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), periodStart, default))
-           .ReturnsAsync(new LessonPlan(appState.CurrentYearData, new Subject([], subjectName), PeriodType.Lesson, "", numberOfPeriods, periodStart, date, []));
+        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), periodStart, default))
+           .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), new Subject([], subjectName), PeriodType.Lesson, "", numberOfPeriods, periodStart, date, []));
 
         Services.AddScoped(sp => lessonPlanRepository.Object);
         appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[1].Periods[0] = new LessonTemplate(subjectName, periodStart, numberOfPeriods);
@@ -108,7 +108,7 @@ public class LessonPlannerTests : TestContext
     public void Initialise_WhenNoLessonPlannedAndNitPeriodInWeekPlannerTemplate_ShouldCreateBlankNitPeriod()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplatePeriod(1, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
         var day = 31;
         var periodStart = 1;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, day, periodStart);
@@ -132,13 +132,13 @@ public class LessonPlannerTests : TestContext
         var appState = CreateAppState();
 
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
-        var lessonPlan = new LessonPlan(appState.CurrentYearData, Subject.Nit, PeriodType.Nit, "", 2, 1, new DateOnly(2025, 1, 31), []);
+        var lessonPlan = new LessonPlan(It.IsAny<DayPlanId>(), Subject.Nit, PeriodType.Nit, "", 2, 1, new DateOnly(TestYear, FirstMonthOfSchool, 31), []);
         var todoItem = new TodoItem(lessonPlan.Id, "Test");
         lessonPlan.ToDos.Add(todoItem);
-        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), 1, default))
+        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), 1, default))
            .ReturnsAsync(lessonPlan);
         Services.AddScoped(sp => lessonPlanRepository.Object);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplatePeriod(1, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
 
         var day = 31;
         var periodStart = 1;
@@ -264,8 +264,15 @@ public class LessonPlannerTests : TestContext
     [InlineData(8, 1)]
     public void AvailableLessonDurations_ShouldMatchWeekPlannerTemplate(int startPeriod, int expectedCount)
     {
-        var appstate = CreateAppState();
-        var component = RenderLessonPlanner(appstate, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
+        var appState = CreateAppState();
+        var lessonPlanRepository = new Mock<ILessonPlanRepository>();
+        var subject = new Subject("English", [], "");
+        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), startPeriod, default))
+           .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
+           [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
+        Services.AddScoped(sp => lessonPlanRepository.Object);
+
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
 
         Assert.Equal(expectedCount, component.Instance.AvailableLessonSlots.Count);
         Assert.Equal([.. Enumerable.Range(1, expectedCount)], component.Instance.AvailableLessonSlots);
@@ -289,7 +296,7 @@ public class LessonPlannerTests : TestContext
     {
         var appState = CreateAppState();
         AddThreeSubjectsToYearData(appState.CurrentYearData);
-        var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
         component.Find("#edit-lesson-plan").Click();
         var selectSubject = component.Find("select#subject-name");
         var options = selectSubject.GetElementsByTagName("option");
@@ -305,7 +312,7 @@ public class LessonPlannerTests : TestContext
     [Fact]
     public void ChangeSelectedSubject_ShouldUpdateEditingLessonPlanAndDisplayCorrectValue()
     {
-        var component = RenderLessonPlanner(_appState, 2025, 1, 29, 1);
+        var component = RenderLessonPlanner(_appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
         component.Find("#edit-lesson-plan").Click();
         var selectSubject = component.Find("select#subject-name");
         selectSubject.Change("Mathematics");
@@ -360,6 +367,7 @@ public class LessonPlannerTests : TestContext
         //var overwriteDialog = component.FindComponent<Radzen.Dialog>();
         //Assert.NotNull(overwriteDialog);
         //Assert.Contains("The changes you made will overwrite an existing lesson plan.", overwriteDialog.Markup);
+        throw new NotImplementedException();
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
@@ -384,31 +392,43 @@ public class LessonPlannerTests : TestContext
         var yearDataRepository = new Mock<IYearDataRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var unitOfWork = new Mock<IUnitOfWork>();
-        var termDatesService = Helpers.CreateTermDatesService();
-        var curriculumService = Helpers.CreateCurriculumService();
+        var termDatesService = UnitTestHelpers.CreateTermDatesService();
+        var curriculumService = UnitTestHelpers.CreateCurriculumService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
-        appState.CurrentYear = 2025;
+        appState.CurrentYear = TestYear;
 
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
-        accountSetupState.SetCalendarYear(2025);
+        accountSetupState.SetCalendarYear(TestYear);
 
         var yearData = new YearData(Guid.NewGuid(), accountSetupState);
-        var weekPlanner = new WeekPlanner(yearData, 2025, 1, 1, FirstDateOfSchool);
-        var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
-        weekPlanner.UpdateDayPlan(dayPlan);
+        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, FirstDateOfSchool);
+        for (int i  = 0; i < 5; i++)
+        {
+            var date = FirstDateOfSchool.AddDays(i);
+            var dayPlan = new DayPlan(weekPlanner.Id, date, [], []);
+            weekPlanner.UpdateDayPlan(dayPlan);
+        }
         yearData.AddWeekPlanner(weekPlanner);
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
         appState.User = new User();
-        var subject = new Subject("English", [], "");
-        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(yearData.Id, new DateOnly(2025, 1, 29), 1, default))
-           .ReturnsAsync(new LessonPlan(yearData, subject, PeriodType.Lesson, "", 1, 1, new DateOnly(2025, 1, 29),
+        var subjects = new List<Subject>() {
+            new Subject("English", [], ""),
+            new Subject("Mathematics", [], ""),
+            new Subject("Science", [], "")
+        };
+
+        var subject = subjects.First(s => s.Name == "English")  ;
+
+        lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
+           .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
            [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
 
         subjectRepository.Setup(cr => cr.GetSubjectById(It.IsAny<SubjectId>(), It.IsAny<CancellationToken>())).ReturnsAsync(curriculumService.CurriculumSubjects.First(s => s.Name == "Mathematics"));
 
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
+        yearData.SubjectsTaught.AddRange(subjects);
         appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
 
         Services.AddScoped(sp => termDatesService);

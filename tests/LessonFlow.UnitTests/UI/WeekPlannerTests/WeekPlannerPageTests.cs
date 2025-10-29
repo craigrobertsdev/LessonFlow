@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
+using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
 public class WeekPlannerPageTests : TestContext
@@ -48,6 +49,27 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
+    public void InitialiseGrid_WhenNitLessonsInWeekPlannerTemplateAndNoLessonsPlanned_ShouldRenderCorrectly()
+    {
+        var appState = CreateAppState(TestYear);
+        var nitLesson = new NitTemplate(5, 2);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods[4] = nitLesson;
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
+        var component = RenderWeekPlannerPage(appState);
+
+        var cells = component.Instance.GridCols[0].Cells;
+
+        Assert.Equal(7, cells.Count);
+        Assert.Equal(typeof(LessonTemplate), cells[0].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), cells[1].Period.GetType());
+        Assert.Equal(typeof(BreakTemplate), cells[2].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), cells[3].Period.GetType());
+        Assert.Equal(typeof(NitTemplate), cells[4].Period.GetType());
+        Assert.Equal(typeof(BreakTemplate), cells[5].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), cells[6].Period.GetType());
+    }
+
+    [Fact]
     public void InitialiseGrid_WhenAllLessonsPlanned_ShouldRenderFromDayPlan()
     {
         var appState = CreateAppStateWithLessonsPlanned();
@@ -73,13 +95,35 @@ public class WeekPlannerPageTests : TestContext
         {
             Assert.Equal(typeof(LessonPlan), col.Cells[0].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[1].Period.GetType());
-            Assert.Equal(typeof(BreakPeriod), col.Cells[2].Period.GetType());
+            Assert.Equal(typeof(BreakTemplate), col.Cells[2].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[3].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[4].Period.GetType());
-            Assert.Equal(typeof(BreakPeriod), col.Cells[5].Period.GetType());
+            Assert.Equal(typeof(BreakTemplate), col.Cells[5].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[6].Period.GetType());
             Assert.Equal(typeof(LessonPlan), col.Cells[7].Period.GetType());
         }
+    }
+
+    [Fact]
+    public void InitialiseGrid_WhenWeekPlannerTemplateHasPeriodOverlappingBreak_ShouldRenderCorrectly()
+    {
+        var appState = CreateAppState(TestYear);
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods[4].NumberOfPeriods = 2;
+        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
+
+        var component = RenderWeekPlannerPage(appState);
+        var col = component.Instance.GridCols[0];
+        Assert.Equal(2, col.Cells[4].RowSpans.Count);
+        Assert.Equal([(7, 8), (9, 10)], component.Instance.GridCols[0].Cells[4].RowSpans);
+
+        Assert.Equal(typeof(LessonTemplate), col.Cells[0].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), col.Cells[1].Period.GetType());
+        Assert.Equal(typeof(BreakTemplate), col.Cells[2].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), col.Cells[3].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), col.Cells[4].Period.GetType());
+        Assert.Equal(2, col.Cells[4].Period.NumberOfPeriods);
+        Assert.Equal(typeof(BreakTemplate), col.Cells[5].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), col.Cells[6].Period.GetType());
     }
 
     [Fact]
@@ -103,14 +147,30 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal((9, 10), col.Cells[6].RowSpans[0]);
         Assert.Equal((10, 11), col.Cells[7].RowSpans[0]);
 
-        Assert.Equal(typeof(LessonPeriod), col.Cells[0].Period.GetType());
+        Assert.Equal(typeof(LessonTemplate), col.Cells[0].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[1].Period.GetType());
-        Assert.Equal(typeof(BreakPeriod), col.Cells[2].Period.GetType());
+        Assert.Equal(typeof(BreakTemplate), col.Cells[2].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[3].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[4].Period.GetType());
-        Assert.Equal(typeof(BreakPeriod), col.Cells[5].Period.GetType());
+        Assert.Equal(typeof(BreakTemplate), col.Cells[5].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[6].Period.GetType());
         Assert.Equal(typeof(LessonPlan), col.Cells[7].Period.GetType());
+    }
+
+    [Fact]
+    public void InitialiseGrid_WhenDayPlanHasMultiPeriodLessons_ShouldRenderCorrectly()
+    {
+        var appState = CreateAppStateWithMultiPeriodLessons();
+        var component = RenderWeekPlannerPage(appState);
+
+        var col = component.Instance.GridCols[0];
+        Assert.Equal(6, col.Cells.Count);
+        Assert.Equal((3, 4), col.Cells[0].RowSpans[0]);
+        Assert.Equal([(4, 5), (6, 7)], col.Cells[1].RowSpans);
+        Assert.Equal((5, 6), col.Cells[2].RowSpans[0]);
+        Assert.Equal([(7, 8), (9, 10)], col.Cells[3].RowSpans);
+        Assert.Equal((8, 9), col.Cells[4].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[5].RowSpans[0]);
     }
 
     [Theory]
@@ -529,7 +589,7 @@ public class WeekPlannerPageTests : TestContext
         var yearDataRepository = new Mock<IYearDataRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var unitOfWork = new Mock<IUnitOfWork>();
-        var termDatesService = Helpers.CreateTermDatesService();
+        var termDatesService = UnitTestHelpers.CreateTermDatesService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
         appState.CurrentYear = calendarYear;
@@ -538,7 +598,7 @@ public class WeekPlannerPageTests : TestContext
         accountSetupState.SetCalendarYear(calendarYear);
 
         var yearData = new YearData(Guid.NewGuid(), accountSetupState);
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
         yearData.WeekPlannerTemplate = weekPlannerTemplate;
         appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
@@ -567,10 +627,10 @@ public class WeekPlannerPageTests : TestContext
 
     private static WeekPlanner CreateWeekPlanner(YearData yearData)
     {
-        var weekPlanner = new WeekPlanner(yearData, DateTime.Now.Year, 1, 1, new DateOnly());
-
+        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        yearData.WeekPlanners.Add(weekPlanner);
         var dayPlans = Enumerable.Range(0, 5)
-            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly().AddDays(i), CreateLessonPlans(new DateOnly().AddDays(i), yearData), [])).ToList();
+            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearData), [])).ToList();
 
         foreach (var dayPlan in dayPlans)
         {
@@ -580,16 +640,50 @@ public class WeekPlannerPageTests : TestContext
         return weekPlanner;
     }
 
+    private AppState CreateAppStateWithMultiPeriodLessons()
+    {
+        var appState = CreateAppState(TestYear);
+        appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlannerWithMultiPeriodLessons(appState.CurrentYearData!));
+        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].Date);
+        return appState;
+    }
+
+    private static WeekPlanner CreateWeekPlannerWithMultiPeriodLessons(YearData yearData)
+    {
+        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        yearData.WeekPlanners.Add(weekPlanner);
+        var dayPlans = Enumerable.Range(0, 5)
+            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateMultiPeriodLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearData), [])).ToList();
+        foreach (var dayPlan in dayPlans)
+        {
+            weekPlanner.UpdateDayPlan(dayPlan);
+        }
+        return weekPlanner;
+
+        static List<LessonPlan> CreateMultiPeriodLessonPlans(DateOnly date, YearData yearData)
+        {
+            var dayPlan = yearData.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
+            return
+            [
+                new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
+                new LessonPlan(dayPlan.Id, new Subject([], "Mathematics"), PeriodType.Lesson, "", 2, 2, date, []),
+                new LessonPlan(dayPlan.Id, new Subject([], "HASS"), PeriodType.Lesson, "", 2, 5, date, []),
+                new LessonPlan(dayPlan.Id, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
+            ];
+        }
+    }
+
     private static List<LessonPlan> CreateLessonPlans(DateOnly date, YearData yearData)
     {
+        var dayPlan = yearData.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
         return
         [
-            new LessonPlan(yearData, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
-            new LessonPlan(yearData, new Subject([], "Mathematics"), PeriodType.Lesson, "", 1, 2, date, []),
-            new LessonPlan(yearData, new Subject([], "Health and PE"), PeriodType.Lesson, "", 1, 4, date, []),
-            new LessonPlan(yearData, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 5, date, []),
-            new LessonPlan(yearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 7, date, []),
-            new LessonPlan(yearData, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
+            new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
+            new LessonPlan(dayPlan.Id, new Subject([], "Mathematics"), PeriodType.Lesson, "", 1, 2, date, []),
+            new LessonPlan(dayPlan.Id, new Subject([], "Health and PE"), PeriodType.Lesson, "", 1, 4, date, []),
+            new LessonPlan(dayPlan.Id, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 5, date, []),
+            new LessonPlan(dayPlan.Id, new Subject([], "Science"), PeriodType.Lesson, "", 1, 7, date, []),
+            new LessonPlan(dayPlan.Id, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
         ];
     }
 
@@ -615,18 +709,19 @@ public class WeekPlannerPageTests : TestContext
             new TemplatePeriod(PeriodType.Lesson,7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
             new TemplatePeriod(PeriodType.Lesson, 8,"Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
         };
+
         var dayTemplates = new List<DayTemplate>();
         foreach (var day in Enum.GetValues<DayOfWeek>().Where(d => d != DayOfWeek.Saturday && d != DayOfWeek.Sunday))
         {
-            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodBase>((p, i) =>
+            dayTemplates.Add(new DayTemplate(periods.Select<TemplatePeriod, PeriodTemplateBase>((p, i) =>
             {
                 if (p.PeriodType == PeriodType.Lesson)
                 {
-                    return new LessonPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new LessonTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
                 else
                 {
-                    return new BreakPeriod(p.Name ?? string.Empty, i + 1, 1);
+                    return new BreakTemplate(p.Name ?? string.Empty, i + 1, 1);
                 }
             }).ToList(), day, DayType.Working));
         }

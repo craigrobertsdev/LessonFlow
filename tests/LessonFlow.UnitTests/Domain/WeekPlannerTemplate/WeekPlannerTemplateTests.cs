@@ -8,7 +8,7 @@ public class WeekPlannerTemplateTests
     public void AddPeriod_ShouldAddPeriodToAllDayTemplates()
     {
         // Arrange
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var newPeriod = new TemplatePeriod(PeriodType.Lesson, 9, "Lesson 7", new TimeOnly(10, 0), new TimeOnly(11, 0));
 
         // Act
@@ -27,7 +27,7 @@ public class WeekPlannerTemplateTests
     public void RemovePeriod_ShouldRemovePeriodFromAllDayTemplates()
     {
         // Arrange
-        var weekPlannerTemplate = Helpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var periodToRemove = weekPlannerTemplate.Periods[2]; 
 
         // Act
