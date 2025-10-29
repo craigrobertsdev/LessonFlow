@@ -8,6 +8,7 @@ using LessonFlow.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Radzen;
 
 namespace LessonFlow;
@@ -76,6 +77,12 @@ public class Program
         });
 
         app.MapPost("api/dev/services/term-dates", SetTermDates.Endpoint);
+
+        app.MapGet("/health", () =>
+        {
+            Console.WriteLine("Health check");
+            Results.Ok();
+        });
 
         app.Run();
     }
