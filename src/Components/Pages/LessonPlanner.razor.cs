@@ -5,6 +5,7 @@ using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.WeekPlanners;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Exceptions;
+using LessonFlow.Shared.Extensions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
@@ -22,18 +23,20 @@ public partial class LessonPlanner
     [Inject] public ILessonPlanRepository LessonPlanRepository { get; set; } = default!;
     [Inject] public ICurriculumService CurriculumService { get; set; } = default!;
     [Inject] public IYearDataRepository YearDataRepository { get; set; } = default!;
+    [Inject] public IWeekPlannerRepository WeekPlannerRepository { get; set; } = default!;
     [Inject] public ISubjectRepository SubjectRepository { get; set; } = default!;
+    [Inject] public ITermDatesService TermDatesService { get; set; } = default!;
     [Inject] public IUnitOfWork UnitOfWork { get; set; } = default!;
 
-    private bool _loading = false;
+    private bool _loading = true;
 
     internal LessonPlan LessonPlan { get; set; } = default!;
-    internal DateOnly Date => new(Year, Month, Day);
+    internal DateOnly Date { get; set; }
     internal List<int> AvailableLessonSlots { get; set; } = [];
     internal string? SelectedSubject { get; set; }
     internal string? LessonText { get; set; }
     internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData.WeekPlannerTemplate;
-    internal DayPlan DayPlan => AppState.CurrentYearData.GetDayPlan(Date);
+    internal DayPlan DayPlan { get; set; } = default!;
     internal List<Subject> SubjectsTaught => AppState.CurrentYearData.SubjectsTaught;
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
@@ -48,6 +51,20 @@ public partial class LessonPlanner
         try
         {
             _loading = true;
+            try
+            {
+                Date = new DateOnly(Year, Month, Day);
+                var dayPlan = AppState.CurrentYearData.GetDayPlan(Date);
+                DayPlan = dayPlan;
+            }
+            catch (WeekPlannerNotFoundException)
+            {
+                var weekPlanner = new WeekPlanner(AppState.CurrentYearData, Year, TermDatesService.GetTermNumber(Date), TermDatesService.GetWeekNumber(Date), Date.GetWeekStart());
+                WeekPlannerRepository.Add(weekPlanner);
+                await UnitOfWork.SaveChangesAsync(new CancellationToken());
+                DayPlan = weekPlanner.GetDayPlan(Date)!;
+            }
+
             LessonPlan = await LoadLessonPlan();
             AvailableLessonSlots = GetAvailableLessonSlots();
         }
@@ -64,57 +81,65 @@ public partial class LessonPlanner
 
     private async Task<LessonPlan> LoadLessonPlan()
     {
-        var lessonPlan = await LessonPlanRepository.GetByDateAndPeriodStart(AppState.CurrentYearData.Id, new DateOnly(Year, Month, Day), StartPeriod, new CancellationToken());
-        if (lessonPlan is null)
+        var lessonPlan = DayPlan.LessonPlans.FirstOrDefault(lp => lp.StartPeriod == StartPeriod);
+        if (lessonPlan is not null)
         {
-            var templatePeriod = WeekPlannerTemplate.GetTemplatePeriod(Date.DayOfWeek, StartPeriod);
-            if (templatePeriod is null)
+            return lessonPlan;
+        }
+
+        lessonPlan = await LessonPlanRepository.GetByDateAndPeriodStart(DayPlan.Id, new DateOnly(Year, Month, Day), StartPeriod, new CancellationToken());
+        if (lessonPlan is not null)
+        {
+            return lessonPlan;
+        }
+
+        var templatePeriod = WeekPlannerTemplate.GetTemplatePeriod(Date.DayOfWeek, StartPeriod);
+        if (templatePeriod is null)
+        {
+            lessonPlan = new LessonPlan(
+                DayPlan.Id,
+                SubjectsTaught.First(),
+                PeriodType.Lesson,
+                "",
+                1,
+                StartPeriod,
+                new DateOnly(Year, Month, Day),
+                []);
+
+            EditingLessonPlan = lessonPlan.Clone();
+
+            IsInEditMode = true;
+        }
+        else
+        {
+            if (templatePeriod is NitTemplate n)
             {
                 lessonPlan = new LessonPlan(
-                    AppState.CurrentYearData,
-                    new Subject([], CurriculumService.CurriculumSubjects.First().Name),
-                    PeriodType.Lesson,
+                    DayPlan.Id,
+                    Subject.Nit,
+                    PeriodType.Nit,
                     "",
-                    1,
-                    StartPeriod,
+                    n.NumberOfPeriods,
+                    n.StartPeriod,
                     new DateOnly(Year, Month, Day),
                     []);
+            }
 
-                EditingLessonPlan = lessonPlan.Clone();
-
-                IsInEditMode = true;
+            else if (templatePeriod is LessonTemplate p)
+            {
+                lessonPlan = new LessonPlan(
+                    DayPlan.Id,
+                    SubjectsTaught.First(),
+                    PeriodType.Lesson,
+                    "",
+                    p.NumberOfPeriods,
+                    p.StartPeriod,
+                    new DateOnly(Year, Month, Day),
+                    []);
             }
             else
             {
-                if (templatePeriod is NitTemplatePeriod n)
-                {
-                    lessonPlan = new LessonPlan(
-                        AppState.CurrentYearData,
-                        Subject.Nit,
-                        PeriodType.Nit,
-                        "",
-                        n.NumberOfPeriods,
-                        n.StartPeriod,
-                        new DateOnly(Year, Month, Day),
-                        []);
-                }
-
-                else if (templatePeriod is LessonTemplate p)
-                {
-                    lessonPlan = new LessonPlan(
-                        AppState.CurrentYearData,
-                        new Subject([], p.SubjectName),
-                        PeriodType.Lesson,
-                        "",
-                        p.NumberOfPeriods,
-                        p.StartPeriod,
-                        new DateOnly(Year, Month, Day),
-                        []);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Trying to create a lesson plan for a non-lesson period.");
-                }
+                throw new InvalidOperationException("Trying to create a lesson plan for a non-lesson period.");
             }
         }
 
@@ -151,7 +176,7 @@ public partial class LessonPlanner
         var lessonPlanExists = LessonPlanRepository.UpdateLessonPlan(LessonPlan);
         if (!lessonPlanExists)
         {
-            var subject = await SubjectRepository.GetSubjectById(LessonPlan.Subject.Id, cancellationToken);
+            var subject = CurriculumService.GetSubjectByName(LessonPlan.Subject.Name);
             if (subject is null)
             {
                 throw new SubjectNotFoundException(LessonPlan.Subject.Name);
@@ -159,7 +184,7 @@ public partial class LessonPlanner
 
             LessonPlan.UpdateSubject(subject);
             DayPlan.AddLessonPlan(LessonPlan);
-            await UnitOfWork.SaveChangesAsync(cancellationToken);
+            //await UnitOfWork.SaveChangesAsync(cancellationToken);
             LessonPlanRepository.Add(LessonPlan);
         }
 
@@ -184,7 +209,8 @@ public partial class LessonPlanner
     {
         if (EditingLessonPlan is null) return;
 
-        var subject = CurriculumService.GetSubjectByName(args.Value!.ToString()!);
+        var subjectName = args.Value?.ToString();
+        var subject = SubjectsTaught.FirstOrDefault(s => s.Name == subjectName);
         if (subject != null)
         {
             EditingLessonPlan.UpdateSubject(subject);
@@ -199,4 +225,5 @@ public partial class LessonPlanner
             EditingLessonPlan.SetNumberOfPeriods(duration);
         }
     }
+
 }

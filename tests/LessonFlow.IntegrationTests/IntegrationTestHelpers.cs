@@ -94,6 +94,8 @@ internal static class IntegrationTestHelpers
             dbContext.SaveChanges();
 
             user.AddYearData(yearData);
+
+
             dbContext.SaveChanges();
         }
 
@@ -112,6 +114,34 @@ internal static class IntegrationTestHelpers
         {
             yearData.AddSubjects(subjects);
         }
+
+        var termDatesByYear = new Dictionary<int, List<SchoolTerm>>()
+            {
+                {
+                    2025,
+                    [
+                        new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4,11)),
+                        new SchoolTerm(2, new DateOnly(2025, 4, 28), new DateOnly(2025, 7, 4)),
+                        new SchoolTerm(3, new DateOnly(2025, 7, 21), new DateOnly(2025, 9, 26)),
+                        new SchoolTerm(4, new DateOnly(2025, 10, 13), new DateOnly(2025, 12, 12))
+                    ]
+                },
+                {
+                    2026,
+                    [
+                        new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4,10)),
+                        new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
+                        new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
+                        new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
+                    ]
+                }
+            };
+
+        foreach (var (year, terms) in termDatesByYear)
+        {
+            dbContext.TermDates.AddRange(terms);
+        }
+
         dbContext.SaveChanges();
     }
 

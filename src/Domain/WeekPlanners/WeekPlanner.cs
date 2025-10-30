@@ -36,6 +36,11 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
         DayPlans[idx] = dayPlan;
     }
 
+    public DayPlan? GetDayPlan(DateOnly date)
+    {
+        return DayPlans.FirstOrDefault(d =>  d.Date == date);
+    }
+
     public void SortDayPlans()
     {
         DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));

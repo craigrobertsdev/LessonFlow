@@ -58,7 +58,9 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
     private async Task<AppState> CreateAppState()
     {
         var authStateProvider = Services.GetRequiredService<AuthenticationStateProvider>();
-        var appState = new AppState(authStateProvider, _userRepository, _logger);
+        var termDatesService = Services.GetRequiredService<ITermDatesService>();
+
+        var appState = new AppState(authStateProvider, _userRepository, _logger, termDatesService);
         await appState.InitialiseAsync();
 
         return appState;

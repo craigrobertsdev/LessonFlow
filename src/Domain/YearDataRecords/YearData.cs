@@ -114,15 +114,10 @@ public class YearData : Entity<YearDataId>, IAggregateRoot
             wp.WeekStart <= date && wp.WeekStart.AddDays(4) >= date);
         if (weekPlanner is null)
         {
-            throw new DayPlanNotFoundException(date);
+            throw new WeekPlannerNotFoundException(date);
         }
 
-        var dayPlan = weekPlanner.DayPlans.Find(dp => dp.Date == date);
-        if (dayPlan is null)
-        {
-            throw new DayPlanNotFoundException(date);
-        }
-        return dayPlan;
+        return weekPlanner.DayPlans.First(dp => dp.Date == date); // Should never be null as WeekPlanner creates DayPlans for all days in its constructor
     }
 
     public YearData(Guid userId, WeekPlannerTemplate weekPlannerTemplate, string schoolName,

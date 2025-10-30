@@ -41,6 +41,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IYearDataRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ISubjectRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<AppState>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<DialogService>());
@@ -54,8 +55,9 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
             var auth = sp.GetRequiredService<AuthenticationStateProvider>();
             var repo = sp.GetRequiredService<IUserRepository>();
             var logger = sp.GetRequiredService<ILogger<AppState>>();
+            var termDatesService = sp.GetRequiredService<ITermDatesService>();
 
-            return new AppState(auth, repo, logger);
+            return new AppState(auth, repo, logger, termDatesService);
         });
 
         _dbContext = _factoryScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();

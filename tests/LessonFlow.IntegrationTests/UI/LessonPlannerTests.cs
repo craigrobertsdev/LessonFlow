@@ -33,7 +33,9 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IYearDataRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IWeekPlannerRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped<DialogService>();
         Services.AddScoped<NotificationService>();
         Services.AddScoped<TooltipService>();
@@ -61,13 +63,18 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        var savedLessonPlan = _dbContext.LessonPlans
-            .Include(lp => lp.Subject)
-            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+        component.WaitForAssertion(() =>
+        {
+            var dbContext = _factory.Services.CreateScope()
+                .ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var savedLessonPlan = dbContext.LessonPlans
+                .Include(lp => lp.Subject)
+                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
-        Assert.NotNull(savedLessonPlan);
-        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+            Assert.NotNull(savedLessonPlan);
+            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        }, TimeSpan.FromSeconds(2));
     }
 
     [Fact]
@@ -99,14 +106,32 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        var savedLessonPlan = _dbContext.LessonPlans
-            .Include(lp => lp.Subject)
-            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+        component.WaitForAssertion(() =>
+        {
+            var dbContext = _factory.Services.CreateScope()
+                .ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var savedLessonPlan = dbContext.LessonPlans
+                .Include(lp => lp.Subject)
+                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
-        Assert.NotNull(savedLessonPlan);
-        Assert.Equal(lessonPlanId, savedLessonPlan.Id);
-        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+            Assert.NotNull(savedLessonPlan);
+            Assert.Equal(lessonPlanId, savedLessonPlan.Id);
+            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        },TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public async Task PageLoad_WhenNoWeekPlannerInDatabase_WeekPlannerCreatedAndPersisted()
+    {
+        var month = 4;
+        var day = 28;
+        var appState = await CreateAppState();
+        var lessonPlanner = RenderLessonPlanner(appState, TestYear, month, day, 1); // First day of term 2 2025 -- should not be in database yet
+
+        var weekPlanner = _dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart ==  new DateOnly(TestYear, month, day));
+
+        Assert.NotNull(weekPlanner);
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
@@ -125,7 +150,8 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppState>>();
         var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
         var authStateProvider = Services.GetRequiredService<AuthenticationStateProvider>();
-        var appState = new AppState(authStateProvider, userRepository, logger);
+        var termDatesService = Services.GetRequiredService<ITermDatesService>();
+        var appState = new AppState(authStateProvider, userRepository, logger, termDatesService);
         await appState.InitialiseAsync();
 
         return appState;

@@ -6,7 +6,7 @@ public class TooManyDayPlansInWeekPlannerException()
 public class WeekPlannerAlreadyExistsException()
     : BaseException("Week Planner already exists", 400, "WeekPlanner.AlreadyExists");
 
-public class WeekPlannerNotFoundException() : BaseException("Week Planner not found", 404, "WeekPlanner.NotFound");
+public class WeekPlannerNotFoundException(DateOnly date) : BaseException($"Week Planner not found for week commencing {date}", 404, "WeekPlanner.NotFound");
 
 public class DayPlanNotFoundException(DateOnly date) : BaseException($"Day Plan not found for date:{date}", 404, "DayPlan.NotFound");
 

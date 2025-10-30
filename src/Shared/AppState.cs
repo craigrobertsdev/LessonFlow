@@ -2,6 +2,7 @@ using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 
 namespace LessonFlow.Shared;
@@ -11,12 +12,14 @@ public class AppState
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IUserRepository _userRepository;
     private readonly ILogger<AppState> _logger;
+    private readonly ITermDatesService _termDatesService;
 
-    public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger)
+    public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger, ITermDatesService termDatesService)
     {
         _authStateProvider = authStateProvider;
         _userRepository = userRepository;
         _logger = logger;
+        _termDatesService = termDatesService;
     }
 
     public bool IsInitialised { get; private set; }
@@ -106,6 +109,8 @@ public class AppState
                     yearData.WeekPlannerTemplate.SortPeriods();
                     YearDataByYear.Add(yearData.CalendarYear, yearData);
                     CurrentYear = user.LastSelectedYear;
+                    CurrentTerm = _termDatesService.GetTermNumber(DateOnly.FromDateTime(DateTime.Now));
+                    CurrentWeek = _termDatesService.GetWeekNumber(DateOnly.FromDateTime(DateTime.Now));
                 }
                 else
                 {

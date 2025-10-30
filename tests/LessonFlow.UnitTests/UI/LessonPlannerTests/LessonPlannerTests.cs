@@ -395,7 +395,7 @@ public class LessonPlannerTests : TestContext
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
         var curriculumService = UnitTestHelpers.CreateCurriculumService();
 
-        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
+        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService);
         appState.CurrentYear = TestYear;
 
         var accountSetupState = new AccountSetupState(Guid.NewGuid());

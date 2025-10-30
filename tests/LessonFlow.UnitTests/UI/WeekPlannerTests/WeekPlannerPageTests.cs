@@ -591,7 +591,7 @@ public class WeekPlannerPageTests : TestContext
         var unitOfWork = new Mock<IUnitOfWork>();
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
 
-        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object);
+        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService);
         appState.CurrentYear = calendarYear;
 
         var accountSetupState = new AccountSetupState(Guid.NewGuid());

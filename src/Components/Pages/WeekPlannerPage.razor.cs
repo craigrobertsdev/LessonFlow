@@ -86,7 +86,6 @@ public partial class WeekPlannerPage : ComponentBase
             if (AppState.CurrentYearData?.WeekPlannerTemplate != null)
             {
                 var weekPlanner = YearData.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == WeekNumber && wp.TermNumber == TermNumber);
-
                 if (weekPlanner is null)
                 {
                     try

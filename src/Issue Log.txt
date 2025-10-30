@@ -5,5 +5,6 @@ Another error appears to be that neither before nor after school duties are save
 *** LessonPlanner ***
 There is an error when running the app that the only subject shown is NIT but the exception suggests that the subject Mathematics is not found
 
-*** WeekPlanner *** 
-Initial loading into page doesn't take you to current week, rather takes you to week 1, term 1, year current
+*** WeekPlanner ***
+when there are planned multi-period lessons after second break, the grid renders both the multi-period lesson and an extra lesson slot in the last period
+When clicking on lessonplan, an exception occurs that "DayPlan not found for {date}".
