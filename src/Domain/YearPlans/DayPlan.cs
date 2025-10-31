@@ -5,9 +5,10 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Extensions;
 
-namespace LessonFlow.Domain.WeekPlanners;
+namespace LessonFlow.Domain.YearPlans;
 
 /// <summary>
 ///     Represents the actually planned lessons and events for a given day.

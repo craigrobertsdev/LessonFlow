@@ -7,7 +7,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Interfaces;
 
 namespace LessonFlow.Domain.LessonPlans;

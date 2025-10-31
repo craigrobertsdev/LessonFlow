@@ -6,12 +6,12 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Services;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen;
 
@@ -85,16 +85,15 @@ internal static class IntegrationTestHelpers
             user = dbContext.Users.First(u => u.Email == email);
 
             var weekPlannerTemplate = IntegrationTestHelpers.GenerateWeekPlannerTemplate(user.Id);
-            var yearData = new YearData(user.Id, weekPlannerTemplate, "Test School", TestYear);
-            var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, FirstDateOfSchool);
+            var yearPlan = new YearPlan(user.Id, weekPlannerTemplate, "Test School", TestYear);
+            var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
             var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
             weekPlanner.UpdateDayPlan(dayPlan);
-            yearData.AddWeekPlanner(weekPlanner);
-            dbContext.YearData.Add(yearData);
+            yearPlan.AddWeekPlanner(weekPlanner);
+            dbContext.YearPlans.Add(yearPlan);
             dbContext.SaveChanges();
 
-            user.AddYearData(yearData);
-
+            user.AddYearPlan(yearPlan);
 
             dbContext.SaveChanges();
         }
@@ -109,10 +108,10 @@ internal static class IntegrationTestHelpers
         dbContext.Subjects.AddRange(subjects);
         dbContext.SaveChanges();
 
-        var yearDatas = dbContext.YearData.ToList();
-        foreach (var yearData in yearDatas)
+        var yearPlans = dbContext.YearPlans.ToList();
+        foreach (var yearPlan in yearPlans)
         {
-            yearData.AddSubjects(subjects);
+            yearPlan.AddSubjects(subjects);
         }
 
         var termDatesByYear = new Dictionary<int, List<SchoolTerm>>()
@@ -152,8 +151,7 @@ internal static class IntegrationTestHelpers
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<ITermPlannerRepository, TermPlannerRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IWeekPlannerRepository, WeekPlannerRepository>();
-        services.AddScoped<IYearDataRepository, YearDataRepository>();
+        services.AddScoped<IYearPlanRepository, YearPlanRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<ICurriculumService, CurriculumService>();
         services.AddScoped<AppState>();

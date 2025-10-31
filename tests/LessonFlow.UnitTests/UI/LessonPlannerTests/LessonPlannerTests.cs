@@ -8,8 +8,6 @@ using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -19,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Radzen;
+using LessonFlow.Domain.YearPlans;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
 public class LessonPlannerTests : TestContext
@@ -77,7 +76,7 @@ public class LessonPlannerTests : TestContext
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), new Subject([], subjectName), PeriodType.Lesson, "", numberOfPeriods, periodStart, date, []));
 
         Services.AddScoped(sp => lessonPlanRepository.Object);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[1].Periods[0] = new LessonTemplate(subjectName, periodStart, numberOfPeriods);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[1].Periods[0] = new LessonTemplate(subjectName, periodStart, numberOfPeriods);
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, day, periodStart);
         // Act
         var lessonPlan = component.Instance.LessonPlan;
@@ -93,7 +92,7 @@ public class LessonPlannerTests : TestContext
     public void Initialise_WhenNoLessonPlannedAndNoLessonTemplate_ShouldCreateBlankLessonPlan()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates.Clear();
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates.Clear();
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, 31, 1);
 
         var lessonPlan = component.Instance.LessonPlan;
@@ -108,7 +107,7 @@ public class LessonPlannerTests : TestContext
     public void Initialise_WhenNoLessonPlannedAndNitPeriodInWeekPlannerTemplate_ShouldCreateBlankNitPeriod()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
         var day = 31;
         var periodStart = 1;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, day, periodStart);
@@ -138,7 +137,7 @@ public class LessonPlannerTests : TestContext
         lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), 1, default))
            .ReturnsAsync(lessonPlan);
         Services.AddScoped(sp => lessonPlanRepository.Object);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[4].Periods[0] = new NitTemplate(1, 2);
 
         var day = 31;
         var periodStart = 1;
@@ -171,7 +170,7 @@ public class LessonPlannerTests : TestContext
     public void CanEditLessonPlan_WhenNoLessonPlanExistsButSubjectPlannedInWeekPlannerTemplate_ShouldNotLoadIntoEditMode()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[3].Periods[0] = new LessonTemplate("Mathematics", 1, 2);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[3].Periods[0] = new LessonTemplate("Mathematics", 1, 2);
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, 30, 1);
 
         var subjectName = component.Find("p#subject-name");
@@ -188,7 +187,7 @@ public class LessonPlannerTests : TestContext
     public void CanEditLessonPlan_WhenNoLessonPlanOrSubjectPlannedInWeekPlannerTemplate_ShouldLoadIntoEditMode()
     {
         var appState = CreateAppState();
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[4].Periods.Clear();
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[4].Periods.Clear();
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, 31, 1);
 
         Assert.True(component.Instance.IsInEditMode);
@@ -269,7 +268,7 @@ public class LessonPlannerTests : TestContext
         var subject = new Subject("English", [], "");
         lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), startPeriod, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
-           [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
+           [new Resource(appState.User!.Id, "Test", "Url", false, subject, [])]));
         Services.AddScoped(sp => lessonPlanRepository.Object);
 
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
@@ -295,13 +294,13 @@ public class LessonPlannerTests : TestContext
     public void SubjectsDropdown_ShouldContainAllTaughtSubjectsAndNit()
     {
         var appState = CreateAppState();
-        AddThreeSubjectsToYearData(appState.CurrentYearData);
+        AddThreeSubjectsToYearPlan(appState.CurrentYearPlan);
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
         component.Find("#edit-lesson-plan").Click();
         var selectSubject = component.Find("select#subject-name");
         var options = selectSubject.GetElementsByTagName("option");
 
-        var taughtSubjects = appState.CurrentYearData.SubjectsTaught;
+        var taughtSubjects = appState.CurrentYearPlan.SubjectsTaught;
         Assert.Equal(taughtSubjects.Count + 1, options.Length);
         foreach (var subject in taughtSubjects)
         {
@@ -326,7 +325,7 @@ public class LessonPlannerTests : TestContext
     public void SaveLessonPlan_ShouldPersistChangesAndExitEditMode()
     {
         var appState = CreateAppState();
-        AddThreeSubjectsToYearData(appState.CurrentYearData);
+        AddThreeSubjectsToYearPlan(appState.CurrentYearPlan);
         var component = RenderLessonPlanner(appState,  TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
 
         component.Find("#edit-lesson-plan").Click();
@@ -356,8 +355,8 @@ public class LessonPlannerTests : TestContext
     {
         //var appState = CreateAppState();
         //var lessonPlanRepository = new Mock<ILessonPlanRepository>();
-        //lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearDataId>(), It.IsAny<DateOnly>(), 2, default))
-        //   .ReturnsAsync(new LessonPlan(appState.CurrentYearData, new Subject([], "Science"), PeriodType.Lesson, "", 1, 2, new DateOnly(2025, 1, 29), []));
+        //lessonPlanRepository.Setup(r => r.GetByDateAndPeriodStart(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), 2, default))
+        //   .ReturnsAsync(new LessonPlan(appState.CurrentYearPlan, new Subject([], "Science"), PeriodType.Lesson, "", 1, 2, new DateOnly(2025, 1, 29), []));
         //Services.AddScoped(sp => lessonPlanRepository.Object);
         //var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
         //component.Find("#edit-lesson-plan").Click();
@@ -387,9 +386,8 @@ public class LessonPlannerTests : TestContext
         var authStateProvider = new Mock<AuthenticationStateProvider>();
         var subjectRepository = new Mock<ISubjectRepository>();
         var userRepository = new Mock<IUserRepository>();
-        var weekPlannerRepository = new Mock<IWeekPlannerRepository>();
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
-        var yearDataRepository = new Mock<IYearDataRepository>();
+        var yearPlanRepository = new Mock<IYearPlanRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
@@ -401,15 +399,15 @@ public class LessonPlannerTests : TestContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(TestYear);
 
-        var yearData = new YearData(Guid.NewGuid(), accountSetupState);
-        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, FirstDateOfSchool);
+        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState);
+        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
         for (int i  = 0; i < 5; i++)
         {
             var date = FirstDateOfSchool.AddDays(i);
             var dayPlan = new DayPlan(weekPlanner.Id, date, [], []);
             weekPlanner.UpdateDayPlan(dayPlan);
         }
-        yearData.AddWeekPlanner(weekPlanner);
+        yearPlan.AddWeekPlanner(weekPlanner);
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
         appState.User = new User();
@@ -427,17 +425,16 @@ public class LessonPlannerTests : TestContext
 
         subjectRepository.Setup(cr => cr.GetSubjectById(It.IsAny<SubjectId>(), It.IsAny<CancellationToken>())).ReturnsAsync(curriculumService.CurriculumSubjects.First(s => s.Name == "Mathematics"));
 
-        yearData.WeekPlannerTemplate = weekPlannerTemplate;
-        yearData.SubjectsTaught.AddRange(subjects);
-        appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
+        yearPlan.WeekPlannerTemplate = weekPlannerTemplate;
+        yearPlan.SubjectsTaught.AddRange(subjects);
+        appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
 
         Services.AddScoped(sp => termDatesService);
         Services.AddScoped(sp => subjectRepository.Object);
         Services.AddScoped(sp => curriculumService);
-        Services.AddScoped(sp => weekPlannerRepository.Object);
         Services.AddScoped(sp => lessonPlanRepository.Object);
         Services.AddScoped(sp => userRepository.Object);
-        Services.AddScoped(sp => yearDataRepository.Object);
+        Services.AddScoped(sp => yearPlanRepository.Object);
         Services.AddScoped(sp => unitOfWork.Object);
 
         Services.AddRadzenComponents();
@@ -446,13 +443,13 @@ public class LessonPlannerTests : TestContext
         return appState;
     }
 
-    private static void AddThreeSubjectsToYearData(YearData yearData)
+    private static void AddThreeSubjectsToYearPlan(YearPlan yearPlan)
     {
         var mathSubject = new Subject("Mathematics", [], "");
         var engSubject = new Subject("English", [], "");
         var sciSubject = new Subject("Science", [], "");
-        yearData.SubjectsTaught.Add(mathSubject);
-        yearData.SubjectsTaught.Add(engSubject);
-        yearData.SubjectsTaught.Add(sciSubject);
+        yearPlan.SubjectsTaught.Add(mathSubject);
+        yearPlan.SubjectsTaught.Add(engSubject);
+        yearPlan.SubjectsTaught.Add(sciSubject);
     }
 }

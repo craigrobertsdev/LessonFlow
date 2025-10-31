@@ -4,7 +4,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Extensions;
 
 namespace LessonFlow.Shared.Extensions;

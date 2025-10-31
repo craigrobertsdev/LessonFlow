@@ -1,6 +1,6 @@
 using LessonFlow.Database;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords.DomainEvents;
+using LessonFlow.Domain.YearPlans;
+using LessonFlow.Domain.YearPlans.DomainEvents;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using MediatR;
@@ -8,27 +8,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Domain.EventHandlers;
 
-public class WeekPlannerTemplateAddedToYearDataEventHandler(
+public class WeekPlannerTemplateAddedToYearPlanEventHandler(
     ApplicationDbContext context,
     IUnitOfWork unitOfWork,
     ITermDatesService termDatesService)
-    : INotificationHandler<WeekPlannerTemplateAddedToYearDataEvent>
+    : INotificationHandler<WeekPlannerTemplateAddedToYearPlanEvent>
 {
-    public async Task Handle(WeekPlannerTemplateAddedToYearDataEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(WeekPlannerTemplateAddedToYearPlanEvent notification, CancellationToken cancellationToken)
     {
-        var yearData = await context.YearData
+        var yearPlan = await context.YearPlans
             .Where(yd => yd.WeekPlannerTemplate != null && yd.WeekPlannerTemplate.Id == notification.WeekPlannerTemplateId)
             .Include(yd => yd.WeekPlanners)
             .FirstAsync(cancellationToken);
 
-        if (yearData.WeekPlanners.Count == 0)
+        if (yearPlan.WeekPlanners.Count == 0)
         {
-            yearData.AddWeekPlanner(new WeekPlanner(
-                yearData,
-                yearData.CalendarYear,
+            yearPlan.AddWeekPlanner(new WeekPlanner(
+                yearPlan.Id,
+                yearPlan.CalendarYear,
                 1,
                 1,
-                termDatesService.GetFirstDayOfWeek(yearData.CalendarYear, 1, 1)));
+                termDatesService.GetFirstDayOfWeek(yearPlan.CalendarYear, 1, 1)));
         }
 
         await unitOfWork.SaveChangesAsync(cancellationToken);

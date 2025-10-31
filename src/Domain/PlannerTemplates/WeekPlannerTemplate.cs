@@ -10,7 +10,7 @@ namespace LessonFlow.Domain.PlannerTemplates;
 ///     This is used as a template for creating a WeekPlanner in the UI. If there are no lessons planned for a given
 ///     periods, the WeekPlanner will use the WeekPlannerTemplate to determine what to display.
 ///     Manages the number of periods in a week, which includes lessons and breaks.
-///     A YearData object will have a single WeekPlannerTemplate object.
+///     A YearPlans object will have a single WeekPlannerTemplate object.
 /// </summary>
 public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
 {

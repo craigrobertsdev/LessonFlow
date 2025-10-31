@@ -12,12 +12,12 @@ public class TermPlannerRepository(ApplicationDbContext context) : ITermPlannerR
         return await context.TermPlanners.FirstOrDefaultAsync(tp => tp.Id == id, cancellationToken);
     }
 
-    public async Task<TermPlanner?> GetByYearDataIdAndYear(YearDataId yearDataId, int calendarYear,
+    public async Task<TermPlanner?> GetByYearPlanIdAndYear(YearPlanId yearPlanId, int calendarYear,
         CancellationToken cancellationToken)
     {
         var termPlanner = await context.TermPlanners
             .AsNoTracking()
-            .Where(yd => yd.YearDataId == yearDataId)
+            .Where(yd => yd.YearPlanId == yearPlanId)
             .Where(yd => yd.CalendarYear == calendarYear)
             .Include(tp => tp.TermPlans)
             .FirstOrDefaultAsync(cancellationToken);

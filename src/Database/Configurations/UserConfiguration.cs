@@ -13,7 +13,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(w => w.Id);
 
-        builder.HasMany(u => u.YearDataHistory)
+        builder.HasMany(u => u.YearPlanHistory)
             .WithOne()
             .HasForeignKey(u => u.UserId);
 

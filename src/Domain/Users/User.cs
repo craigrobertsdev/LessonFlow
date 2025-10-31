@@ -1,5 +1,5 @@
 using LessonFlow.Components.AccountSetup.State;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using Microsoft.AspNetCore.Identity;
 
 namespace LessonFlow.Domain.Users;
@@ -10,31 +10,31 @@ public class User : IdentityUser<Guid>
     public AccountSetupState? AccountSetupState { get; set; }
     public int LastSelectedYear { get; set; }
     public DateOnly LastSelectedWeekStart { get; set; }
-    public List<YearData> YearDataHistory { get; private set; } = [];
-    public YearData? CurrentYearData => YearDataHistory.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
+    public List<YearPlan> YearPlanHistory { get; private set; } = [];
+    public YearPlan? CurrentYearPlan => YearPlanHistory.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
     public List<Resource> Resources { get; private set; } = [];
 
-    public YearData? GetYearData(int year)
+    public YearPlan? GetYearPlan(int year)
     {
-        return YearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year);
+        return YearPlanHistory.FirstOrDefault(yd => yd.CalendarYear == year);
     }
 
-    public void AddYearData(YearData yearData)
+    public void AddYearPlan(YearPlan yearPlan)
     {
-        if (!YearDataExists(yearData))
+        if (!YearPlanExists(yearPlan))
         {
-            YearDataHistory.Add(yearData);
+            YearPlanHistory.Add(yearPlan);
         }
     }
 
-    private bool YearDataExists(YearData yearData)
+    private bool YearPlanExists(YearPlan yearPlan)
     {
-        return YearDataExists(yearData.CalendarYear);
+        return YearPlanExists(yearPlan.CalendarYear);
     }
 
-    private bool YearDataExists(int year)
+    private bool YearPlanExists(int year)
     {
-        return YearDataHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
+        return YearPlanHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
     }
 
     public void CompleteAccountSetup()

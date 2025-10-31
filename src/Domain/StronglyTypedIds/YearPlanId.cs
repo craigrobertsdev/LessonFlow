@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace LessonFlow.Domain.StronglyTypedIds;
 
-[JsonConverter(typeof(StronglyTypedIdJsonConverter<YearDataId>))]
-public record YearDataId(Guid Value) : IStronglyTypedId
+[JsonConverter(typeof(StronglyTypedIdJsonConverter<YearPlanId>))]
+public record YearPlanId(Guid Value) : IStronglyTypedId
 {
     public Guid Value { get; set; } = Value;
 
     public class StronglyTypedIdEfValueConverter(ConverterMappingHints? mappingHints = null)
-        : ValueConverter<YearDataId, Guid>(id => id.Value, value => new YearDataId(value), mappingHints);
+        : ValueConverter<YearPlanId, Guid>(id => id.Value, value => new YearPlanId(value), mappingHints);
 }

@@ -2,7 +2,7 @@
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
-using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Extensions;
@@ -22,8 +22,7 @@ public partial class LessonPlanner
 
     [Inject] public ILessonPlanRepository LessonPlanRepository { get; set; } = default!;
     [Inject] public ICurriculumService CurriculumService { get; set; } = default!;
-    [Inject] public IYearDataRepository YearDataRepository { get; set; } = default!;
-    [Inject] public IWeekPlannerRepository WeekPlannerRepository { get; set; } = default!;
+    [Inject] public IYearPlanRepository YearPlanRepository { get; set; } = default!;
     [Inject] public ISubjectRepository SubjectRepository { get; set; } = default!;
     [Inject] public ITermDatesService TermDatesService { get; set; } = default!;
     [Inject] public IUnitOfWork UnitOfWork { get; set; } = default!;
@@ -35,17 +34,17 @@ public partial class LessonPlanner
     internal List<int> AvailableLessonSlots { get; set; } = [];
     internal string? SelectedSubject { get; set; }
     internal string? LessonText { get; set; }
-    internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData.WeekPlannerTemplate;
+    internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearPlan.WeekPlannerTemplate;
     internal DayPlan DayPlan { get; set; } = default!;
-    internal List<Subject> SubjectsTaught => AppState.CurrentYearData.SubjectsTaught;
+    internal List<Subject> SubjectsTaught => AppState.CurrentYearPlan.SubjectsTaught;
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        if (AppState is null || AppState.CurrentYearData is null)
+        if (AppState is null || AppState.CurrentYearPlan is null)
         {
-            throw new InvalidOperationException("AppState or CurrentYearData is not initialized.");
+            throw new InvalidOperationException("AppState or CurrentYearPlan is not initialized.");
         }
 
         try
@@ -54,15 +53,21 @@ public partial class LessonPlanner
             try
             {
                 Date = new DateOnly(Year, Month, Day);
-                var dayPlan = AppState.CurrentYearData.GetDayPlan(Date);
+                var dayPlan = AppState.CurrentYearPlan.GetDayPlan(Date);
+                if (dayPlan is null)
+                {
+                    var ct = new CancellationToken();
+                    var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(AppState.CurrentYearPlan.Id, Year, TermDatesService.GetTermNumber(Date),
+                        TermDatesService.GetWeekNumber(Date), Date.GetWeekStart(), ct);
+                    await UnitOfWork.SaveChangesAsync(ct);
+                    AppState.CurrentYearPlan.AddWeekPlanner(weekPlanner);
+                    dayPlan = weekPlanner.GetDayPlan(Date)!;
+                }
+
                 DayPlan = dayPlan;
             }
             catch (WeekPlannerNotFoundException)
             {
-                var weekPlanner = new WeekPlanner(AppState.CurrentYearData, Year, TermDatesService.GetTermNumber(Date), TermDatesService.GetWeekNumber(Date), Date.GetWeekStart());
-                WeekPlannerRepository.Add(weekPlanner);
-                await UnitOfWork.SaveChangesAsync(new CancellationToken());
-                DayPlan = weekPlanner.GetDayPlan(Date)!;
             }
 
             LessonPlan = await LoadLessonPlan();

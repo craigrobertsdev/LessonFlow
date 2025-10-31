@@ -2,7 +2,7 @@
 @using LessonFlow.Components.WeekPlanners
 @using LessonFlow.Domain.Enums
 @using LessonFlow.Domain.PlannerTemplates
-@using LessonFlow.Domain.WeekPlanners
+@using LessonFlow.Domain.YearPlans
 @using LessonFlow.Shared.Interfaces
 
 <div class="grid grid-rows-subgrid grid-cols-subgrid row-span-full @(IsCurrentWeekday() ? "border border-gray-400" : "")"
@@ -10,23 +10,23 @@
 
     <div class="row-start-1 border border-gray-200 flex flex-col justify-center items-center @(IsCurrentWeekday() ? "border-gray-400 bg-gray-400" : "")">
         <p class="font-bold">
-            @DayPlan.DayOfWeek
+            @DayOfWeek
         </p>
         <p>
-            @DayPlan.Date.ToString("MMM d")
+            @Date.ToString("MMM d")
         </p>
     </div>
 
     <div class="row-start-2 flex justify-center items-center border border-gray-300 bg-gray-200 p-1">
         @if (WeekPlanner.EditingDuties)
         {
-            <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleBeforeSchoolDutyChanged)"
+            <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan?.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleBeforeSchoolDutyChanged)"
                    class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                    placeholder="Duty name" />
         }
         else
         {
-            <p>@(DayPlan.BeforeSchoolDuty ?? string.Empty)</p>
+            <p>@(DayPlan?.BeforeSchoolDuty ?? string.Empty)</p>
         }
     </div>
 
@@ -66,13 +66,13 @@
     <div class="row-start-[-1] border border-gray-300 bg-gray-200 flex justify-center items-center p-1">
         @if (WeekPlanner.EditingDuties)
         {
-            <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleAfterSchoolDutyChanged)"
+            <input id=@($"before-school-duty-{Column.Col}") value="@(DayPlan?.BeforeSchoolDuty ?? string.Empty)" @onchange="@(HandleAfterSchoolDutyChanged)"
                    class="h-full box-border border-2 focus:ring-0 border-gray-200 bg-white rounded-lg w-full text-center hover:outline hover:outline-gray-500 hover:-outline-offset-1"
                    placeholder="Duty name" />
         }
         else
         {
-            <p>@(DayPlan.AfterSchoolDuty ?? string.Empty)</p>
+            <p>@(DayPlan?.AfterSchoolDuty ?? string.Empty)</p>
         }
     </div>
 </div>
@@ -80,9 +80,11 @@
 @code {
     [CascadingParameter] public WeekPlannerPage WeekPlanner { get; set; } = default!;
     [Parameter] public GridColumn Column { get; set; } = default!;
-    [Parameter] public DayPlan DayPlan { get; set; } = default!;
+    [Parameter] public DayPlan? DayPlan { get; set; } 
+    [Parameter] public DayOfWeek DayOfWeek { get; set; }
+    [Parameter] public DateOnly Date { get; set; }
 
-    bool IsCurrentWeekday() => DateTime.Now.DayOfWeek == DayPlan.DayOfWeek;
+    bool IsCurrentWeekday() => DateTime.Now.DayOfWeek == DayPlan?.DayOfWeek;
 
     private void HandleBreakDutyChanged(ChangeEventArgs e, GridCell cell)
     {
@@ -90,7 +92,7 @@
 
         if (e.Value is string newValue && cell.Period is BreakTemplate period)
         {
-            WeekPlanner.HandleBreakNameChanged(DayPlan.DayOfWeek, period, newValue);
+            WeekPlanner.HandleBreakNameChanged(DayOfWeek, period, newValue);
         }
     }
 
@@ -99,7 +101,7 @@
         if (!Column.IsWorkingDay) return;
         if (e.Value is string newValue)
         {
-            WeekPlanner.HandleBeforeSchoolDutyChanged(DayPlan.DayOfWeek, newValue);
+            WeekPlanner.HandleBeforeSchoolDutyChanged(DayOfWeek, newValue);
         }
     }
 
@@ -108,13 +110,13 @@
         if (!Column.IsWorkingDay) return;
         if (e.Value is string newValue)
         {
-            WeekPlanner.HandleAfterSchoolDutyChanged(DayPlan.DayOfWeek, newValue);
+            WeekPlanner.HandleAfterSchoolDutyChanged(DayOfWeek, newValue);
         }
     }
 
     private string GetBreakPeriodDutyName(GridCell cell)
     {
-        if (cell.Period is not BreakTemplate period) return string.Empty;
+        if (cell.Period is not BreakTemplate period || DayPlan is null) return string.Empty;
 
         DayPlan.BreakDutyOverrides.TryGetValue(cell.PeriodNumber, out var overrideName);
         return overrideName ?? period.BreakDuty ?? string.Empty;

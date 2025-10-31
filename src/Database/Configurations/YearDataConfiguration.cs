@@ -4,40 +4,41 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace LessonFlow.Database.Configurations;
 
-public class YearDataConfiguration : IEntityTypeConfiguration<YearData>
+public class YearPlanConfiguration : IEntityTypeConfiguration<YearPlan>
 {
-    public void Configure(EntityTypeBuilder<YearData> builder)
+    public void Configure(EntityTypeBuilder<YearPlan> builder)
     {
         builder.HasKey(yd => yd.Id);
 
         builder.Property(yd => yd.Id)
             .HasColumnName("Id")
-            .HasConversion(new StronglyTypedIdConverter.YearDataIdConverter());
+            .HasConversion(new StronglyTypedIdConverter.YearPlanIdConverter());
 
         builder.HasMany(yd => yd.Students)
             .WithOne();
 
         builder.HasOne(yd => yd.TermPlanner)
             .WithOne()
-            .HasForeignKey<TermPlanner>(tp => tp.YearDataId);
+            .HasForeignKey<TermPlanner>(tp => tp.YearPlanId);
 
         builder.HasOne<User>()
-            .WithMany(u => u.YearDataHistory)
+            .WithMany(u => u.YearPlanHistory)
             .HasForeignKey(yd => yd.UserId);
 
         builder.HasMany(yd => yd.WeekPlanners)
-            .WithOne(wp=> wp.YearData);
+            .WithOne()
+            .HasForeignKey(wp => wp.YearPlanId);
 
         builder.HasOne(yd => yd.WeekPlannerTemplate)
             .WithOne()
-            .HasForeignKey<WeekPlannerTemplate>("YearDataId");
+            .HasForeignKey<WeekPlannerTemplate>("YearPlanId");
 
         builder.HasMany(yd => yd.SubjectsTaught)
             .WithMany();

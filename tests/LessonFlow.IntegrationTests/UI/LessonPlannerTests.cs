@@ -31,9 +31,8 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         _dbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ICurriculumService>());
-        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IYearDataRepository>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
-        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IWeekPlannerRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped<DialogService>();
@@ -82,7 +81,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
     {
         var user = _dbContext.Users.First(u => u.Email == "test@test.com");
         var dayPlan = _dbContext.Users.First(u => u.Email == "test@test.com")
-            .YearDataHistory.First(yd => yd.CalendarYear == TestYear)
+            .YearPlanHistory.First(yd => yd.CalendarYear == TestYear)
                 .WeekPlanners.First().DayPlans.First();
         var subject = _dbContext.Subjects.First(s => s.Name == "English");
 
@@ -96,7 +95,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var lessonPlanId = lessonPlan.Id;
 
         var appState = await CreateAppState();
-        appState.CurrentYearData.WeekPlanners.First().DayPlans[0] = dayPlan;
+        appState.CurrentYearPlan.WeekPlanners.First().DayPlans[0] = dayPlan;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
 
         component.WaitForElement("#edit-lesson-plan").Click();
@@ -118,7 +117,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
             Assert.Equal(lessonPlanId, savedLessonPlan.Id);
             Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
             Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
-        },TimeSpan.FromSeconds(2));
+        }, TimeSpan.FromSeconds(2));
     }
 
     [Fact]
@@ -127,11 +126,15 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var month = 4;
         var day = 28;
         var appState = await CreateAppState();
-        var lessonPlanner = RenderLessonPlanner(appState, TestYear, month, day, 1); // First day of term 2 2025 -- should not be in database yet
+        var component = RenderLessonPlanner(appState, TestYear, month, day, 1); // First day of term 2 2025 -- should not be in database yet
 
-        var weekPlanner = _dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart ==  new DateOnly(TestYear, month, day));
+        component.WaitForAssertion(() =>
+        {
 
-        Assert.NotNull(weekPlanner);
+            var weekPlanner = _dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == new DateOnly(TestYear, month, day));
+
+            Assert.NotNull(weekPlanner);
+        });
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)

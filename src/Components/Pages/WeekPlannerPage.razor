@@ -24,7 +24,7 @@ else if (AppState.User?.AccountSetupComplete == false)
     return;
 }
 
-else if (AppState.CurrentYearData?.WeekPlannerTemplate == null)
+else if (AppState.CurrentYearPlan?.WeekPlannerTemplate == null)
 {
     <LoadingSpinner Message="Loading week planner..." />
     return;
@@ -134,12 +134,12 @@ else if (AppState.CurrentYearData?.WeekPlannerTemplate == null)
                 var col = GridCols[i];
                 var dayIncrement = i;
                 var dayOfWeek = WeekPlannerTemplate.DayTemplates[i].DayOfWeek;
-                var date = WeekPlanner.WeekStart.AddDays(dayIncrement);
-                var dayPlan = WeekPlanner.DayPlans.FirstOrDefault(wp => wp.Date == date);
+                var date = WeekStart.AddDays(dayIncrement);
+                var dayPlan = WeekPlanner?.DayPlans.FirstOrDefault(wp => wp.Date == date);
                 if (col.IsWorkingDay)
                 {
                     <CascadingValue Value="this">
-                        <WeekPlannerColumn Column="col" DayPlan="@dayPlan" />
+                        <WeekPlannerColumn Column="col" DayPlan="@dayPlan" DayOfWeek="@dayOfWeek" Date="@date" />
                     </CascadingValue>
 
                 }

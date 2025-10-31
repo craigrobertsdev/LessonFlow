@@ -1,6 +1,6 @@
 using System.Text.Json;
 using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Domain.YearPlans;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

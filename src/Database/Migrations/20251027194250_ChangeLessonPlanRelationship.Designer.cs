@@ -336,14 +336,14 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("YearDataId")
+                    b.Property<Guid?>("YearPlanId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("YearDataId")
+                    b.HasIndex("YearPlanId")
                         .IsUnique();
 
                     b.ToTable("WeekPlannerTemplates");
@@ -403,14 +403,14 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("YearDataId")
+                    b.Property<Guid?>("YearPlanId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("YearDataId");
+                    b.HasIndex("YearPlanId");
 
                     b.ToTable("Students");
                 });
@@ -443,7 +443,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<int>("CalendarYear")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("YearDataId")
+                    b.Property<Guid>("YearPlanId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("YearLevels")
@@ -452,7 +452,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("YearDataId")
+                    b.HasIndex("YearPlanId")
                         .IsUnique();
 
                     b.ToTable("TermPlanners");
@@ -712,17 +712,17 @@ namespace LessonFlow.Database.Migrations
                     b.Property<int>("Year")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("YearDataId")
+                    b.Property<Guid>("YearPlanId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("YearDataId");
+                    b.HasIndex("YearPlanId");
 
                     b.ToTable("WeekPlanners");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.YearDataRecords.YearData", b =>
+            modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlans", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -751,7 +751,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("YearData");
+                    b.ToTable("YearPlans");
                 });
 
             modelBuilder.Entity("LessonPlanResource", b =>
@@ -914,19 +914,19 @@ namespace LessonFlow.Database.Migrations
                     b.ToTable("SubjectTermPlan");
                 });
 
-            modelBuilder.Entity("SubjectYearData", b =>
+            modelBuilder.Entity("SubjectYearPlan", b =>
                 {
                     b.Property<Guid>("SubjectsTaughtId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("YearDataId")
+                    b.Property<Guid>("YearPlanId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("SubjectsTaughtId", "YearDataId");
+                    b.HasKey("SubjectsTaughtId", "YearPlanId");
 
-                    b.HasIndex("YearDataId");
+                    b.HasIndex("YearPlanId");
 
-                    b.ToTable("SubjectYearData");
+                    b.ToTable("SubjectYearPlan");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.BreakTemplate", b =>
@@ -1340,9 +1340,9 @@ namespace LessonFlow.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", null)
+                    b.HasOne("LessonFlow.Domain.YearPlans.YearPlans", null)
                         .WithOne("WeekPlannerTemplate")
-                        .HasForeignKey("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "YearDataId");
+                        .HasForeignKey("LessonFlow.Domain.PlannerTemplates.WeekPlannerTemplate", "YearPlanId");
 
                     b.OwnsMany("LessonFlow.Domain.ValueObjects.TemplatePeriod", "Periods", b1 =>
                         {
@@ -1451,9 +1451,9 @@ namespace LessonFlow.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", null)
+                    b.HasOne("LessonFlow.Domain.YearPlans.YearPlans", null)
                         .WithMany("Students")
-                        .HasForeignKey("YearDataId");
+                        .HasForeignKey("YearPlanId");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.TermPlanners.TermPlan", b =>
@@ -1469,9 +1469,9 @@ namespace LessonFlow.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.TermPlanners.TermPlanner", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", null)
+                    b.HasOne("LessonFlow.Domain.YearPlans.YearPlans", null)
                         .WithOne("TermPlanner")
-                        .HasForeignKey("LessonFlow.Domain.TermPlanners.TermPlanner", "YearDataId")
+                        .HasForeignKey("LessonFlow.Domain.TermPlanners.TermPlanner", "YearPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1515,19 +1515,19 @@ namespace LessonFlow.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanner", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", "YearData")
+                    b.HasOne("LessonFlow.Domain.YearPlans.YearPlans", "YearPlans")
                         .WithMany("WeekPlanners")
-                        .HasForeignKey("YearDataId")
+                        .HasForeignKey("YearPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("YearData");
+                    b.Navigation("YearPlans");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.YearDataRecords.YearData", b =>
+            modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlans", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Users.User", null)
-                        .WithMany("YearDataHistory")
+                        .WithMany("YearPlanHistory")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1614,7 +1614,7 @@ namespace LessonFlow.Database.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SubjectYearData", b =>
+            modelBuilder.Entity("SubjectYearPlan", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Curriculum.Subject", null)
                         .WithMany()
@@ -1622,9 +1622,9 @@ namespace LessonFlow.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LessonFlow.Domain.YearDataRecords.YearData", null)
+                    b.HasOne("LessonFlow.Domain.YearPlans.YearPlans", null)
                         .WithMany()
-                        .HasForeignKey("YearDataId")
+                        .HasForeignKey("YearPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1662,7 +1662,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.Navigation("Resources");
 
-                    b.Navigation("YearDataHistory");
+                    b.Navigation("YearPlanHistory");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.DayPlan", b =>
@@ -1675,7 +1675,7 @@ namespace LessonFlow.Database.Migrations
                     b.Navigation("DayPlans");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.YearDataRecords.YearData", b =>
+            modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlans", b =>
                 {
                     b.Navigation("Students");
 

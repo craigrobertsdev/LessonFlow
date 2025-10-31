@@ -1,5 +1,5 @@
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
@@ -36,13 +36,13 @@ public class AppState
         }
     }
 
-    private Dictionary<int, YearData> _yearDataByYear = [];
-    public Dictionary<int, YearData> YearDataByYear
+    private Dictionary<int, YearPlan> _yearPlanByYear = [];
+    public Dictionary<int, YearPlan> YearPlanByYear
     {
-        get => _yearDataByYear;
+        get => _yearPlanByYear;
         set
         {
-            _yearDataByYear = value;
+            _yearPlanByYear = value;
             OnStateChanged?.Invoke();
         }
     }
@@ -78,7 +78,7 @@ public class AppState
         }
     }
 
-    public YearData CurrentYearData => _yearDataByYear[_currentYear];
+    public YearPlan CurrentYearPlan => _yearPlanByYear[_currentYear];
 
     public event Action? OnStateChanged;
 
@@ -104,10 +104,10 @@ public class AppState
                 User = user;
                 if (user.AccountSetupComplete)
                 {
-                    var yearData = await _userRepository.GetYearDataByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
-                        ?? throw new YearDataNotFoundException();
-                    yearData.WeekPlannerTemplate.SortPeriods();
-                    YearDataByYear.Add(yearData.CalendarYear, yearData);
+                    var yearPlan = await _userRepository.GetYearPlanByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
+                        ?? throw new YearPlanNotFoundException();
+                    yearPlan.WeekPlannerTemplate.SortPeriods();
+                    YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
                     CurrentYear = user.LastSelectedYear;
                     CurrentTerm = _termDatesService.GetTermNumber(DateOnly.FromDateTime(DateTime.Now));
                     CurrentWeek = _termDatesService.GetWeekNumber(DateOnly.FromDateTime(DateTime.Now));
@@ -132,11 +132,11 @@ public class AppState
         }
     }
 
-    public void AddNewYearData(int year, YearData yearData)
+    public void AddNewYearPlan(int year, YearPlan yearPlan)
     {
         if (!IsInitialised) return;
 
-        _yearDataByYear.Add(year, yearData);
+        _yearPlanByYear.Add(year, yearPlan);
         OnStateChanged?.Invoke();
     }
 }

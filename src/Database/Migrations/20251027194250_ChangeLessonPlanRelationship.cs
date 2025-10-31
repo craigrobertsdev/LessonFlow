@@ -219,7 +219,7 @@ namespace LessonFlow.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "YearData",
+                name: "YearPlans",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
@@ -231,9 +231,9 @@ namespace LessonFlow.Database.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_YearData", x => x.Id);
+                    table.PrimaryKey("PK_YearPlan", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_YearData_AspNetUsers_UserId",
+                        name: "FK_YearPlan_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -322,7 +322,7 @@ namespace LessonFlow.Database.Migrations
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
                     FirstName = table.Column<string>(type: "text", nullable: false),
                     LastName = table.Column<string>(type: "text", nullable: false),
-                    YearDataId = table.Column<Guid>(type: "uuid", nullable: true)
+                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -334,32 +334,32 @@ namespace LessonFlow.Database.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Students_YearData_YearDataId",
-                        column: x => x.YearDataId,
-                        principalTable: "YearData",
+                        name: "FK_Students_YearPlan_YearPlanId",
+                        column: x => x.YearPlanId,
+                        principalTable: "YearPlans",
                         principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "SubjectYearData",
+                name: "SubjectYearPlan",
                 columns: table => new
                 {
                     SubjectsTaughtId = table.Column<Guid>(type: "uuid", nullable: false),
-                    YearDataId = table.Column<Guid>(type: "uuid", nullable: false)
+                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SubjectYearData", x => new { x.SubjectsTaughtId, x.YearDataId });
+                    table.PrimaryKey("PK_SubjectYearPlan", x => new { x.SubjectsTaughtId, x.YearPlanId });
                     table.ForeignKey(
-                        name: "FK_SubjectYearData_Subjects_SubjectsTaughtId",
+                        name: "FK_SubjectYearPlan_Subjects_SubjectsTaughtId",
                         column: x => x.SubjectsTaughtId,
                         principalTable: "Subjects",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_SubjectYearData_YearData_YearDataId",
-                        column: x => x.YearDataId,
-                        principalTable: "YearData",
+                        name: "FK_SubjectYearPlan_YearPlan_YearPlanId",
+                        column: x => x.YearPlanId,
+                        principalTable: "YearPlans",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -370,16 +370,16 @@ namespace LessonFlow.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     YearLevels = table.Column<string>(type: "text", nullable: false),
-                    YearDataId = table.Column<Guid>(type: "uuid", nullable: false),
+                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: false),
                     CalendarYear = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TermPlanners", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TermPlanners_YearData_YearDataId",
-                        column: x => x.YearDataId,
-                        principalTable: "YearData",
+                        name: "FK_TermPlanners_YearPlan_YearPlanId",
+                        column: x => x.YearPlanId,
+                        principalTable: "YearPlans",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -389,7 +389,7 @@ namespace LessonFlow.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    YearDataId = table.Column<Guid>(type: "uuid", nullable: false),
+                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: false),
                     WeekStart = table.Column<DateOnly>(type: "date", nullable: false),
                     WeekNumber = table.Column<int>(type: "integer", nullable: false),
                     TermNumber = table.Column<int>(type: "integer", nullable: false),
@@ -401,9 +401,9 @@ namespace LessonFlow.Database.Migrations
                 {
                     table.PrimaryKey("PK_WeekPlanners", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_WeekPlanners_YearData_YearDataId",
-                        column: x => x.YearDataId,
-                        principalTable: "YearData",
+                        name: "FK_WeekPlanners_YearPlan_YearPlanId",
+                        column: x => x.YearPlanId,
+                        principalTable: "YearPlans",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -414,7 +414,7 @@ namespace LessonFlow.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    YearDataId = table.Column<Guid>(type: "uuid", nullable: true)
+                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -426,9 +426,9 @@ namespace LessonFlow.Database.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_WeekPlannerTemplates_YearData_YearDataId",
-                        column: x => x.YearDataId,
-                        principalTable: "YearData",
+                        name: "FK_WeekPlannerTemplates_YearPlan_YearPlanId",
+                        column: x => x.YearPlanId,
+                        principalTable: "YearPlans",
                         principalColumn: "Id");
                 });
 
@@ -1165,9 +1165,9 @@ namespace LessonFlow.Database.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Students_YearDataId",
+                name: "IX_Students_YearPlanId",
                 table: "Students",
-                column: "YearDataId");
+                column: "YearPlanId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SubjectTermPlan_TermPlanId",
@@ -1175,9 +1175,9 @@ namespace LessonFlow.Database.Migrations
                 column: "TermPlanId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SubjectYearData_YearDataId",
-                table: "SubjectYearData",
-                column: "YearDataId");
+                name: "IX_SubjectYearPlan_YearPlanId",
+                table: "SubjectYearPlan",
+                column: "YearPlanId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TemplatePeriods_WeekPlannerTemplateId",
@@ -1190,9 +1190,9 @@ namespace LessonFlow.Database.Migrations
                 column: "TermPlannerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TermPlanners_YearDataId",
+                name: "IX_TermPlanners_YearPlanId",
                 table: "TermPlanners",
-                column: "YearDataId",
+                column: "YearPlanId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1201,9 +1201,9 @@ namespace LessonFlow.Database.Migrations
                 column: "LessonPlanId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WeekPlanners_YearDataId",
+                name: "IX_WeekPlanners_YearPlanId",
                 table: "WeekPlanners",
-                column: "YearDataId");
+                column: "YearPlanId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WeekPlannerTemplates_UserId",
@@ -1211,14 +1211,14 @@ namespace LessonFlow.Database.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WeekPlannerTemplates_YearDataId",
+                name: "IX_WeekPlannerTemplates_YearPlanId",
                 table: "WeekPlannerTemplates",
-                column: "YearDataId",
+                column: "YearPlanId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_YearData_UserId",
-                table: "YearData",
+                name: "IX_YearPlan_UserId",
+                table: "YearPlans",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -1288,7 +1288,7 @@ namespace LessonFlow.Database.Migrations
                 name: "SubjectTermPlan");
 
             migrationBuilder.DropTable(
-                name: "SubjectYearData");
+                name: "SubjectYearPlan");
 
             migrationBuilder.DropTable(
                 name: "TemplatePeriods");
@@ -1354,7 +1354,7 @@ namespace LessonFlow.Database.Migrations
                 name: "WeekPlanners");
 
             migrationBuilder.DropTable(
-                name: "YearData");
+                name: "YearPlans");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

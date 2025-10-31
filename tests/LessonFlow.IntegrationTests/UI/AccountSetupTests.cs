@@ -38,7 +38,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         Services.AddSingleton(_ => _factoryScope.ServiceProvider.GetRequiredService<ILoggerFactory>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUserRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ICurriculumService>());
-        Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IYearDataRepository>());
+        Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ISubjectRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUnitOfWork>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ITermDatesService>());

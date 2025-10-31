@@ -2,13 +2,12 @@ using LessonFlow.Components.WeekPlanners;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
 using static LessonFlow.Shared.AppConstants;
 using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Domain.YearPlans;
 
 namespace LessonFlow.Components.Pages;
 
@@ -23,8 +22,7 @@ public partial class WeekPlannerPage : ComponentBase
     [Inject] ILogger<WeekPlannerPage> Logger { get; set; } = default!;
     [Inject] ITermDatesService TermDatesService { get; set; } = default!;
     [Inject] IUserRepository UserRepository { get; set; } = default!;
-    [Inject] IWeekPlannerRepository WeekPlannerRepository { get; set; } = default!;
-    [Inject] IYearDataRepository YearDataRepository { get; set; } = default!;
+    [Inject] IYearPlanRepository YearPlanRepository { get; set; } = default!;
     [Inject] IUnitOfWork UnitOfWork { get; set; } = default!;
 
     private const string _gridTemplateCols = "minmax(0, 0.6fr) repeat(5, minmax(0, 1fr))";
@@ -35,9 +33,9 @@ public partial class WeekPlannerPage : ComponentBase
     private bool _canNavigateToNextWeek;
     private bool _canNavigateToPreviousWeek;
 
-    internal YearData YearData => AppState.CurrentYearData!;
-    internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearData!.WeekPlannerTemplate;
-    internal WeekPlanner WeekPlanner { get; set; } = null!;
+    internal YearPlan YearPlan => AppState.CurrentYearPlan!;
+    internal WeekPlannerTemplate WeekPlannerTemplate => AppState.CurrentYearPlan!.WeekPlannerTemplate;
+    internal WeekPlanner? WeekPlanner { get; set; }
     internal List<GridColumn> GridCols { get; set; } = [];
     internal User User { get; set; } = null!;
     internal DateOnly SelectedDate { get; set; } = DateOnly.FromDateTime(DateTime.Now);
@@ -46,8 +44,9 @@ public partial class WeekPlannerPage : ComponentBase
     internal int SelectedWeek { get; set; }
     internal bool EditingDuties => _editingBreaks;
     internal WeekPlanner? EditingWeekPlanner { get; set; }
+    internal DateOnly WeekStart { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         try
         {
@@ -78,33 +77,17 @@ public partial class WeekPlannerPage : ComponentBase
             SelectedYear = Year;
             SelectedTerm = TermNumber;
             SelectedWeek = WeekNumber;
+            WeekStart = TermDatesService.GetFirstDayOfWeek(Year, TermNumber, WeekNumber);
             _canNavigateToNextWeek = CanNavigateToNextWeek();
             _canNavigateToPreviousWeek = CanNavigateToPreviousWeek();
 
             AppState.OnStateChanged += OnAppStateChanged;
 
-            if (AppState.CurrentYearData?.WeekPlannerTemplate != null)
+            if (AppState.CurrentYearPlan?.WeekPlannerTemplate != null)
             {
-                var weekPlanner = YearData.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == WeekNumber && wp.TermNumber == TermNumber);
-                if (weekPlanner is null)
-                {
-                    try
-                    {
-                        weekPlanner = await WeekPlannerRepository.GetWeekPlanner(YearData.Id, Year, TermNumber, WeekNumber, default);
-                        if (weekPlanner is null)
-                        {
-                            var weekStart = TermDatesService.GetFirstDayOfWeek(Year, TermNumber, WeekNumber);
-                            weekPlanner = new WeekPlanner(YearData, Year, TermNumber, WeekNumber, weekStart);
-                        }
-                    }
-                    catch (Exception)
-                    {
-                        var weekStart = TermDatesService.GetFirstDayOfWeek(Year, TermNumber, WeekNumber);
-                        weekPlanner = new WeekPlanner(YearData, Year, TermNumber, WeekNumber, weekStart);
-                    }
-                }
+                var weekStart = TermDatesService.GetFirstDayOfWeek(Year, TermNumber, WeekNumber);
+                WeekPlanner = YearPlan.GetWeekPlanner(weekStart);
 
-                WeekPlanner = weekPlanner;
                 InitialiseGrid();
             }
         }
@@ -116,7 +99,7 @@ public partial class WeekPlannerPage : ComponentBase
 
     private void OnAppStateChanged()
     {
-        if (AppState.CurrentYearData?.WeekPlannerTemplate != null && GridCols.Count != 0)
+        if (AppState.CurrentYearPlan?.WeekPlannerTemplate != null && GridCols.Count != 0)
         {
             InitialiseGrid();
             InvokeAsync(StateHasChanged);
@@ -128,50 +111,60 @@ public partial class WeekPlannerPage : ComponentBase
         GridCols = [];
         var filledGridCells = new bool[5, WeekPlannerTemplate.Periods.Count];
 
-        for (int i = 0; i < WeekPlanner.DayPlans.Count; i++)
+        for (int i = 0; i < WeekPlannerTemplate.DayTemplates.Count; i++)
         {
             var gridCol = new GridColumn(i + 2); // +2 because the css grid-col starts at 1 and we have the timeslot column
             GridCols.Add(gridCol);
-
-            if (!WeekPlannerTemplate.DayTemplates[i].IsWorkingDay) continue;
-            gridCol.IsWorkingDay = true;
-
-            var dayPlan = WeekPlanner.DayPlans[i];
-            if (dayPlan.LessonPlans.Count == 0) continue;
-
-            var cells = new List<GridCell>();
-            for (int j = 0; j < dayPlan.LessonPlans.Count; j++)
+            if (WeekPlannerTemplate.DayTemplates[i].IsWorkingDay)
             {
-                var lessonPlan = dayPlan.LessonPlans[j];
-                var cell = new GridCell([], dayPlan.LessonPlans[j], gridCol, lessonPlan.StartPeriod);
-                if (cell.Period.NumberOfPeriods == 1)
-                {
-                    cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
-                    cell.IsFirstCellInBlock = true;
-                }
-                else
-                {
-                    cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
-                    cell.SetRowSpans(1, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
-                }
+                gridCol.IsWorkingDay = true;
+            }
+        }
 
-                gridCol.Cells.Add(cell);
+        if (WeekPlanner is not null)
+        {
+            for (int i = 0; i < WeekPlanner.DayPlans.Count; i++)
+            {
+                var gridCol = GridCols[i];
+                if (!WeekPlannerTemplate.DayTemplates[i].IsWorkingDay) continue;
 
-                var cellsFilled = 0;
-                var idx = WeekPlannerTemplate.Periods.FindIndex(p => p.StartPeriod == lessonPlan.StartPeriod);
-                for (int k = idx; k < WeekPlannerTemplate.Periods.Count; k++)
+                var dayPlan = WeekPlanner.DayPlans[i];
+                if (dayPlan.LessonPlans.Count == 0) continue;
+
+                var cells = new List<GridCell>();
+                for (int j = 0; j < dayPlan.LessonPlans.Count; j++)
                 {
-                    if (cellsFilled == lessonPlan.NumberOfPeriods) break;
-
-                    if (WeekPlannerTemplate.Periods[k].PeriodType != PeriodType.Break)
+                    var lessonPlan = dayPlan.LessonPlans[j];
+                    var cell = new GridCell([], dayPlan.LessonPlans[j], gridCol, lessonPlan.StartPeriod);
+                    if (cell.Period.NumberOfPeriods == 1)
                     {
-                        filledGridCells[i, k] = true;
-                        cellsFilled++;
+                        cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
+                        cell.IsFirstCellInBlock = true;
                     }
-                    while (k < WeekPlannerTemplate.Periods.Count - 1 && WeekPlannerTemplate.Periods[k + 1].StartPeriod > lessonPlan.StartPeriod + 1 && cellsFilled < lessonPlan.NumberOfPeriods)
+                    else
                     {
-                        filledGridCells[i, k + 1] = true;
-                        cellsFilled++;
+                        cell.RowSpans.Add((cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET, cell.Period.StartPeriod + WEEK_PLANNER_GRID_START_ROW_OFFSET + 1));
+                        cell.SetRowSpans(1, cell.Period.NumberOfPeriods, WeekPlannerTemplate.Periods);
+                    }
+
+                    gridCol.Cells.Add(cell);
+
+                    var cellsFilled = 0;
+                    var idx = WeekPlannerTemplate.Periods.FindIndex(p => p.StartPeriod == lessonPlan.StartPeriod);
+                    for (int k = idx; k < WeekPlannerTemplate.Periods.Count; k++)
+                    {
+                        if (cellsFilled == lessonPlan.NumberOfPeriods) break;
+
+                        if (WeekPlannerTemplate.Periods[k].PeriodType != PeriodType.Break)
+                        {
+                            filledGridCells[i, k] = true;
+                            cellsFilled++;
+                        }
+                        while (k < WeekPlannerTemplate.Periods.Count - 1 && WeekPlannerTemplate.Periods[k + 1].StartPeriod > lessonPlan.StartPeriod + 1 && cellsFilled < lessonPlan.NumberOfPeriods)
+                        {
+                            filledGridCells[i, k + 1] = true;
+                            cellsFilled++;
+                        }
                     }
                 }
             }
@@ -277,7 +270,7 @@ public partial class WeekPlannerPage : ComponentBase
         {
             var selectedDate = TermDatesService.GetFirstDayOfWeek(SelectedYear, SelectedTerm, SelectedWeek);
 
-            await LoadWeekPlannerForDate(selectedDate, SelectedYear, SelectedTerm, SelectedWeek);
+            await LoadWeekPlannerForDate(selectedDate);
 
             AppState.CurrentTerm = SelectedTerm;
             AppState.CurrentWeek = SelectedWeek;
@@ -302,7 +295,7 @@ public partial class WeekPlannerPage : ComponentBase
             AppState.CurrentTerm = TermDatesService.GetTermNumber(nextWeek);
             AppState.CurrentWeek = TermDatesService.GetWeekNumber(nextWeek.Year, AppState.CurrentTerm, nextWeek);
 
-            await LoadWeekPlannerForDate(nextWeek, AppState.CurrentYear, AppState.CurrentTerm, AppState.CurrentWeek);
+            await LoadWeekPlannerForDate(nextWeek);
 
             UpdateCanNavigate();
         }
@@ -339,7 +332,7 @@ public partial class WeekPlannerPage : ComponentBase
             AppState.CurrentTerm = TermDatesService.GetTermNumber(previousWeek);
             AppState.CurrentWeek = TermDatesService.GetWeekNumber(previousWeek);
 
-            await LoadWeekPlannerForDate(previousWeek, AppState.CurrentYear, AppState.CurrentTerm, AppState.CurrentWeek);
+            await LoadWeekPlannerForDate(previousWeek);
 
             UpdateCanNavigate();
         }
@@ -353,32 +346,30 @@ public partial class WeekPlannerPage : ComponentBase
         }
     }
 
-    private async Task LoadWeekPlannerForDate(DateOnly nextWeek, int year, int term, int week)
+    private async Task LoadWeekPlannerForDate(DateOnly date)
     {
-        if (!AppState.YearDataByYear.ContainsKey(nextWeek.Year))
+        if (!AppState.YearPlanByYear.ContainsKey(date.Year))
         {
-            var yearData = await YearDataRepository.GetByUserIdAndYear(User.Id, nextWeek.Year, new CancellationToken());
-            if (yearData is null)
+            var yearPlan = await YearPlanRepository.GetByUserIdAndYear(User.Id, date.Year, new CancellationToken());
+            if (yearPlan is null)
             {
-                var schoolName = AppState.CurrentYearData.SchoolName;
-                yearData = new YearData(User.Id, WeekPlannerTemplate, schoolName, nextWeek.Year);
+                var schoolName = AppState.CurrentYearPlan.SchoolName;
+                yearPlan = new YearPlan(User.Id, WeekPlannerTemplate, schoolName, date.Year);
             }
 
-            AppState.AddNewYearData(nextWeek.Year, yearData);
+            AppState.AddNewYearPlan(date.Year, yearPlan);
         }
 
-        AppState.CurrentYear = nextWeek.Year;
+        AppState.CurrentYear = date.Year;
 
-        var weekPlanner = AppState.CurrentYearData.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == nextWeek);
+        var weekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(date);
         if (weekPlanner is null)
         {
-            weekPlanner = await WeekPlannerRepository.GetWeekPlanner(AppState.CurrentYearData!.Id, nextWeek, new CancellationToken());
-            if (weekPlanner is null)
+            weekPlanner = await YearPlanRepository.GetWeekPlanner(AppState.CurrentYearPlan.Id, date, new CancellationToken());
+            if (weekPlanner is not null)
             {
-                weekPlanner = new WeekPlanner(AppState.CurrentYearData!, year, term, week, nextWeek);
+                YearPlan.WeekPlanners.Add(weekPlanner);
             }
-
-            YearData.WeekPlanners.Add(weekPlanner);
         }
 
         WeekPlanner = weekPlanner;
@@ -430,11 +421,15 @@ public partial class WeekPlannerPage : ComponentBase
 
     private void HandleToggleEditBreaks()
     {
-        EditingWeekPlanner = new WeekPlanner(YearData, Year, TermNumber, WeekNumber, WeekPlanner.WeekStart);
-        foreach (var dp in WeekPlanner.DayPlans)
+        EditingWeekPlanner = new WeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart);
+        if (WeekPlanner is not null)
         {
-            EditingWeekPlanner.UpdateDayPlan(dp.Clone());
+            foreach (var dp in WeekPlanner.DayPlans)
+            {
+                EditingWeekPlanner.UpdateDayPlan(dp.Clone());
+            }
         }
+
         _editingBreaks = true;
     }
 
@@ -486,21 +481,26 @@ public partial class WeekPlannerPage : ComponentBase
             _error = null;
             _loading = true;
 
+            var ct = new CancellationToken();
+            var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
+
             foreach (var dayPlan in EditingWeekPlanner.DayPlans)
             {
-                var originalDayPlan = WeekPlanner.DayPlans.First(dp => dp.DayOfWeek == dayPlan.DayOfWeek);
+                var originalDayPlan = weekPlanner.DayPlans.First(dp => dp.DayOfWeek == dayPlan.DayOfWeek);
                 originalDayPlan.BreakDutyOverrides = dayPlan.BreakDutyOverrides;
                 originalDayPlan.BeforeSchoolDuty = dayPlan.BeforeSchoolDuty;
                 originalDayPlan.AfterSchoolDuty = dayPlan.AfterSchoolDuty;
             }
 
-            WeekPlannerRepository.Add(WeekPlanner);
-            await UnitOfWork.SaveChangesAsync();
+            WeekPlanner = weekPlanner;
+            AppState.CurrentYearPlan.AddWeekPlanner(WeekPlanner);
+            await UnitOfWork.SaveChangesAsync(ct);
 
         }
         catch (Exception e)
         {
-            // TODO: work out what kind of errors might be thrown
+            Logger.LogError(e, "Failed to save week planner");
+            _error = "Failed to save changes. Please try again";
         }
         finally
         {

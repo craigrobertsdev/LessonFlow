@@ -35,6 +35,6 @@ public static class StronglyTypedIdConverter
     public class WeekPlannerIdConverter()
         : ValueConverter<WeekPlannerId, Guid>(id => id.Value, value => new WeekPlannerId(value));
 
-    public class YearDataIdConverter()
-        : ValueConverter<YearDataId, Guid>(id => id.Value, value => new YearDataId(value));
+    public class YearPlanIdConverter()
+        : ValueConverter<YearPlanId, Guid>(id => id.Value, value => new YearPlanId(value));
 }

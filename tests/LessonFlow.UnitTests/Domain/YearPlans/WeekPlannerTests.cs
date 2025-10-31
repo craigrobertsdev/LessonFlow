@@ -1,7 +1,7 @@
-﻿using LessonFlow.Domain.WeekPlanners;
+﻿using LessonFlow.Domain.YearPlans;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
-namespace LessonFlow.UnitTests.Domain.WeekPlannerTests;
+namespace LessonFlow.UnitTests.Domain.YearPlans;
 public class WeekPlannerTests
 {
     [Fact]

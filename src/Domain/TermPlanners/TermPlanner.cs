@@ -12,7 +12,7 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
 {
     public List<TermPlan> TermPlans { get; private set; } = [];
     public List<YearLevelValue> YearLevels { get; private set; } = [];
-    public YearDataId YearDataId { get; private set; }
+    public YearPlanId YearPlanId { get; private set; }
     public int CalendarYear { get; private set; }
 
     private static List<YearLevelValue> RemoveDuplicateYearLevels(List<YearLevelValue> yearLevels)
@@ -88,17 +88,17 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
         }
     }
 
-    public TermPlanner(YearDataId yearDataId, int calendarYear,
+    public TermPlanner(YearPlanId yearPlanId, int calendarYear,
         List<YearLevelValue> yearLevels)
     {
         Id = new TermPlannerId(Guid.NewGuid());
-        YearDataId = yearDataId;
+        YearPlanId = yearPlanId;
         CalendarYear = calendarYear;
 
         YearLevels = RemoveDuplicateYearLevels(yearLevels);
         SortYearLevels();
 
-        AddDomainEvent(new TermPlannerCreatedDomainEvent(Guid.NewGuid(), this, yearDataId));
+        AddDomainEvent(new TermPlannerCreatedDomainEvent(Guid.NewGuid(), this, yearPlanId));
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

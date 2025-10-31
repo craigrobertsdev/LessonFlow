@@ -2,7 +2,7 @@ using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,13 +28,13 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
                 .Where(u => u.Email == email)
                 .Include(u => u.AccountSetupState)
                 .Include(u => u.Resources)
-                .Include(u => u.YearDataHistory)
+                .Include(u => u.YearPlanHistory)
                 .AsSplitQuery()
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user is null) return null;
 
-            user.YearDataHistory.ForEach(yd =>
+            user.YearPlanHistory.ForEach(yd =>
             {
                 foreach (var subject in yd.SubjectsTaught)
                 {
@@ -85,11 +85,11 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         await context.SaveChangesAsync();
     }
 
-    public async Task CompleteAccountSetup(Guid userId, YearData yearData)
+    public async Task CompleteAccountSetup(Guid userId, YearPlan yearPlan)
     {
         var user = await context.Users
             .Where(u => u.Id == userId)
-            .Include(u => u.YearDataHistory)
+            .Include(u => u.YearPlanHistory)
             .Include(u => u.AccountSetupState)
             .FirstOrDefaultAsync();
 
@@ -99,7 +99,7 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         }
 
         user.CompleteAccountSetup();
-        user.AddYearData(yearData);
+        user.AddYearPlan(yearPlan);
 
         await context.SaveChangesAsync();
     }
@@ -110,7 +110,7 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
             .Where(u => u.Id == userId)
             .Include(u => u.AccountSetupState)
             .Include(u => u.Resources)
-            .Include(u => u.YearDataHistory)
+            .Include(u => u.YearPlanHistory)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -156,10 +156,10 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
         throw new NotImplementedException();
     }
 
-    public async Task<YearData?> GetYearDataByYear(Guid userId, int calendarYear,
+    public async Task<YearPlan?> GetYearPlanByYear(Guid userId, int calendarYear,
         CancellationToken cancellationToken)
     {
-        return await context.YearData
+        return await context.YearPlans
             .Where(y => y.UserId == userId && y.CalendarYear == calendarYear)
             .Include(yd => yd.WeekPlannerTemplate)
             .Include(yd => yd.SubjectsTaught)

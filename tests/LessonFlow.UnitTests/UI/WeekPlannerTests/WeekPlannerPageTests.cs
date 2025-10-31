@@ -8,8 +8,7 @@ using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -53,8 +52,8 @@ public class WeekPlannerPageTests : TestContext
     {
         var appState = CreateAppState(TestYear);
         var nitLesson = new NitTemplate(5, 2);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods[4] = nitLesson;
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[0].Periods[4] = nitLesson;
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
         var component = RenderWeekPlannerPage(appState);
 
         var cells = component.Instance.GridCols[0].Cells;
@@ -108,8 +107,8 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenWeekPlannerTemplateHasPeriodOverlappingBreak_ShouldRenderCorrectly()
     {
         var appState = CreateAppState(TestYear);
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods[4].NumberOfPeriods = 2;
-        appState.CurrentYearData.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[0].Periods[4].NumberOfPeriods = 2;
+        appState.CurrentYearPlan.WeekPlannerTemplate.DayTemplates[0].Periods.RemoveAt(6);
 
         var component = RenderWeekPlannerPage(appState);
         var col = component.Instance.GridCols[0];
@@ -130,7 +129,7 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenSomeLessonsPlanned_ShouldRenderFromDayPlan()
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
+        appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].LessonPlans.RemoveAt(0);
         appState.CurrentYear = 2025;
         appState.CurrentTerm = 1;
         appState.CurrentWeek = 1;
@@ -180,8 +179,8 @@ public class WeekPlannerPageTests : TestContext
     public void InitialiseGrid_WhenNonWorkingDay_ShouldNotRenderCells(DayOfWeek nonWorkingDay)
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var idx = appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
-        appState.CurrentYearData!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
+        var idx = appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
+        appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
         appState.CurrentYear = 2025;
         appState.CurrentTerm = 1;
         appState.CurrentWeek = 1;
@@ -193,7 +192,7 @@ public class WeekPlannerPageTests : TestContext
     [Fact]
     public void SetRowSpans_WithMultiPeriodLessonAfterFirstBreak_ShouldSetCorrectly()
     {
-        _appState.CurrentYearData!.WeekPlannerTemplate = CreateWeekPlannerTemplateWithMultiPeriodLessons();
+        _appState.CurrentYearPlan!.WeekPlannerTemplate = CreateWeekPlannerTemplateWithMultiPeriodLessons();
         var component = RenderWeekPlannerPage(_appState);
 
         var col = component.Instance.GridCols[0];
@@ -224,8 +223,8 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(1, component.Instance.AppState.CurrentTerm);
         Assert.Equal(2, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
-        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
+        Assert.NotNull(component.Instance.AppState.CurrentYearPlan!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearPlan!.CalendarYear);
     }
 
     [Theory]
@@ -264,7 +263,7 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public void NavigateToNextWeek_WhenNextWeekIsNextYear_LoadsNextWeekPlannerWithNextYearData()
+    public void NavigateToNextWeek_WhenNextWeekIsNextYear_LoadsNextYearPlanAndNavigatesToFirstWeek()
     {
         var appState = CreateAppStateWithLessonsPlanned();
         appState.CurrentYear = 2025;
@@ -275,15 +274,10 @@ public class WeekPlannerPageTests : TestContext
         component.Find("button#next-week").Click();
 
         Assert.Equal(2026, component.Instance.AppState.CurrentYear);
-        Assert.Equal(2026, component.Instance.AppState.CurrentYearData!.CalendarYear);
+        Assert.Equal(2026, component.Instance.AppState.CurrentYearPlan!.CalendarYear);
 
         Assert.Equal(1, component.Instance.AppState.CurrentTerm);
-        Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-
         Assert.Equal(1, component.Instance.AppState.CurrentWeek);
-        Assert.Equal(1, component.Instance.WeekPlanner.WeekNumber);
-
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 1 && wp.TermNumber == 1));
     }
 
     [Theory]
@@ -334,7 +328,7 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public void NavigateToPreviousWeek_WhenPreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearData()
+    public void NavigateToPreviousWeek_WhenPreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearPlan()
     {
         var appState = CreateAppState(2026);
         appState.CurrentTerm = 1;
@@ -345,18 +339,15 @@ public class WeekPlannerPageTests : TestContext
 
         Assert.Equal(9, component.Instance.AppState.CurrentWeek);
         Assert.Equal(9, component.Instance.WeekNumber);
-        Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(4, component.Instance.AppState.CurrentTerm);
         Assert.Equal(4, component.Instance.TermNumber);
-        Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
         Assert.Equal(2025, component.Instance.AppState.CurrentYear);
         Assert.Equal(2025, component.Instance.Year);
-        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearPlan!.CalendarYear);
     }
 
     [Fact]
-    public void NavigateToPreviousWeekAfterNavigatingToNextWeek_PreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearData()
+    public void NavigateToPreviousWeekAfterNavigatingToNextWeek_PreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearPlan()
     {
         var appState = CreateAppState(2025);
         appState.CurrentTerm = 4;
@@ -368,14 +359,11 @@ public class WeekPlannerPageTests : TestContext
 
         Assert.Equal(9, component.Instance.SelectedWeek);
         Assert.Equal(9, component.Instance.AppState.CurrentWeek);
-        Assert.Equal(9, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(4, component.Instance.SelectedTerm);
         Assert.Equal(4, component.Instance.AppState.CurrentTerm);
-        Assert.Equal(4, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 9 && wp.TermNumber == 4));
         Assert.Equal(2025, component.Instance.AppState.CurrentYear);
         Assert.Equal(2025, component.Instance.Year);
-        Assert.Equal(2025, component.Instance.AppState.CurrentYearData!.CalendarYear);
+        Assert.Equal(2025, component.Instance.AppState.CurrentYearPlan!.CalendarYear);
     }
 
     [Theory]
@@ -396,7 +384,7 @@ public class WeekPlannerPageTests : TestContext
 
     [Theory]
     [MemberData(nameof(GoToSelectedWeekDatesGenerator))]
-    public void GoToSelectedWeek_WhenInTermTime_LoadsCorrectWeekPlanner(int year, int termNumber, int weekNumber)
+    public void GoToSelectedWeek_WhenInTermTimeAndWeekPlannerExists_NavigatesToCorrectWeek(int year, int termNumber, int weekNumber)
     {
         var component = RenderWeekPlannerPage(_appState);
         component.Instance.SelectedYear = year;
@@ -412,13 +400,10 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(year, component.Instance.AppState.CurrentYear);
 
         Assert.Equal(termNumber, component.Instance.SelectedTerm);
-        Assert.Equal(termNumber, component.Instance.WeekPlanner.TermNumber);
         Assert.Equal(termNumber, component.Instance.AppState.CurrentTerm);
 
         Assert.Equal(weekNumber, component.Instance.SelectedWeek);
-        Assert.Equal(weekNumber, component.Instance.WeekPlanner.WeekNumber);
         Assert.Equal(weekNumber, component.Instance.AppState.CurrentWeek);
-        Assert.NotNull(component.Instance.AppState.CurrentYearData!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == weekNumber && wp.TermNumber == termNumber));
     }
 
     [Fact]
@@ -585,8 +570,7 @@ public class WeekPlannerPageTests : TestContext
     {
         var authStateProvider = new Mock<AuthenticationStateProvider>();
         var userRepository = new Mock<IUserRepository>();
-        var weekPlannerRepository = new Mock<IWeekPlannerRepository>();
-        var yearDataRepository = new Mock<IYearDataRepository>();
+        var yearPlanRepository = new Mock<IYearPlanRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var unitOfWork = new Mock<IUnitOfWork>();
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
@@ -597,20 +581,23 @@ public class WeekPlannerPageTests : TestContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(calendarYear);
 
-        var yearData = new YearData(Guid.NewGuid(), accountSetupState);
+        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState);
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
-        yearData.WeekPlannerTemplate = weekPlannerTemplate;
-        appState.YearDataByYear.Add(yearData.CalendarYear, yearData);
+        yearPlan.WeekPlannerTemplate = weekPlannerTemplate;
+        appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
         appState.User = new User() { AccountSetupComplete = true };
 
-        var weekPlanner = new WeekPlanner(yearData, 2025, 3, 2, new DateOnly(2025, 7, 28));
-        weekPlannerRepository.Setup(wp => wp.GetWeekPlanner(yearData.Id, 2025, 3, 2, new CancellationToken()).Result).Returns(weekPlanner);
+        var week2Term3 = new DateOnly(2025, 7, 28);
+        var weekPlanner = new WeekPlanner(yearPlan.Id, 2025, 3, 2, week2Term3);
+        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result).Returns(weekPlanner);
+        yearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(yearPlan.Id, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
+            .Returns(weekPlanner);
+            
 
         Services.AddScoped(sp => termDatesService);
-        Services.AddScoped(sp => weekPlannerRepository.Object);
         Services.AddScoped(sp => userRepository.Object);
-        Services.AddScoped(sp => yearDataRepository.Object);
+        Services.AddScoped(sp => yearPlanRepository.Object);
         Services.AddScoped(sp => unitOfWork.Object);
 
         appState.GetType().GetProperty(nameof(appState.IsInitialised))!.SetValue(appState, true);
@@ -620,17 +607,17 @@ public class WeekPlannerPageTests : TestContext
     private AppState CreateAppStateWithLessonsPlanned()
     {
         var appState = CreateAppState(2025);
-        appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlanner(appState.CurrentYearData!));
-        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].Date);
+        appState.CurrentYearPlan!.AddWeekPlanner(CreateWeekPlanner(appState.CurrentYearPlan!));
+        appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
         return appState;
     }
 
-    private static WeekPlanner CreateWeekPlanner(YearData yearData)
+    private static WeekPlanner CreateWeekPlanner(YearPlan yearPlan)
     {
-        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
-        yearData.WeekPlanners.Add(weekPlanner);
+        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        yearPlan.WeekPlanners.Add(weekPlanner);
         var dayPlans = Enumerable.Range(0, 5)
-            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearData), [])).ToList();
+            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearPlan), [])).ToList();
 
         foreach (var dayPlan in dayPlans)
         {
@@ -643,26 +630,26 @@ public class WeekPlannerPageTests : TestContext
     private AppState CreateAppStateWithMultiPeriodLessons()
     {
         var appState = CreateAppState(TestYear);
-        appState.CurrentYearData!.AddWeekPlanner(CreateWeekPlannerWithMultiPeriodLessons(appState.CurrentYearData!));
-        appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearData!.WeekPlanners[0].DayPlans[0].Date);
+        appState.CurrentYearPlan!.AddWeekPlanner(CreateWeekPlannerWithMultiPeriodLessons(appState.CurrentYearPlan!));
+        appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
         return appState;
     }
 
-    private static WeekPlanner CreateWeekPlannerWithMultiPeriodLessons(YearData yearData)
+    private static WeekPlanner CreateWeekPlannerWithMultiPeriodLessons(YearPlan yearPlan)
     {
-        var weekPlanner = new WeekPlanner(yearData, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
-        yearData.WeekPlanners.Add(weekPlanner);
+        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        yearPlan.WeekPlanners.Add(weekPlanner);
         var dayPlans = Enumerable.Range(0, 5)
-            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateMultiPeriodLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearData), [])).ToList();
+            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateMultiPeriodLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearPlan), [])).ToList();
         foreach (var dayPlan in dayPlans)
         {
             weekPlanner.UpdateDayPlan(dayPlan);
         }
         return weekPlanner;
 
-        static List<LessonPlan> CreateMultiPeriodLessonPlans(DateOnly date, YearData yearData)
+        static List<LessonPlan> CreateMultiPeriodLessonPlans(DateOnly date, YearPlan yearPlan)
         {
-            var dayPlan = yearData.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
+            var dayPlan = yearPlan.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
             return
             [
                 new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
@@ -673,9 +660,9 @@ public class WeekPlannerPageTests : TestContext
         }
     }
 
-    private static List<LessonPlan> CreateLessonPlans(DateOnly date, YearData yearData)
+    private static List<LessonPlan> CreateLessonPlans(DateOnly date, YearPlan yearPlan)
     {
-        var dayPlan = yearData.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
+        var dayPlan = yearPlan.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
         return
         [
             new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),

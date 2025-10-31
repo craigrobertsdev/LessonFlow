@@ -3,5 +3,5 @@ using LessonFlow.Domain.StronglyTypedIds;
 
 namespace LessonFlow.Domain.TermPlanners.DomainEvents;
 
-public record TermPlannerCreatedDomainEvent(Guid Id, TermPlanner TermPlanner, YearDataId YearDataId)
+public record TermPlannerCreatedDomainEvent(Guid Id, TermPlanner TermPlanner, YearPlanId YearPlanId)
     : DomainEvent(Id);

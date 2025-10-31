@@ -2,7 +2,7 @@ using System.Text.Json;
 using LessonFlow.Database.Converters;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.TermPlanners;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -22,9 +22,9 @@ public class TermPlannerConfiguration : IEntityTypeConfiguration<TermPlanner>
         builder.Property(tp => tp.CalendarYear)
             .IsRequired();
 
-        builder.HasOne<YearData>()
+        builder.HasOne<YearPlan>()
             .WithOne()
-            .HasForeignKey<TermPlanner>(tp => tp.YearDataId)
+            .HasForeignKey<TermPlanner>(tp => tp.YearPlanId)
             .OnDelete(DeleteBehavior.Cascade);
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.

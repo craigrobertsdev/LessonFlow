@@ -1,5 +1,5 @@
 using LessonFlow.Database.Converters;
-using LessonFlow.Domain.WeekPlanners;
+using LessonFlow.Domain.YearPlans;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,8 +18,8 @@ public class WeekPlannerConfiguration : IEntityTypeConfiguration<WeekPlanner>
             .WithOne()
             .HasForeignKey("WeekPlannerId");
 
-        builder.HasOne(wp => wp.YearData)
-            .WithMany(yd => yd.WeekPlanners);
+        builder.HasIndex(wp => new { wp.YearPlanId, wp.WeekStart })
+            .IsUnique();
 
         builder.Navigation(wp => wp.DayPlans).AutoInclude();
     }

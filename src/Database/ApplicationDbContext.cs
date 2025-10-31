@@ -10,8 +10,7 @@ using LessonFlow.Domain.Students;
 using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
-using LessonFlow.Domain.WeekPlanners;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -43,7 +42,7 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     public virtual DbSet<WeekPlannerTemplate> WeekPlannerTemplates { get; set; } = null!;
     public virtual DbSet<TermPlanner> TermPlanners { get; set; } = null!;
     public virtual DbSet<Calendar> Calendar { get; set; } = null!;
-    public virtual DbSet<YearData> YearData { get; set; } = null!;
+    public virtual DbSet<YearPlan> YearPlans { get; set; } = null!;
     public virtual DbSet<SchoolTerm> TermDates { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

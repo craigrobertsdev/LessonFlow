@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using LessonFlow.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LessonFlow.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251031015447_RemoveNavigationWeekPlannerToYearPlan")]
+    partial class RemoveNavigationWeekPlannerToYearPlan
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,7 +38,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("SchoolEventsId");
 
-                    b.ToTable("CalendarSchoolEvent", (string)null);
+                    b.ToTable("CalendarSchoolEvent");
                 });
 
             modelBuilder.Entity("DayPlanSchoolEvent", b =>
@@ -50,7 +53,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("SchoolEventsId");
 
-                    b.ToTable("DayPlanSchoolEvent", (string)null);
+                    b.ToTable("DayPlanSchoolEvent");
                 });
 
             modelBuilder.Entity("LessonFlow.Components.AccountSetup.State.AccountSetupState", b =>
@@ -110,7 +113,7 @@ namespace LessonFlow.Database.Migrations
                     b.HasIndex("WeekPlannerTemplateId")
                         .IsUnique();
 
-                    b.ToTable("AccountSetupState", (string)null);
+                    b.ToTable("AccountSetupState");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Assessments.Assessment", b =>
@@ -157,7 +160,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Assessments", (string)null);
+                    b.ToTable("Assessments");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Calendar.Calendar", b =>
@@ -183,7 +186,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Calendar", (string)null);
+                    b.ToTable("Calendar");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Subject", b =>
@@ -203,7 +206,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Subjects", (string)null);
+                    b.ToTable("Subjects");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
@@ -265,7 +268,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("SubjectId");
 
-                    b.ToTable("LessonPlans", (string)null);
+                    b.ToTable("LessonPlans");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.DayTemplate", b =>
@@ -343,7 +346,7 @@ namespace LessonFlow.Database.Migrations
                     b.HasIndex("YearPlanId")
                         .IsUnique();
 
-                    b.ToTable("WeekPlannerTemplates", (string)null);
+                    b.ToTable("WeekPlannerTemplates");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Reports.Report", b =>
@@ -380,7 +383,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reports", (string)null);
+                    b.ToTable("Reports");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Students.Student", b =>
@@ -409,7 +412,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("YearPlanId");
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.TermPlanners.TermPlan", b =>
@@ -428,7 +431,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("TermPlannerId");
 
-                    b.ToTable("TermPlan", (string)null);
+                    b.ToTable("TermPlan");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.TermPlanners.TermPlanner", b =>
@@ -440,19 +443,19 @@ namespace LessonFlow.Database.Migrations
                     b.Property<int>("CalendarYear")
                         .HasColumnType("integer");
 
+                    b.Property<Guid>("YearPlanId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("YearLevels")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<Guid>("YearPlanId")
-                        .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
                     b.HasIndex("YearPlanId")
                         .IsUnique();
 
-                    b.ToTable("TermPlanners", (string)null);
+                    b.ToTable("TermPlanners");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Users.Resource", b =>
@@ -498,7 +501,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Resources", (string)null);
+                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Users.User", b =>
@@ -631,7 +634,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("LocationId");
 
-                    b.ToTable("SchoolEvent", (string)null);
+                    b.ToTable("SchoolEvent");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.ValueObjects.SchoolTerm", b =>
@@ -651,7 +654,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TermDates", (string)null);
+                    b.ToTable("TermDates");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.DayPlan", b =>
@@ -682,7 +685,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("WeekPlannerId");
 
-                    b.ToTable("DayPlan", (string)null);
+                    b.ToTable("DayPlan");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.WeekPlanner", b =>
@@ -717,7 +720,7 @@ namespace LessonFlow.Database.Migrations
                     b.HasIndex("YearPlanId", "WeekStart")
                         .IsUnique();
 
-                    b.ToTable("WeekPlanners", (string)null);
+                    b.ToTable("WeekPlanners");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlans", b =>
@@ -749,7 +752,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("YearPlans", (string)null);
+                    b.ToTable("YearPlans");
                 });
 
             modelBuilder.Entity("LessonPlanResource", b =>
@@ -764,7 +767,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("ResourcesId");
 
-                    b.ToTable("LessonPlanResource", (string)null);
+                    b.ToTable("LessonPlanResource");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -909,7 +912,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("TermPlanId");
 
-                    b.ToTable("SubjectTermPlan", (string)null);
+                    b.ToTable("SubjectTermPlan");
                 });
 
             modelBuilder.Entity("SubjectYearPlan", b =>
@@ -924,7 +927,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.HasIndex("YearPlanId");
 
-                    b.ToTable("SubjectYearPlan", (string)null);
+                    b.ToTable("SubjectYearPlan");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.BreakTemplate", b =>
@@ -934,7 +937,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<string>("BreakDuty")
                         .HasColumnType("text");
 
-                    b.ToTable("BreakTemplate", (string)null);
+                    b.ToTable("BreakTemplate");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.LessonTemplate", b =>
@@ -945,14 +948,14 @@ namespace LessonFlow.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.ToTable("LessonTemplate", (string)null);
+                    b.ToTable("LessonTemplate");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.NitTemplate", b =>
                 {
                     b.HasBaseType("LessonFlow.Domain.PlannerTemplates.PeriodTemplateBase");
 
-                    b.ToTable("NitTemplate", (string)null);
+                    b.ToTable("NitTemplate");
                 });
 
             modelBuilder.Entity("CalendarSchoolEvent", b =>
@@ -1074,7 +1077,7 @@ namespace LessonFlow.Database.Migrations
 
                                     b2.HasKey("AssessmentResultId", "AssessmentResultAssessmentId");
 
-                                    b2.ToTable("AssessmentResults", (string)null);
+                                    b2.ToTable("AssessmentResults");
 
                                     b2.WithOwner()
                                         .HasForeignKey("AssessmentResultId", "AssessmentResultAssessmentId");

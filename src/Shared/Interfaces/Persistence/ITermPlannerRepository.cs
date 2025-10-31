@@ -7,7 +7,7 @@ public interface ITermPlannerRepository
 {
     Task<TermPlanner?> GetById(TermPlannerId id, CancellationToken cancellationToken);
 
-    Task<TermPlanner?> GetByYearDataIdAndYear(YearDataId yearDataId, int calendarYear,
+    Task<TermPlanner?> GetByYearPlanIdAndYear(YearPlanId yearPlanId, int calendarYear,
         CancellationToken cancellationToken);
 
     void Add(TermPlanner termPlanner);

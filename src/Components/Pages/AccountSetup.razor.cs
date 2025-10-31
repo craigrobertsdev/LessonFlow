@@ -1,6 +1,6 @@
 ﻿using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
@@ -123,10 +123,10 @@ public partial class AccountSetup : ComponentBase, IDisposable
             return;
         }
 
-        var yearData = new YearData(User.Id, AccountSetupState);
+        var yearPlan = new YearPlan(User.Id, AccountSetupState);
 
-        await UserRepository.CompleteAccountSetup(AppState.User.Id, yearData);
-        AppState.YearDataByYear.Add(yearData.CalendarYear, yearData);
+        await UserRepository.CompleteAccountSetup(AppState.User.Id, yearPlan);
+        AppState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
     }
 
     public void Dispose()

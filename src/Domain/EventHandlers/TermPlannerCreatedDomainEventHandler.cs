@@ -11,11 +11,11 @@ internal sealed class TermPlannerCreatedDomainEventHandler(ApplicationDbContext 
 {
     public async Task Handle(TermPlannerCreatedDomainEvent notification, CancellationToken cancellationToken)
     {
-        var yearData = await context.YearData
-            .Where(yd => yd.Id == notification.YearDataId)
+        var yearPlan = await context.YearPlans
+            .Where(yd => yd.Id == notification.YearPlanId)
             .FirstAsync(cancellationToken);
 
-        yearData.AddTermPlanner(notification.TermPlanner);
+        yearPlan.AddTermPlanner(notification.TermPlanner);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }

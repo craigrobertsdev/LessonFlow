@@ -1,7 +1,7 @@
 ﻿using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.ValueObjects;
 
-namespace LessonFlow.UnitTests.Domain.WeekPlannerTemplate;
+namespace LessonFlow.UnitTests.Domain.WeekPlannerTemplates;
 public class WeekPlannerTemplateTests
 {
     [Fact]

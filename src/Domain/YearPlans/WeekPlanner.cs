@@ -7,16 +7,16 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearDataRecords;
+using LessonFlow.Domain.YearPlans;
 
-namespace LessonFlow.Domain.WeekPlanners;
+namespace LessonFlow.Domain.YearPlans;
 
 /// <summary>
 ///     Represents a week of planning for a teacher.
 /// </summary>
 public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
 {
-    public YearData YearData { get; private set; }
+    public YearPlanId YearPlanId { get; private set; }
     public DateOnly WeekStart { get; private set; }
     public int WeekNumber { get; private set; }
     public int TermNumber { get; private set; }
@@ -47,14 +47,14 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     }
 
     public WeekPlanner(
-        YearData yearData,
+        YearPlanId yearPlanId,
         int year,
         int termNumber,
         int weekNumber,
         DateOnly weekStart)
     {
         Id = new WeekPlannerId(Guid.NewGuid());
-        YearData = yearData;
+        YearPlanId = yearPlanId;
         WeekStart = weekStart;
         WeekNumber = weekNumber;
         TermNumber = termNumber;
