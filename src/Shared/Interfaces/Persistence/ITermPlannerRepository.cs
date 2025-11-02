@@ -5,11 +5,11 @@ namespace LessonFlow.Shared.Interfaces.Persistence;
 
 public interface ITermPlannerRepository
 {
-    Task<TermPlanner?> GetById(TermPlannerId id, CancellationToken cancellationToken);
+    Task<TermPlanner?> GetById(TermPlannerId id, CancellationToken ct);
 
     Task<TermPlanner?> GetByYearPlanIdAndYear(YearPlanId yearPlanId, int calendarYear,
-        CancellationToken cancellationToken);
+        CancellationToken ct);
 
     void Add(TermPlanner termPlanner);
-    Task Delete(TermPlannerId id, CancellationToken cancellationToken);
+    Task Delete(TermPlannerId id, CancellationToken ct);
 }

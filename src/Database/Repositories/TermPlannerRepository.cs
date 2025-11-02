@@ -5,22 +5,24 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class TermPlannerRepository(ApplicationDbContext context) : ITermPlannerRepository
+public class TermPlannerRepository(IDbContextFactory<ApplicationDbContext> factory) : ITermPlannerRepository
 {
-    public async Task<TermPlanner?> GetById(TermPlannerId id, CancellationToken cancellationToken)
+    public async Task<TermPlanner?> GetById(TermPlannerId id, CancellationToken ct)
     {
-        return await context.TermPlanners.FirstOrDefaultAsync(tp => tp.Id == id, cancellationToken);
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.TermPlanners.FirstOrDefaultAsync(tp => tp.Id == id, ct);
     }
 
     public async Task<TermPlanner?> GetByYearPlanIdAndYear(YearPlanId yearPlanId, int calendarYear,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var termPlanner = await context.TermPlanners
             .AsNoTracking()
             .Where(yd => yd.YearPlanId == yearPlanId)
             .Where(yd => yd.CalendarYear == calendarYear)
             .Include(tp => tp.TermPlans)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
 
         if (termPlanner is null)
         {
@@ -35,7 +37,7 @@ public class TermPlannerRepository(ApplicationDbContext context) : ITermPlannerR
         var subjects = await context.Subjects
             .Where(s => subjectIds.Contains(s.Id))
             .AsNoTracking()
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         termPlanner.PopulateSubjectsForTerms(subjects);
 
@@ -44,18 +46,20 @@ public class TermPlannerRepository(ApplicationDbContext context) : ITermPlannerR
 
     public void Add(TermPlanner termPlanner)
     {
+        using var context = factory.CreateDbContext();
         context.TermPlanners.Add(termPlanner);
     }
 
-    public async Task Delete(TermPlannerId id, CancellationToken cancellationToken)
+    public async Task Delete(TermPlannerId id, CancellationToken ct)
     {
-        var termPlanner = await GetById(id, cancellationToken);
+        var termPlanner = await GetById(id, ct);
 
         if (termPlanner == null)
         {
             return;
         }
 
+        using var context = factory.CreateDbContext();
         context.TermPlanners.Remove(termPlanner);
     }
 }

@@ -6,15 +6,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class SubjectRepository(ApplicationDbContext context) : ISubjectRepository
+public class SubjectRepository(IDbContextFactory<ApplicationDbContext> factory) : ISubjectRepository
 {
-    public async Task AddCurriculum(List<Subject> subjects, CancellationToken cancellationToken)
+    public async Task AddCurriculum(List<Subject> subjects, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var curriculumSubjects = await context.Subjects
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         context.Subjects.RemoveRange(curriculumSubjects);
-        await context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(ct);
 
         foreach (var subject in subjects)
         {
@@ -22,49 +23,52 @@ public class SubjectRepository(ApplicationDbContext context) : ISubjectRepositor
         }
     }
 
-    public async Task<List<Subject>> GetAllSubjects(CancellationToken cancellationToken)
+    public async Task<List<Subject>> GetAllSubjects(CancellationToken ct)
     {
-        return await context.Subjects.ToListAsync(cancellationToken);
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.Subjects.ToListAsync(ct);
     }
 
     public async Task<List<Subject>> GetSubjectsById(List<SubjectId> subjectIds,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.Subjects
             .Where(s => subjectIds.Contains(s.Id))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
     public async Task<List<Subject>> GetSubjectsByName(List<string> subjectNames,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.Subjects
             .Where(s => subjectNames.Contains(s.Name))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
-    public async Task<Subject?> GetSubjectById(SubjectId subjectId, CancellationToken cancellationToken)
+    public async Task<Subject?> GetSubjectById(SubjectId subjectId, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var subject = await context.Subjects
             .Where(s => s.Id == subjectId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
 
         return subject;
     }
 
     public async Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevelValue> yearLevels,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
-        {
-            var subjects = await context.Subjects
-                .Include(s => s.YearLevels)
-                .ThenInclude(yl => yl.ConceptualOrganisers)
-                .ThenInclude(c => c.ContentDescriptions)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
+        await using var context = await factory.CreateDbContextAsync(ct);
+        var subjects = await context.Subjects
+            .Include(s => s.YearLevels)
+            .ThenInclude(yl => yl.ConceptualOrganisers)
+            .ThenInclude(c => c.ContentDescriptions)
+            .AsNoTracking()
+            .ToListAsync(ct);
 
-            return subjects.Select(s =>
-                new Subject(s.Name, s.RemoveYearLevelsNotTaught(yearLevels), s.Description)).ToList();
-        }
+        return subjects.Select(s =>
+            new Subject(s.Name, s.RemoveYearLevelsNotTaught(yearLevels), s.Description)).ToList();
     }
 }

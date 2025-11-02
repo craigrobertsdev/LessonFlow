@@ -6,12 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class YearPlanRepository(ApplicationDbContext context) : IYearPlanRepository
+public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory) : IYearPlanRepository
 {
-    public void Add(YearPlan yearPlan) => context.YearPlans.Add(yearPlan);
-    public async Task<YearPlan?> GetByUserIdAndYear(Guid userId, int calendarYear,
-        CancellationToken cancellationToken)
+    public void Add(YearPlan yearPlan)
     {
+        using var context = factory.CreateDbContext();
+        context.YearPlans.Add(yearPlan);
+    }
+
+    public async Task<YearPlan?> GetByUserIdAndYear(Guid userId, int calendarYear,
+        CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.YearPlans
             .Where(yd => yd.UserId == userId && yd.CalendarYear == calendarYear)
             .Include(yd => yd.SubjectsTaught)
@@ -23,33 +29,36 @@ public class YearPlanRepository(ApplicationDbContext context) : IYearPlanReposit
             .ThenInclude(wp => wp.DayTemplates)
             .AsSplitQuery()
             .AsNoTracking()
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<YearPlan?> GetById(YearPlanId yearPlanId, CancellationToken cancellationToken)
+    public async Task<YearPlan?> GetById(YearPlanId yearPlanId, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.YearPlans
             .Where(yd => yd.Id == yearPlanId)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
     }
 
     public async Task<List<YearLevelValue>> GetYearLevelsTaught(Guid UserId, int calendarYear,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var yearPlan = await context.YearPlans
             .Where(yd => yd.CalendarYear == calendarYear)
             .AsNoTracking()
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
 
         return yearPlan?.YearLevelsTaught.ToList() ?? [];
     }
 
-    public async Task<WeekPlannerTemplateId?> GetWeekPlannerTemplateId(YearPlanId yearPlanId, CancellationToken cancellationToken)
+    public async Task<WeekPlannerTemplateId?> GetWeekPlannerTemplateId(YearPlanId yearPlanId, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var yearPlan = await context.YearPlans
             .Where(yd => yd.Id == yearPlanId)
             .Include(yd => yd.WeekPlannerTemplate)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
 
         if (yearPlan is null)
         {
@@ -69,17 +78,18 @@ public class YearPlanRepository(ApplicationDbContext context) : IYearPlanReposit
     /// <param name="termNumber"></param>
     /// <param name="weekNumber"></param>
     /// <param name="weekStart"></param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="ct"></param>
     /// <returns></returns>
     public async Task<WeekPlanner> GetOrCreateWeekPlanner(YearPlanId yearPlanId, int year, int termNumber, int weekNumber, DateOnly weekStart,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var weekPlanner = await context.WeekPlanners
             .Where(wp => wp.YearPlanId == yearPlanId && wp.Year == year && wp.TermNumber == termNumber && wp.WeekNumber == weekNumber)
             .Include(wp => wp.DayPlans)
             .ThenInclude(dp => dp.LessonPlans)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
 
         if (weekPlanner is null)
         {
@@ -91,20 +101,12 @@ public class YearPlanRepository(ApplicationDbContext context) : IYearPlanReposit
         return weekPlanner;
     }
 
-    public void Update(YearPlan yearPlan)
+    public async Task<WeekPlanner?> GetWeekPlanner(YearPlanId yearPlanId, DateOnly weekStart, CancellationToken ct)
     {
-        if (!context.YearPlans.Local.Any(yp => yp.Id == yearPlan.Id))
-        {
-            context.YearPlans.Attach(yearPlan);
-            context.Entry(yearPlan).State = EntityState.Modified;
-        }
-    }
-
-    public Task<WeekPlanner?> GetWeekPlanner(YearPlanId yearPlanId, DateOnly weekStart, CancellationToken cancellationToken)
-    {
-        return context.WeekPlanners
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.WeekPlanners
             .Where(wp => wp.YearPlanId == yearPlanId && wp.WeekStart == weekStart)
             .AsNoTracking()
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
     }
 }

@@ -8,7 +8,7 @@ namespace LessonFlow.Services;
 public static class SetTermDates
 {
     public static async Task<IResult> Endpoint([FromBody] SetTermDatesRequest request, ApplicationDbContext context,
-        ITermDatesService termDatesService, CancellationToken cancellationToken)
+        ITermDatesService termDatesService, CancellationToken ct)
     {
         var termDates = context.TermDates.Where(td => td.StartDate.Year == request.TermDates[0].StartDate.Year)
             .ToList();
@@ -23,7 +23,7 @@ public static class SetTermDates
             context.TermDates.AddRange(request.TermDates);
         }
 
-        await context.SaveChangesAsync(cancellationToken);
+        await context.SaveChangesAsync(ct);
 
         termDatesService.SetTermDates(request.CalendarYear, request.TermDates);
         return Results.Ok();
