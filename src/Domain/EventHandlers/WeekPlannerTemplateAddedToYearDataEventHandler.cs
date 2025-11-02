@@ -9,17 +9,19 @@ using Microsoft.EntityFrameworkCore;
 namespace LessonFlow.Domain.EventHandlers;
 
 public class WeekPlannerTemplateAddedToYearPlanEventHandler(
-    ApplicationDbContext context,
-    IUnitOfWork unitOfWork,
+        IUnitOfWorkFactory factory,
+    IAmbientDbContextAccessor<ApplicationDbContext> ambient,
     ITermDatesService termDatesService)
     : INotificationHandler<WeekPlannerTemplateAddedToYearPlanEvent>
 {
-    public async Task Handle(WeekPlannerTemplateAddedToYearPlanEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(WeekPlannerTemplateAddedToYearPlanEvent notification, CancellationToken ct)
     {
+        await using var uow = factory.Create();
+        ApplicationDbContext context = ambient.Current!; 
         var yearPlan = await context.YearPlans
             .Where(yd => yd.WeekPlannerTemplate != null && yd.WeekPlannerTemplate.Id == notification.WeekPlannerTemplateId)
             .Include(yd => yd.WeekPlanners)
-            .FirstAsync(cancellationToken);
+            .FirstAsync(ct);
 
         if (yearPlan.WeekPlanners.Count == 0)
         {
@@ -31,6 +33,6 @@ public class WeekPlannerTemplateAddedToYearPlanEventHandler(
                 termDatesService.GetFirstDayOfWeek(yearPlan.CalendarYear, 1, 1)));
         }
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(ct);
     }
 }

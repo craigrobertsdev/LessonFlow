@@ -2,9 +2,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LessonFlow.Shared.Interfaces.Persistence;
 
-public interface IUnitOfWork
+public interface IUnitOfWork : IAsyncDisposable
 {
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    Task SaveChangesAsync(CancellationToken ct = default);
     IDbContextTransaction BeginTransaction();
-    Task CommitTransaction(CancellationToken cancellationToken);
+    Task CommitTransaction(CancellationToken ct);
 }

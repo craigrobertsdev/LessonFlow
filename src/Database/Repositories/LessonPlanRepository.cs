@@ -6,59 +6,67 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRepository
+public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factory, IAmbientDbContextAccessor<ApplicationDbContext> ambient) : ILessonPlanRepository
 {
     public void Add(LessonPlan lessonPlan)
     {
+        using var context = factory.CreateDbContext();
         var subject = context.Subjects.First(s => s.Name == lessonPlan.Subject.Name);
         lessonPlan.UpdateSubject(subject);
         context.Add(lessonPlan);
     }
 
     public async Task<List<LessonPlan>> GetByDayPlanAndDate(DayPlanId dayPlanId, DateOnly date,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var lessonPlans = await context.LessonPlans
             .Where(lp => lp.DayPlanId == dayPlanId && lp.LessonDate == date)
             .Include(lp => lp.Resources)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         return lessonPlans;
     }
 
     public async Task<LessonPlan?> GetByDayPlanAndDateAndPeriod(DayPlanId dayPlanId, DateOnly date, int period,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.LessonPlans
             .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .Where(lp => lp.StartPeriod == period)
             .Include(lp => lp.Resources)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<LessonPlan?> GetByDateAndPeriodStart(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken cancellationToken)
+    public async Task<LessonPlan?> GetByDateAndPeriodStart(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken ct)
     {
-        return await context.LessonPlans
+        await using var context = await factory.CreateDbContextAsync(ct);
+        var lessonplan = await context.LessonPlans
             .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .Where(lp => lp.StartPeriod == period)
-            .Include(lp => lp.Resources)
-            .Include(lp => lp.Subject)
-            .FirstOrDefaultAsync(cancellationToken);
+            //.Include(lp => lp.Resources)
+            //.Include(lp => lp.Subject)
+            .FirstOrDefaultAsync(ct);
+
+        return lessonplan;
     }
 
-    public bool UpdateLessonPlan(LessonPlan lessonPlan)
+    public async Task<bool> UpdateLessonPlan(LessonPlan lessonPlan, CancellationToken ct)
     {
-        var existingLessonPlan = context.LessonPlans
+        var context = ambient.Current!;
+        var existingLessonPlan = await context.LessonPlans
+            .Where(lp => lp.Id == lessonPlan.Id)
             .Include(lp => lp.Resources)
             .Include(lp => lp.Subject)
-            .FirstOrDefault(lp => lp.Id == lessonPlan.Id);
+            .FirstOrDefaultAsync(ct);
 
         if (existingLessonPlan is not null)
         {
             existingLessonPlan.UpdateValuesFrom(lessonPlan);
-            var subject = context.Subjects.First(s => s.Id == lessonPlan.Subject.Id);
+            var subject = await context.Subjects.FirstAsync(s => s.Id == lessonPlan.Subject.Id, ct);
             existingLessonPlan.UpdateSubject(subject);
 
             return true;
@@ -68,34 +76,38 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
     }
 
     public async Task<List<LessonPlan>?> GetLessonsByDayPlanId(DayPlanId dayPlanId,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.LessonPlans
             .Where(lessonPlan => lessonPlan.DayPlanId == dayPlanId)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
     public async Task<List<LessonPlan>> GetByDate(DayPlanId dayPlanId, DateOnly date,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.LessonPlans
             .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
-    public async Task<List<Resource>> GetResources(LessonPlan lessonPlan, CancellationToken cancellationToken)
+    public async Task<List<Resource>> GetResources(LessonPlan lessonPlan, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.Resources
             .Where(r => lessonPlan.Resources.ToList().Contains(r))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
     }
 
-    public async Task UpdateResources(LessonPlan lessonPlan, CancellationToken cancellationToken)
+    public async Task UpdateResources(LessonPlan lessonPlan, CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         var existingResources = await context.Resources
             .Where(r => lessonPlan.Resources.Contains(r))
-            .ToListAsync(cancellationToken);
+            .ToListAsync(ct);
 
         throw new NotImplementedException();
 
@@ -104,6 +116,7 @@ public class LessonPlanRepository(ApplicationDbContext context) : ILessonPlanRep
 
     public void DeleteLessonPlans(IEnumerable<LessonPlan> lessonPlans)
     {
+        using var context = factory.CreateDbContext();
         foreach (var lessonPlan in lessonPlans)
         {
             lessonPlan.ClearResources();

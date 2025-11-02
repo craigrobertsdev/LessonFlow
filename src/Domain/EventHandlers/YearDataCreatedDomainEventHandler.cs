@@ -6,17 +6,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Domain.EventHandlers;
 
-internal sealed class YearPlanCreatedDomainEventHandler(ApplicationDbContext context, IUnitOfWork unitOfWork)
+internal sealed class YearPlanCreatedDomainEventHandler(IUnitOfWorkFactory uowFactory, IAmbientDbContextAccessor<ApplicationDbContext> ambient)
     : INotificationHandler<YearPlanCreatedDomainEvent>
 {
-    public async Task Handle(YearPlanCreatedDomainEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(YearPlanCreatedDomainEvent notification, CancellationToken ct)
     {
+        await using var uow = uowFactory.Create();
+        ApplicationDbContext context = ambient.Current!;
+
         var user = await context.Users
             .Where(t => t.Id == notification.UserId)
-            .FirstAsync(cancellationToken);
+            .FirstAsync(ct);
 
         user.AddYearPlan(notification.YearPlan);
 
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+        await uow.SaveChangesAsync(ct);
     }
 }

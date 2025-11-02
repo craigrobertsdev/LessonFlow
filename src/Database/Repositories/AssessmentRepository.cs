@@ -5,13 +5,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class AssessmentRepository(ApplicationDbContext context) : IAssessmentRepository
+public class AssessmentRepository(IDbContextFactory<ApplicationDbContext> factory, IAmbientDbContextAccessor<ApplicationDbContext> ambient) : IAssessmentRepository
 {
     public async Task<List<Assessment>> GetAssessmentsById(List<AssessmentId> assessmentIds,
-        CancellationToken cancellationToken)
+        CancellationToken ct)
     {
+        await using var context = await factory.CreateDbContextAsync(ct);
         return await context.Assessments
             .Where(x => assessmentIds.Contains(x.Id))
-            .ToListAsync(cancellationToken);
+            .AsNoTracking()
+            .ToListAsync(ct);
     }
 }

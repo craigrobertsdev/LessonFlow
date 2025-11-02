@@ -37,11 +37,15 @@ public static class Infrastructure
 
 #endif
 
-        services.AddDbContext<ApplicationDbContext>(options => options
+        services.AddPooledDbContextFactory<ApplicationDbContext>(options => options
             .UseNpgsql(dbContextSettings.DefaultConnection)
-            .LogTo(Console.WriteLine, LogLevel.Information)
+            .LogTo(Console.WriteLine, LogLevel.Debug)
             .EnableSensitiveDataLogging()
             .EnableDetailedErrors());
+
+        services.AddScoped(sp => 
+            sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>()
+                .CreateDbContext());
 
         services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -52,7 +56,9 @@ public static class Infrastructure
         
         services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddSingleton<IAmbientDbContextAccessor<ApplicationDbContext>, AmbientDbContextAccessor<ApplicationDbContext>>();
+        services.AddScoped<IUnitOfWorkFactory, UnitOfWorkFactory<ApplicationDbContext>>();
+
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
         services.AddScoped<ISubjectRepository, SubjectRepository>();
         services.AddScoped<ILessonPlanRepository, LessonPlanRepository>();
