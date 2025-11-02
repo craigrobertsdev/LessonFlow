@@ -20,7 +20,7 @@ internal static class IntegrationTestHelpers
 {
     internal readonly static int TestYear = 2025;
     internal readonly static int FirstMonthOfSchool = 1;
-    internal readonly static int FirstDayOfSchool = 29;
+    internal readonly static int FirstDayOfSchool = 27;
     internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
 
     internal static WeekPlannerTemplate GenerateWeekPlannerTemplate(Guid userId)
@@ -142,22 +142,5 @@ internal static class IntegrationTestHelpers
         }
 
         dbContext.SaveChanges();
-    }
-
-    internal static void RegisterServices(IServiceCollection services)
-    {
-        services.AddScoped<IAssessmentRepository, AssessmentRepository>();
-        services.AddScoped<ILessonPlanRepository, LessonPlanRepository>();
-        services.AddScoped<ISubjectRepository, SubjectRepository>();
-        services.AddScoped<ITermPlannerRepository, TermPlannerRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IYearPlanRepository, YearPlanRepository>();
-        services.AddScoped<IUnitOfWork, UnitOfWork>();
-        services.AddScoped<ICurriculumService, CurriculumService>();
-        services.AddScoped<AppState>();
-        services.AddScoped<DialogService>();
-        services.AddScoped<NotificationService>();
-        services.AddScoped<TooltipService>();
-        services.AddScoped<ContextMenuService>();
     }
 }

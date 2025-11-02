@@ -33,7 +33,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
-        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<IUnitOfWorkFactory>());
         Services.AddScoped(sp => _scope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped<DialogService>();
         Services.AddScoped<NotificationService>();
@@ -62,18 +62,15 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        component.WaitForAssertion(() =>
-        {
-            var dbContext = _factory.Services.CreateScope()
-                .ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var savedLessonPlan = dbContext.LessonPlans
-                .Include(lp => lp.Subject)
-                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+       var dbContext = _factory.Services.CreateScope()
+            .ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var savedLessonPlan = dbContext.LessonPlans
+            .Include(lp => lp.Subject)
+            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
-            Assert.NotNull(savedLessonPlan);
-            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
-        }, TimeSpan.FromSeconds(2));
+        Assert.NotNull(savedLessonPlan);
+        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
     }
 
     [Fact]
@@ -81,11 +78,11 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
     {
         var user = _dbContext.Users.First(u => u.Email == "test@test.com");
         var dayPlan = _dbContext.Users.First(u => u.Email == "test@test.com")
-            .YearPlanHistory.First(yd => yd.CalendarYear == TestYear)
+            .YearPlans.First(yd => yd.CalendarYear == TestYear)
                 .WeekPlanners.First().DayPlans.First();
         var subject = _dbContext.Subjects.First(s => s.Name == "English");
 
-        var startPeriod = 3;
+        var startPeriod = 4;
 
         var lessonPlan = new LessonPlan(dayPlan.Id, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool, []);
         dayPlan.AddLessonPlan(lessonPlan);
@@ -105,19 +102,16 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        component.WaitForAssertion(() =>
-        {
-            var dbContext = _factory.Services.CreateScope()
-                .ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            var savedLessonPlan = dbContext.LessonPlans
-                .Include(lp => lp.Subject)
-                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+        var dbContext = _factory.Services.CreateScope()
+            .ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var savedLessonPlan = dbContext.LessonPlans
+            .Include(lp => lp.Subject)
+            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
-            Assert.NotNull(savedLessonPlan);
-            Assert.Equal(lessonPlanId, savedLessonPlan.Id);
-            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
-        }, TimeSpan.FromSeconds(2));
+        Assert.NotNull(savedLessonPlan);
+        Assert.Equal(lessonPlanId, savedLessonPlan.Id);
+        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
     }
 
     [Fact]
@@ -128,13 +122,10 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var appState = await CreateAppState();
         var component = RenderLessonPlanner(appState, TestYear, month, day, 1); // First day of term 2 2025 -- should not be in database yet
 
-        component.WaitForAssertion(() =>
-        {
+        var dbContext = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var weekPlanner = dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == new DateOnly(TestYear, month, day));
+        Assert.NotNull(weekPlanner);
 
-            var weekPlanner = _dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == new DateOnly(TestYear, month, day));
-
-            Assert.NotNull(weekPlanner);
-        });
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
