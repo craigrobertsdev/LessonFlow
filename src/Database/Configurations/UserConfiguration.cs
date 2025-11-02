@@ -13,49 +13,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(w => w.Id);
 
-        builder.HasMany(u => u.YearPlanHistory)
+        builder.HasMany(u => u.YearPlans)
             .WithOne()
             .HasForeignKey(u => u.UserId);
-
-        //builder.OwnsOne(u => u.AccountSetupState, asb =>
-        //{
-        //    asb.ToTable("AccountSetupState");
-        //    asb.WithOwner();
-        //    asb.HasKey(a => a.Id);
-
-        //    asb.Ignore(a => a.StepOrder);
-
-        //    asb.HasOne(a => a.WeekPlannerTemplate)
-        //        .WithOne();
-
-        //    asb.Property(x => x.YearLevelsTaught)
-        //        .HasConversion(
-        //            v => string.Join(',', v.Select(y => y.ToString())),
-        //            v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-        //                  .Select(y => Enum.Parse<YearLevelValue>(y))
-        //                  .ToList())
-        //        .HasColumnName("YearLevelsTaught")
-        //        .HasMaxLength(256)
-        //        .IsRequired();
-
-        //    asb.Property(x => x.SubjectsTaught)
-        //        .HasConversion(
-        //            v => string.Join(',', v),
-        //            v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
-        //        .HasColumnName("SubjectsTaught")
-        //        .HasMaxLength(256)
-        //        .IsRequired();
-
-        //    asb.Property(x => x.WorkingDays)
-        //        .HasConversion(
-        //            v => string.Join(',', v.Select(d => d.ToString())),
-        //            v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-        //                  .Select(d => Enum.Parse<DayOfWeek>(d))
-        //                  .ToList())
-        //        .HasColumnName("WorkingDays")
-        //        .HasMaxLength(128)
-        //        .IsRequired();
-        //});
     }
 }
 

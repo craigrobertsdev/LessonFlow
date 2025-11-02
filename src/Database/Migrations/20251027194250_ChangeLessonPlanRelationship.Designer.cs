@@ -1527,7 +1527,7 @@ namespace LessonFlow.Database.Migrations
             modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlans", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Users.User", null)
-                        .WithMany("YearPlanHistory")
+                        .WithMany("YearPlans")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1662,7 +1662,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.Navigation("Resources");
 
-                    b.Navigation("YearPlanHistory");
+                    b.Navigation("YearPlans");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.WeekPlanners.DayPlan", b =>

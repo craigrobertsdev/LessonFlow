@@ -89,7 +89,7 @@ public partial class AccountSetup : ComponentBase, IDisposable
         try
         {
             if (User is null) throw new UserNotFoundException();
-            await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
+            await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState, new CancellationToken());
             User.AccountSetupState = AccountSetupState;
         }
         catch (Exception ex)
@@ -109,7 +109,7 @@ public partial class AccountSetup : ComponentBase, IDisposable
 
         _accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
 
-        await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState);
+        await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState, new CancellationToken());
 
         StateHasChanged();
     }
@@ -124,8 +124,8 @@ public partial class AccountSetup : ComponentBase, IDisposable
         }
 
         var yearPlan = new YearPlan(User.Id, AccountSetupState);
-
-        await UserRepository.CompleteAccountSetup(AppState.User.Id, yearPlan);
+        
+        await UserRepository.CompleteAccountSetup(AppState.User.Id, yearPlan, new CancellationToken());
         AppState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
     }
 

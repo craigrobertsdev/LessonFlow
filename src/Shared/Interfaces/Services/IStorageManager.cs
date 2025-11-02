@@ -2,5 +2,5 @@ namespace LessonFlow.Shared.Interfaces.Services;
 
 public interface IStorageManager
 {
-    Task<string> UploadResource(Stream file, CancellationToken cancellationToken);
+    Task<string> UploadResource(Stream file, CancellationToken ct);
 }

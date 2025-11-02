@@ -10,20 +10,20 @@ public class User : IdentityUser<Guid>
     public AccountSetupState? AccountSetupState { get; set; }
     public int LastSelectedYear { get; set; }
     public DateOnly LastSelectedWeekStart { get; set; }
-    public List<YearPlan> YearPlanHistory { get; private set; } = [];
-    public YearPlan? CurrentYearPlan => YearPlanHistory.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
+    public List<YearPlan> YearPlans { get; private set; } = [];
+    public YearPlan? CurrentYearPlan => YearPlans.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
     public List<Resource> Resources { get; private set; } = [];
 
     public YearPlan? GetYearPlan(int year)
     {
-        return YearPlanHistory.FirstOrDefault(yd => yd.CalendarYear == year);
+        return YearPlans.FirstOrDefault(yd => yd.CalendarYear == year);
     }
 
     public void AddYearPlan(YearPlan yearPlan)
     {
         if (!YearPlanExists(yearPlan))
         {
-            YearPlanHistory.Add(yearPlan);
+            YearPlans.Add(yearPlan);
         }
     }
 
@@ -34,7 +34,7 @@ public class User : IdentityUser<Guid>
 
     private bool YearPlanExists(int year)
     {
-        return YearPlanHistory.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
+        return YearPlans.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
     }
 
     public void CompleteAccountSetup()

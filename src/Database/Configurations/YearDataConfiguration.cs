@@ -29,7 +29,7 @@ public class YearPlanConfiguration : IEntityTypeConfiguration<YearPlan>
             .HasForeignKey<TermPlanner>(tp => tp.YearPlanId);
 
         builder.HasOne<User>()
-            .WithMany(u => u.YearPlanHistory)
+            .WithMany(u => u.YearPlans)
             .HasForeignKey(yd => yd.UserId);
 
         builder.HasMany(yd => yd.WeekPlanners)

@@ -71,7 +71,7 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
         }
     }
 
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = new())
     {
         var entitiesWithDomainEvents = ChangeTracker.Entries<IHasDomainEvents>()
             .Select(e => e.Entity)
@@ -86,11 +86,11 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
 
         try
         {
-            var result = await base.SaveChangesAsync(cancellationToken);
+            var result = await base.SaveChangesAsync(ct);
 
             foreach (var domainEvent in domainEvents)
             {
-                await _publisher.Publish(domainEvent, cancellationToken);
+                await _publisher.Publish(domainEvent, ct);
             }
 
             return result;
