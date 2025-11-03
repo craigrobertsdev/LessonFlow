@@ -12,8 +12,10 @@ using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.VisualBasic;
 using Moq;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
@@ -210,7 +212,7 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public void NavigateToNextWeek_WhenNextWeekWithinSameYear_LoadsNextWeekPlanner()
+    public void NavigateToNextWeek_WhenNextWeekWithinSameYear_UpdatesTermAndWeek()
     {
         var appState = CreateAppStateWithLessonsPlanned();
         appState.CurrentYear = 2025;
@@ -221,9 +223,6 @@ public class WeekPlannerPageTests : TestContext
 
         Assert.Equal(2, component.Instance.AppState.CurrentWeek);
         Assert.Equal(1, component.Instance.AppState.CurrentTerm);
-        Assert.Equal(2, component.Instance.WeekPlanner.WeekNumber);
-        Assert.Equal(1, component.Instance.WeekPlanner.TermNumber);
-        Assert.NotNull(component.Instance.AppState.CurrentYearPlan!.WeekPlanners.FirstOrDefault(wp => wp.WeekNumber == 2 && wp.TermNumber == 1));
         Assert.Equal(2025, component.Instance.AppState.CurrentYearPlan!.CalendarYear);
     }
 
@@ -240,7 +239,6 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
         Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
         Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
-        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
     [Theory]
@@ -259,7 +257,6 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
         Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
         Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
-        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
     [Fact]
@@ -324,7 +321,6 @@ public class WeekPlannerPageTests : TestContext
         Assert.Equal(expectedYear, component.Instance.AppState.CurrentYear);
         Assert.Equal(expectedTerm, component.Instance.AppState.CurrentTerm);
         Assert.Equal(expectedWeek, component.Instance.AppState.CurrentWeek);
-        Assert.Equal(expectedWeek, component.Instance.WeekPlanner.WeekNumber);
     }
 
     [Fact]
@@ -470,18 +466,17 @@ public class WeekPlannerPageTests : TestContext
     public async Task SaveChanges_WhenClicked_UpdatesFieldsInComponentWeekPlanner()
     {
         var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
-        var weekPlanner = component.Instance.WeekPlanner;
 
         component.Find("button#edit-week-planner").Click();
         var breakDutyInput = component.Find("input#break-duty-2-3");
         breakDutyInput.Change("Test Duty");
 
         var saveButton = component.Find("button#save-changes");
-        await saveButton.ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        await saveButton.ClickAsync(new MouseEventArgs());
 
         var editingWeekPlanner = component.Instance.EditingWeekPlanner;
         Assert.Null(editingWeekPlanner);
-        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.NotNull(component.Instance.WeekPlanner);
         Assert.Equal("Test Duty", component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[3]);
     }
 
@@ -491,19 +486,18 @@ public class WeekPlannerPageTests : TestContext
         var originalValue = "Test Duty";
         var newValue = "Test Duty 2";
         var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
-        var weekPlanner = component.Instance.WeekPlanner;
 
         component.Find("button#edit-week-planner").Click();
         component.Find("input#break-duty-2-3").Change(originalValue);
-        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
 
         component.Find("button#edit-week-planner").Click();
         component.Find("input#break-duty-2-3").Change(newValue);
-        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
 
         var editingWeekPlanner = component.Instance.EditingWeekPlanner;
         Assert.Null(editingWeekPlanner);
-        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.NotNull(component.Instance.WeekPlanner);
         Assert.Equal(newValue, component.Instance.WeekPlanner.DayPlans[0].BreakDutyOverrides[3]);
     }
 
@@ -513,20 +507,36 @@ public class WeekPlannerPageTests : TestContext
         var originalValue = "Test Duty";
         var newValue = string.Empty;
         var component = RenderWeekPlannerPage(CreateAppStateWithLessonsPlanned());
-        var weekPlanner = component.Instance.WeekPlanner;
 
         component.Find("button#edit-week-planner").Click();
         component.Find("input#break-duty-2-3").Change(originalValue);
-        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
 
         component.Find("button#edit-week-planner").Click();
         component.Find("input#break-duty-2-3").Change(newValue);
-        await component.Find("button#save-changes").ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
+        await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
 
         var editingWeekPlanner = component.Instance.EditingWeekPlanner;
+        var weekPlanner = component.Instance.WeekPlanner;
         Assert.Null(editingWeekPlanner);
-        Assert.Equal(weekPlanner.Id, component.Instance.WeekPlanner.Id);
+        Assert.NotNull(weekPlanner);
         Assert.False(weekPlanner.DayPlans[0].BreakDutyOverrides.ContainsKey(3));
+    }
+
+    [Fact]
+    public async Task SaveChanges_WhenSavingWithNoExistingWeekPlanner_ShouldUpdateAppStateToContainNewWeekPlanner()
+    {
+        var appState = CreateAppState(TestYear);
+        var component = RenderWeekPlannerPage(appState);
+        var initialWeekPlanner = component.Instance.WeekPlanner;
+        
+        component.Find("button#edit-week-planner").Click();
+        component.Find("input#break-duty-2-3").Change("Test");
+        await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
+
+        var appStateWeekPlanner = component.Instance.AppState.CurrentYearPlan.GetWeekPlanner(FirstDateOfSchool);
+        Assert.Null(initialWeekPlanner);
+        Assert.NotNull(appStateWeekPlanner);
     }
 
     public static TheoryData<int, int, int> GoToSelectedWeekDatesGenerator()
@@ -572,7 +582,7 @@ public class WeekPlannerPageTests : TestContext
         var userRepository = new Mock<IUserRepository>();
         var yearPlanRepository = new Mock<IYearPlanRepository>();
         var logger = new Mock<ILogger<AppState>>();
-        var unitOfWork = new Mock<IUnitOfWork>();
+        var unitOfWorkFactory = new Mock<IUnitOfWorkFactory>();
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService);
@@ -589,16 +599,18 @@ public class WeekPlannerPageTests : TestContext
         appState.User = new User() { AccountSetupComplete = true };
 
         var week2Term3 = new DateOnly(2025, 7, 28);
-        var weekPlanner = new WeekPlanner(yearPlan.Id, 2025, 3, 2, week2Term3);
-        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result).Returns(weekPlanner);
+        var week2Term3WeekPlanner = new WeekPlanner(yearPlan.Id, 2025, 3, 2, week2Term3);
+        var weekPlanner = new WeekPlanner(yearPlan.Id, 2025, 1, 1, FirstDateOfSchool);
+        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result).Returns(week2Term3WeekPlanner);
         yearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(yearPlan.Id, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
             .Returns(weekPlanner);
-            
+
+        unitOfWorkFactory.Setup(u => u.Create()).Returns(new Mock<IUnitOfWork>().Object);
 
         Services.AddScoped(sp => termDatesService);
         Services.AddScoped(sp => userRepository.Object);
         Services.AddScoped(sp => yearPlanRepository.Object);
-        Services.AddScoped(sp => unitOfWork.Object);
+        Services.AddScoped(sp => unitOfWorkFactory.Object);
 
         appState.GetType().GetProperty(nameof(appState.IsInitialised))!.SetValue(appState, true);
         return appState;

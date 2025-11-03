@@ -66,6 +66,7 @@ public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factor
         await using var context = await factory.CreateDbContextAsync(ct);
         return await context.LessonPlans
             .Where(lessonPlan => lessonPlan.DayPlanId == dayPlanId)
+            .Include(lp => lp.Resources)
             .ToListAsync(ct);
     }
 

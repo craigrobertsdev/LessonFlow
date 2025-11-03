@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Radzen;
 using LessonFlow.Domain.YearPlans;
+using LessonFlow.Database;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
 public class LessonPlannerTests : TestContext
@@ -389,12 +390,14 @@ public class LessonPlannerTests : TestContext
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
         var yearPlanRepository = new Mock<IYearPlanRepository>();
         var logger = new Mock<ILogger<AppState>>();
-        var unitOfWork = new Mock<IUnitOfWork>();
+        var unitOfWorkFactory = new Mock<IUnitOfWorkFactory>();
         var termDatesService = UnitTestHelpers.CreateTermDatesService();
         var curriculumService = UnitTestHelpers.CreateCurriculumService();
 
-        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService);
-        appState.CurrentYear = TestYear;
+        var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService)
+        {
+            CurrentYear = TestYear
+        };
 
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(TestYear);
@@ -418,6 +421,10 @@ public class LessonPlannerTests : TestContext
         };
 
         var subject = subjects.First(s => s.Name == "English")  ;
+        yearPlanRepository.Setup(r => r.GetWeekPlanner(It.IsAny<YearPlanId>(), FirstDateOfSchool, default))
+            .ReturnsAsync(weekPlanner);
+        yearPlanRepository.Setup(r => r.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(weekPlanner);
 
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
@@ -429,13 +436,14 @@ public class LessonPlannerTests : TestContext
         yearPlan.SubjectsTaught.AddRange(subjects);
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
 
+        unitOfWorkFactory.Setup(u => u.Create()).Returns(new Mock<IUnitOfWork>().Object);
         Services.AddScoped(sp => termDatesService);
         Services.AddScoped(sp => subjectRepository.Object);
         Services.AddScoped(sp => curriculumService);
         Services.AddScoped(sp => lessonPlanRepository.Object);
         Services.AddScoped(sp => userRepository.Object);
         Services.AddScoped(sp => yearPlanRepository.Object);
-        Services.AddScoped(sp => unitOfWork.Object);
+        Services.AddScoped(sp => unitOfWorkFactory.Object);
 
         Services.AddRadzenComponents();
 

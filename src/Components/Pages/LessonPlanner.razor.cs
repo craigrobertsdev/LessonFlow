@@ -227,8 +227,13 @@ public partial class LessonPlanner
 
         await using var uow = UnitOfWorkFactory.Create();
 
-        var trackedWeekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(AppState.CurrentYearPlan.Id, Year, TermDatesService.GetTermNumber(Date),
-                    TermDatesService.GetWeekNumber(Date), Date.GetWeekStart(), ct);
+        var trackedWeekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(
+            AppState.CurrentYearPlan.Id,
+            Year,
+            TermDatesService.GetTermNumber(Date),
+            TermDatesService.GetWeekNumber(Date),
+            Date.GetWeekStart(),
+            ct);
 
         var trackedDayPlan = trackedWeekPlanner.GetDayPlan(Date);
         if (trackedDayPlan is null)
@@ -254,7 +259,6 @@ public partial class LessonPlanner
         trackedWeekPlanner.UpdateDayPlan(trackedDayPlan);
 
         await uow.SaveChangesAsync(ct);
-
 
         var stateWeekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(Date.GetWeekStart());
         stateWeekPlanner?.UpdateDayPlan(trackedDayPlan);
