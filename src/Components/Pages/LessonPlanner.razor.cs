@@ -25,7 +25,7 @@ public partial class LessonPlanner
     [Inject] public IYearPlanRepository YearPlanRepository { get; set; } = default!;
     [Inject] public ISubjectRepository SubjectRepository { get; set; } = default!;
     [Inject] public ITermDatesService TermDatesService { get; set; } = default!;
-    [Inject] public IUnitOfWork UnitOfWork { get; set; } = default!;
+    [Inject] public IUnitOfWorkFactory UnitOfWorkFactory { get; set; } = default!;
 
     private bool _loading = true;
 
@@ -40,6 +40,8 @@ public partial class LessonPlanner
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
 
+    private bool _dayPlanFromDb;
+
     protected override async Task OnInitializedAsync()
     {
         if (AppState is null || AppState.CurrentYearPlan is null)
@@ -47,28 +49,69 @@ public partial class LessonPlanner
             throw new InvalidOperationException("AppState or CurrentYearPlan is not initialized.");
         }
 
+        _loading = true;
         try
         {
-            _loading = true;
-            try
+            Date = new DateOnly(Year, Month, Day);
+            var ct = new CancellationToken();
+            var weekStart = Date.GetWeekStart();
+
+            var dbWeekPlanner = await YearPlanRepository.GetWeekPlanner(AppState.CurrentYearPlan.Id, weekStart, ct);
+
+            WeekPlanner weekPlanner;
+            DayPlan? dayPlan;
+
+            if (dbWeekPlanner is not null)
             {
-                Date = new DateOnly(Year, Month, Day);
-                var dayPlan = AppState.CurrentYearPlan.GetDayPlan(Date);
+                weekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(weekStart) ?? dbWeekPlanner;
+
+                dayPlan = weekPlanner.GetDayPlan(Date);
                 if (dayPlan is null)
                 {
-                    var ct = new CancellationToken();
-                    var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(AppState.CurrentYearPlan.Id, Year, TermDatesService.GetTermNumber(Date),
-                        TermDatesService.GetWeekNumber(Date), Date.GetWeekStart(), ct);
-                    await UnitOfWork.SaveChangesAsync(ct);
-                    AppState.CurrentYearPlan.AddWeekPlanner(weekPlanner);
-                    dayPlan = weekPlanner.GetDayPlan(Date)!;
+                    var dbDayPlan = dbWeekPlanner.DayPlans.FirstOrDefault(dp => dp.Date == Date);
+                    if (dbDayPlan is not null)
+                    {
+                        weekPlanner.UpdateDayPlan(dbDayPlan);
+                        dayPlan = dbDayPlan;
+                        _dayPlanFromDb = true;
+                    }
+                }
+                else
+                {
+                    _dayPlanFromDb = true;
                 }
 
-                DayPlan = dayPlan;
+                if (dayPlan is null)
+                {
+                    dayPlan = new DayPlan(weekPlanner.Id, Date, [], []);
+                    weekPlanner.UpdateDayPlan(dayPlan);
+                    _dayPlanFromDb = false;
+                }
             }
-            catch (WeekPlannerNotFoundException)
+            else
             {
+                weekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(weekStart)
+                    ?? new WeekPlanner(
+                        AppState.CurrentYearPlan.Id,
+                        Year,
+                        TermDatesService.GetTermNumber(Date),
+                        TermDatesService.GetWeekNumber(Date),
+                        Date.GetWeekStart());
+
+                if (AppState.CurrentYearPlan.GetWeekPlanner(weekStart) is null)
+                {
+                    AppState.CurrentYearPlan.AddWeekPlanner(weekPlanner);
+                }
+                dayPlan = weekPlanner.GetDayPlan(Date);
+                if (dayPlan is null)
+                {
+                    dayPlan = new DayPlan(weekPlanner.Id, Date, [], []);
+                    weekPlanner.UpdateDayPlan(dayPlan);
+                }
+                _dayPlanFromDb = false;
             }
+
+            DayPlan = dayPlan;
 
             LessonPlan = await LoadLessonPlan();
             AvailableLessonSlots = GetAvailableLessonSlots();
@@ -92,10 +135,15 @@ public partial class LessonPlanner
             return lessonPlan;
         }
 
-        lessonPlan = await LessonPlanRepository.GetByDateAndPeriodStart(DayPlan.Id, new DateOnly(Year, Month, Day), StartPeriod, new CancellationToken());
-        if (lessonPlan is not null)
+        if (_dayPlanFromDb)
         {
-            return lessonPlan;
+            var found = await LessonPlanRepository.GetLessonPlan(DayPlan.Id, new DateOnly(Year, Month, Day), StartPeriod, new CancellationToken());
+
+            if (found is not null)
+            {
+                DayPlan.AddLessonPlan(found);
+                return found;
+            }
         }
 
         var templatePeriod = WeekPlannerTemplate.GetTemplatePeriod(Date.DayOfWeek, StartPeriod);
@@ -148,6 +196,7 @@ public partial class LessonPlanner
             }
         }
 
+        DayPlan.AddLessonPlan(lessonPlan);
         return lessonPlan;
     }
 
@@ -172,29 +221,43 @@ public partial class LessonPlanner
     private async Task SaveChanges()
     {
         if (EditingLessonPlan is null) return;
-        var cancellationToken = new CancellationToken();
+        var ct = new CancellationToken();
 
         LessonPlan.UpdateValuesFrom(EditingLessonPlan);
 
-        UnitOfWork.BeginTransaction();
+        await using var uow = UnitOfWorkFactory.Create();
 
-        var lessonPlanExists = LessonPlanRepository.UpdateLessonPlan(LessonPlan);
+        var trackedWeekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(AppState.CurrentYearPlan.Id, Year, TermDatesService.GetTermNumber(Date),
+                    TermDatesService.GetWeekNumber(Date), Date.GetWeekStart(), ct);
+
+        var trackedDayPlan = trackedWeekPlanner.GetDayPlan(Date);
+        if (trackedDayPlan is null)
+        {
+            trackedDayPlan = new DayPlan(trackedWeekPlanner.Id, Date, [], []);
+            trackedWeekPlanner.UpdateDayPlan(trackedDayPlan);
+        }
+
+        await uow.SaveChangesAsync(ct);
+
+        var lessonPlanExists = await LessonPlanRepository.UpdateLessonPlan(LessonPlan, ct);
         if (!lessonPlanExists)
         {
-            var subject = CurriculumService.GetSubjectByName(LessonPlan.Subject.Name);
-            if (subject is null)
-            {
-                throw new SubjectNotFoundException(LessonPlan.Subject.Name);
-            }
+            var subject = CurriculumService.GetSubjectByName(LessonPlan.Subject.Name)
+                ?? throw new SubjectNotFoundException(LessonPlan.Subject.Name);
 
             LessonPlan.UpdateSubject(subject);
-            DayPlan.AddLessonPlan(LessonPlan);
-            //await UnitOfWork.SaveChangesAsync(cancellationToken);
+
+            trackedDayPlan.AddLessonPlan(LessonPlan);
             LessonPlanRepository.Add(LessonPlan);
         }
 
-        await UnitOfWork.SaveChangesAsync(cancellationToken);
-        await UnitOfWork.CommitTransaction(cancellationToken);
+        trackedWeekPlanner.UpdateDayPlan(trackedDayPlan);
+
+        await uow.SaveChangesAsync(ct);
+
+
+        var stateWeekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(Date.GetWeekStart());
+        stateWeekPlanner?.UpdateDayPlan(trackedDayPlan);
 
         IsInEditMode = false;
         EditingLessonPlan = null;

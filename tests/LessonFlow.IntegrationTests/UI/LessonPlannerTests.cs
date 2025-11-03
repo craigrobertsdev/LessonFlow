@@ -62,21 +62,26 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-       var dbContext = _factory.Services.CreateScope()
-            .ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var savedLessonPlan = dbContext.LessonPlans
-            .Include(lp => lp.Subject)
-            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+        component.WaitForState(() => !component.Instance.IsInEditMode && component.Instance.EditingLessonPlan is null);
 
-        Assert.NotNull(savedLessonPlan);
-        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        component.WaitForAssertion(() =>
+        {
+            var dbFactory = _factory.Services.CreateScope()
+                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+            var dbContext = dbFactory.CreateDbContext();
+            var savedLessonPlan = dbContext.LessonPlans
+                .Include(lp => lp.Subject)
+                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+
+            Assert.NotNull(savedLessonPlan);
+            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        }, TimeSpan.FromSeconds(15));
     }
 
     [Fact]
-    public async Task SaveLessonPlan_WhenPreExistingLesson_ShouldUpdateExistingLessonPlan()
+    public async Task SaveLessonPlan_WhenPreExistingLessonPlan_ShouldUpdateThatLessonPlan()
     {
-        var user = _dbContext.Users.First(u => u.Email == "test@test.com");
         var dayPlan = _dbContext.Users.First(u => u.Email == "test@test.com")
             .YearPlans.First(yd => yd.CalendarYear == TestYear)
                 .WeekPlanners.First().DayPlans.First();
@@ -89,10 +94,18 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         _dbContext.LessonPlans.Add(lessonPlan);
         _dbContext.SaveChanges();
 
+        var weekPlanner = _dbContext.WeekPlanners
+            .Include(wp => wp.DayPlans)
+                .ThenInclude(dp => dp.LessonPlans)
+            .First(wp => wp.Id == dayPlan.WeekPlannerId);
+        weekPlanner.UpdateDayPlan(dayPlan);
+        _dbContext.WeekPlanners.Update(weekPlanner);
+        _dbContext.SaveChanges();
+
         var lessonPlanId = lessonPlan.Id;
 
         var appState = await CreateAppState();
-        appState.CurrentYearPlan.WeekPlanners.First().DayPlans[0] = dayPlan;
+        //appState.CurrentYearPlan.WeekPlanners.First().DayPlans[0] = dayPlan;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
 
         component.WaitForElement("#edit-lesson-plan").Click();
@@ -102,30 +115,23 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         selectNumberOfPeriods.Change("2");
         component.Find("#save-lesson-plan").Click();
 
-        var dbContext = _factory.Services.CreateScope()
-            .ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var savedLessonPlan = dbContext.LessonPlans
-            .Include(lp => lp.Subject)
-            .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
+        component.WaitForState(() => !component.Instance.IsInEditMode && component.Instance.EditingLessonPlan is null);
 
-        Assert.NotNull(savedLessonPlan);
-        Assert.Equal(lessonPlanId, savedLessonPlan.Id);
-        Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
-        Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
-    }
+        component.WaitForAssertion(() =>
+        {
+            var dbFactory = _factory.Services.CreateScope()
+                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+            using var dbContext = dbFactory.CreateDbContext();
+            var savedLessonPlan = dbContext.LessonPlans
+                .Include(lp => lp.Subject)
+                .AsNoTracking()
+                .FirstOrDefault(lp => lp.Id == component.Instance.LessonPlan.Id);
 
-    [Fact]
-    public async Task PageLoad_WhenNoWeekPlannerInDatabase_WeekPlannerCreatedAndPersisted()
-    {
-        var month = 4;
-        var day = 28;
-        var appState = await CreateAppState();
-        var component = RenderLessonPlanner(appState, TestYear, month, day, 1); // First day of term 2 2025 -- should not be in database yet
-
-        var dbContext = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var weekPlanner = dbContext.WeekPlanners.FirstOrDefault(wp => wp.WeekStart == new DateOnly(TestYear, month, day));
-        Assert.NotNull(weekPlanner);
-
+            Assert.NotNull(savedLessonPlan);
+            Assert.Equal(lessonPlanId, savedLessonPlan.Id);
+            Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
+            Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        });
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)

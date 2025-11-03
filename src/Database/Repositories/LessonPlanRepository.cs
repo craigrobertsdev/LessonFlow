@@ -10,13 +10,13 @@ public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factor
 {
     public void Add(LessonPlan lessonPlan)
     {
-        using var context = factory.CreateDbContext();
+        var context = ambient.Current!;
         var subject = context.Subjects.First(s => s.Name == lessonPlan.Subject.Name);
         lessonPlan.UpdateSubject(subject);
         context.Add(lessonPlan);
     }
 
-    public async Task<List<LessonPlan>> GetByDayPlanAndDate(DayPlanId dayPlanId, DateOnly date,
+    public async Task<List<LessonPlan>> GetLessonPlan(DayPlanId dayPlanId, DateOnly date,
         CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -28,27 +28,15 @@ public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factor
         return lessonPlans;
     }
 
-    public async Task<LessonPlan?> GetByDayPlanAndDateAndPeriod(DayPlanId dayPlanId, DateOnly date, int period,
-        CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-        return await context.LessonPlans
-            .Where(lp => lp.DayPlanId == dayPlanId)
-            .Where(lp => lp.LessonDate == date)
-            .Where(lp => lp.StartPeriod == period)
-            .Include(lp => lp.Resources)
-            .FirstOrDefaultAsync(ct);
-    }
-
-    public async Task<LessonPlan?> GetByDateAndPeriodStart(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken ct)
+    public async Task<LessonPlan?> GetLessonPlan(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
         var lessonplan = await context.LessonPlans
             .Where(lp => lp.DayPlanId == dayPlanId)
             .Where(lp => lp.LessonDate == date)
             .Where(lp => lp.StartPeriod == period)
-            //.Include(lp => lp.Resources)
-            //.Include(lp => lp.Subject)
+            .Include(lp => lp.Resources)
+            .Include(lp => lp.Subject)
             .FirstOrDefaultAsync(ct);
 
         return lessonplan;
@@ -63,19 +51,16 @@ public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factor
             .Include(lp => lp.Subject)
             .FirstOrDefaultAsync(ct);
 
-        if (existingLessonPlan is not null)
-        {
-            existingLessonPlan.UpdateValuesFrom(lessonPlan);
-            var subject = await context.Subjects.FirstAsync(s => s.Id == lessonPlan.Subject.Id, ct);
-            existingLessonPlan.UpdateSubject(subject);
+        if (existingLessonPlan is null) return false;
 
-            return true;
-        }
+        existingLessonPlan.UpdateValuesFrom(lessonPlan);
+        var subject = await context.Subjects.FirstAsync(s => s.Name == lessonPlan.Subject.Name, ct);
+        existingLessonPlan.UpdateSubject(subject);
 
-        return false;
+        return true;
     }
 
-    public async Task<List<LessonPlan>?> GetLessonsByDayPlanId(DayPlanId dayPlanId,
+    public async Task<List<LessonPlan>?> GetLessonPlans(DayPlanId dayPlanId,
         CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
