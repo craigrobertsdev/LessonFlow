@@ -23,7 +23,7 @@ public partial class WeekPlannerPage : ComponentBase
     [Inject] ITermDatesService TermDatesService { get; set; } = default!;
     [Inject] IUserRepository UserRepository { get; set; } = default!;
     [Inject] IYearPlanRepository YearPlanRepository { get; set; } = default!;
-    [Inject] IUnitOfWork UnitOfWork { get; set; } = default!;
+    [Inject] IUnitOfWorkFactory UnitOfWorkFactory { get; set; } = default!;
 
     private const string _gridTemplateCols = "minmax(0, 0.6fr) repeat(5, minmax(0, 1fr))";
     private string _gridRows = string.Empty;
@@ -482,6 +482,7 @@ public partial class WeekPlannerPage : ComponentBase
             _loading = true;
 
             var ct = new CancellationToken();
+            var uow = UnitOfWorkFactory.Create();
             var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
 
             foreach (var dayPlan in EditingWeekPlanner.DayPlans)
@@ -494,7 +495,7 @@ public partial class WeekPlannerPage : ComponentBase
 
             WeekPlanner = weekPlanner;
             AppState.CurrentYearPlan.AddWeekPlanner(WeekPlanner);
-            await UnitOfWork.SaveChangesAsync(ct);
+            await uow.SaveChangesAsync(ct);
 
         }
         catch (Exception e)

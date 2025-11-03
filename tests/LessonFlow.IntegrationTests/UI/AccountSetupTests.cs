@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
 using System.Security.Claims;
+using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.UI;
 
@@ -35,7 +36,6 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
 
-        Services.AddSingleton(_ => _factoryScope.ServiceProvider.GetRequiredService<ILoggerFactory>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUserRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
@@ -61,6 +61,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         });
 
         _dbContext = _factoryScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        SeedDbContext(_dbContext);
     }
 
     [Fact]

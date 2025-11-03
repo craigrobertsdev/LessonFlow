@@ -31,7 +31,7 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<IUserRepository>());
-        Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<IUnitOfWorkFactory>());
         Services.AddScoped<DialogService>();
         Services.AddScoped<NotificationService>();
         Services.AddScoped<TooltipService>();
@@ -52,9 +52,10 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
     {
         var appState = await CreateAppState();
         appState.CurrentTerm = 1;
-        appState.CurrentWeek = 1;
+        appState.CurrentWeek = 2;
         appState.CurrentYear = TestYear;
-        var existingWeekPlanner = appState.CurrentYearPlan.GetWeekPlanner(FirstDateOfSchool);
+        var testDate = FirstDateOfSchool.AddDays(7);
+        var existingWeekPlanner = appState.CurrentYearPlan.GetWeekPlanner(testDate);
 
         var component = RenderWeekPlanner(appState);
         component.Find("#edit-week-planner").Click();
@@ -65,18 +66,19 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         var yearPlan = db.YearPlans.First(yp => yp.Id == appState.CurrentYearPlan.Id);
 
         Assert.Null(existingWeekPlanner);
-        var weekPlannerFromYearPlan = yearPlan.GetWeekPlanner(FirstDateOfSchool);
+        var weekPlannerFromYearPlan = yearPlan.GetWeekPlanner(testDate);
         Assert.NotNull(weekPlannerFromYearPlan);
-        Assert.Equal("Yard duty", weekPlannerFromYearPlan!.GetDayPlan(FirstDateOfSchool)!.BeforeSchoolDuty);
+        Assert.Equal("Yard duty", weekPlannerFromYearPlan!.GetDayPlan(testDate)!.BeforeSchoolDuty);
 
         var weekPlannerFromDb = db.WeekPlanners
             .Where(wp => wp.YearPlanId == appState.CurrentYearPlan.Id)
             .FirstOrDefault(wp => wp.WeekStart == weekPlannerFromYearPlan.WeekStart);
 
         Assert.NotNull(weekPlannerFromDb);
-        Assert.Equal("Yard duty", weekPlannerFromDb!.GetDayPlan(FirstDateOfSchool)!.BeforeSchoolDuty);
+        Assert.Equal("Yard duty", weekPlannerFromDb!.GetDayPlan(testDate)!.BeforeSchoolDuty);
     }
 
+    [Fact]
     public async Task HandleSaveChanges_WhenExistingLessonPlan_ShouldCreateAndPersistNewLessonPlanWithChanges()
     {
         throw new NotImplementedException();

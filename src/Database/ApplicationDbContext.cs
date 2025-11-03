@@ -22,11 +22,11 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
 {
     private readonly IPublisher _publisher = null!;
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IPublisher publisher)
-        : base(options)
-    {
-        _publisher = publisher;
-    }
+    //public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IPublisher publisher)
+    //    : base(options)
+    //{
+    //    _publisher = publisher;
+    //}
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {

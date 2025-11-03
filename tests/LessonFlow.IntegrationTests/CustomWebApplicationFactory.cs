@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using LessonFlow.Shared.Interfaces.Persistence;
 
 namespace LessonFlow.IntegrationTests;
 
-public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncDisposable
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -29,21 +30,24 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 
             var dbContextOptionsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
             var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ApplicationDbContext));
-            if (dbContextDescriptor is not null)
-            {
-                services.Remove(dbContextDescriptor);
-            }
-            if (dbContextOptionsDescriptor is not null)
-            {
-                services.Remove(dbContextOptionsDescriptor);
-            }
+            var dbContextFactoryDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextFactory<ApplicationDbContext>));
+            if (dbContextDescriptor is not null) services.Remove(dbContextDescriptor);
+            if (dbContextOptionsDescriptor is not null) services.Remove(dbContextOptionsDescriptor);
+            if (dbContextFactoryDescriptor is not null) services.Remove(dbContextFactoryDescriptor);
 
-            services.AddDbContext<ApplicationDbContext>(options =>
+            services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
                 options.UseNpgsql(connectionString)
                 .EnableDetailedErrors()
                 .EnableSensitiveDataLogging();
             });
+
+            services.AddScoped(sp =>
+                sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>()
+                    .CreateDbContext());
+
+            services.AddSingleton<IAmbientDbContextAccessor<ApplicationDbContext>, AmbientDbContextAccessor<ApplicationDbContext>>();
+            services.AddScoped<IUnitOfWorkFactory, UnitOfWorkFactory<ApplicationDbContext>>();
 
             services.PostConfigure<AuthenticationOptions>(options =>
             {
@@ -54,5 +58,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddAuthentication(TestAuthHandler.AuthScheme)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.AuthScheme, options => { });
         });
+    }
+
+    public override async ValueTask DisposeAsync()
+    {
+        var context = Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.Database.EnsureDeletedAsync();
+        GC.SuppressFinalize(this);
+        await base.DisposeAsync();
     }
 }

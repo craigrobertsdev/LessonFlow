@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Database.Repositories;
 
-public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory) : IYearPlanRepository
+public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory, IAmbientDbContextAccessor<ApplicationDbContext> ambient) : IYearPlanRepository
 {
     public void Add(YearPlan yearPlan)
     {
@@ -22,11 +22,8 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory)
             .Where(yd => yd.UserId == userId && yd.CalendarYear == calendarYear)
             .Include(yd => yd.SubjectsTaught)
             .Include(yd => yd.Students)
-            .Include(yd => yd.WeekPlanners)
             .Include(yd => yd.WeekPlannerTemplate)
-            .ThenInclude(wp => wp.DayTemplates)
-            .Include(yd => yd.WeekPlannerTemplate)
-            .ThenInclude(wp => wp.DayTemplates)
+                .ThenInclude(wp => wp.DayTemplates)
             .AsSplitQuery()
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
@@ -83,11 +80,12 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory)
     public async Task<WeekPlanner> GetOrCreateWeekPlanner(YearPlanId yearPlanId, int year, int termNumber, int weekNumber, DateOnly weekStart,
         CancellationToken ct)
     {
-        await using var context = await factory.CreateDbContextAsync(ct);
+        var context = ambient.Current!;
         var weekPlanner = await context.WeekPlanners
             .Where(wp => wp.YearPlanId == yearPlanId && wp.Year == year && wp.TermNumber == termNumber && wp.WeekNumber == weekNumber)
             .Include(wp => wp.DayPlans)
-            .ThenInclude(dp => dp.LessonPlans)
+                .ThenInclude(dp => dp.LessonPlans)
+                    .ThenInclude(lp => lp.Subject)
             .AsSplitQuery()
             .FirstOrDefaultAsync(ct);
 
@@ -101,11 +99,19 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory)
         return weekPlanner;
     }
 
+    /// <summary>
+    /// Fetches a shallow copy of the WeekPlanner with only DayPlans loaded, no LessonPlans
+    /// </summary>
+    /// <param name="yearPlanId"></param>
+    /// <param name="weekStart"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<WeekPlanner?> GetWeekPlanner(YearPlanId yearPlanId, DateOnly weekStart, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
         return await context.WeekPlanners
             .Where(wp => wp.YearPlanId == yearPlanId && wp.WeekStart == weekStart)
+            .Include(wp => wp.DayPlans)
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
     }
