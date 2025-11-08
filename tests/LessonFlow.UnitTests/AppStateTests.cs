@@ -65,7 +65,7 @@ public class AppStateTests
         userRepository.Setup(ur => ur.GetYearPlanByYear(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
-                var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState);
+                var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
                 return yearPlan;
             });
 

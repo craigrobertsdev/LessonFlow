@@ -77,7 +77,7 @@
       }
     </div>
 
-    <Button Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@AccountSetupState.IsLoading">
+    <Button Id="next-step" Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@AccountSetupState.IsLoading">
       Next
     </Button>
   </div>
@@ -86,9 +86,6 @@
 @code {
     [CascadingParameter]
     private AccountSetupState AccountSetupState { get; set; } = null!;
-
-    [Parameter] 
-    public Func<Task> SaveChanges { get; set; } = null!;
 
     private void ToggleYearLevel(YearLevelValue level)
     {
@@ -129,8 +126,6 @@
             AccountSetupState.SetError("Please select at least one working day");
             return;
         }
-
-        await SaveChanges();
 
         AccountSetupState.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Forward);
         StateHasChanged();

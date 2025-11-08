@@ -591,7 +591,7 @@ public class WeekPlannerPageTests : TestContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(calendarYear);
 
-        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState);
+        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
         yearPlan.WeekPlannerTemplate = weekPlannerTemplate;

@@ -10,7 +10,6 @@ using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.YearPlans.DomainEvents;
 using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Extensions;
-using System.Reflection.Metadata.Ecma335;
 
 namespace LessonFlow.Domain.YearPlans;
 
@@ -159,10 +158,11 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         WeekPlannerTemplate = weekPlannerTemplate;
     }
 
-    public YearPlan(Guid userId, AccountSetupState accountSetupState)
+    public YearPlan(Guid userId, AccountSetupState accountSetupState, List<Subject> subjects)
     {
         Id = new YearPlanId(Guid.NewGuid());
         UserId = userId;
+        SubjectsTaught = subjects;
         SchoolName = accountSetupState.SchoolName;
         CalendarYear = accountSetupState.CalendarYear;
         WeekPlannerTemplate = accountSetupState.WeekPlannerTemplate;

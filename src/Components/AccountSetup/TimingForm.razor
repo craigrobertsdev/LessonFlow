@@ -96,18 +96,14 @@
     <Button Type="ButtonType.Back" OnClick="HandleBack">
       Back
     </Button>
-    <Button type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@(State.IsLoading || !string.IsNullOrEmpty(_timeError))">
+    <Button Id="next-step" type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@(State.IsLoading || !string.IsNullOrEmpty(_timeError))">
       Next
     </Button>
   </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    public AccountSetupState State { get; set; } = null!;
-
-    [Parameter]
-    public Func<Task> SaveChanges { get; set; } = null!;
+    [CascadingParameter] public AccountSetupState State { get; set; } = null!;
 
     private List<TemplatePeriod> _periods = [];
     private TimeOnly StartTime {get; set;}
@@ -208,7 +204,6 @@
     private async Task HandleBack()
     {
         State.ClearError();
-        await SaveChanges();
         State.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Back);
     }
 

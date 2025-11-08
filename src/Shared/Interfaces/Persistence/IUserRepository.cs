@@ -11,7 +11,7 @@ public interface IUserRepository
     Task<User?> GetByEmail(string email, CancellationToken ct);
     Task<AccountSetupState?> GetAccountSetupState(Guid userId, CancellationToken ct);
     Task UpdateAccountSetupState(Guid userId, AccountSetupState accountSetupState, CancellationToken ct);
-    Task CompleteAccountSetup(Guid userId, YearPlan yearPlan, CancellationToken ct);
+    Task<YearPlan> CompleteAccountSetup(Guid userId, AccountSetupState accountSetupState, CancellationToken ct);
     Task<User?> GetById(Guid userId, CancellationToken ct);
     Task<User?> GetWithResources(Guid userId, CancellationToken ct);
     Task<User?> GetByIdWithResources(Guid userId, IEnumerable<ResourceId> resources, CancellationToken ct);

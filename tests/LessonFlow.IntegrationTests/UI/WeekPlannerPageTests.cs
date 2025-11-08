@@ -26,7 +26,7 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         _factory = factory;
 
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>());
-        Services.AddScoped(sp =>scope.ServiceProvider.GetRequiredService<ICurriculumService>());
+        Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ISubjectRepository>());
         Services.AddScoped(sp => scope.ServiceProvider.GetRequiredService<ITermDatesService>());

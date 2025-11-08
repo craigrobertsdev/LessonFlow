@@ -64,6 +64,12 @@ public class AccountSetupState
         NotifyStateChanged();
     }
 
+    public void SetWorkingDays(List<DayOfWeek> workingDays)
+    {
+        WorkingDays = workingDays;
+        NotifyStateChanged();
+    }
+
     public void UpdateTiming(TimeOnly startTime, TimeOnly endTime, List<TemplatePeriod> periods)
     {
         StartTime = startTime;
@@ -77,6 +83,21 @@ public class AccountSetupState
     {
         Error = error;
         NotifyStateChanged();
+    }
+
+    public void Update(AccountSetupState newState)
+    {
+        CalendarYear = newState.CalendarYear;
+        SchoolName = newState.SchoolName;
+        SubjectsTaught = newState.SubjectsTaught;
+        WorkingDays = newState.WorkingDays;
+        StartTime = newState.StartTime;
+        EndTime = newState.EndTime;
+
+        if (newState.WeekPlannerTemplate is not null)
+        {
+            WeekPlannerTemplate?.UpdateFrom(newState.WeekPlannerTemplate);
+        }
     }
 
     public void ClearError()

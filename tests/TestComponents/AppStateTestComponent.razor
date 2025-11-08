@@ -1,0 +1,9 @@
+@using LessonFlow.Shared
+@code {
+    [Parameter] public AppState AppState { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AppState.InitialiseAsync();
+    }
+}

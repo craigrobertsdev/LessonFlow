@@ -4,6 +4,7 @@ using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Exceptions;
+using LessonFlow.Shared.Extensions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,35 +14,17 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
 {
     public async Task<User?> GetByEmail(string email, CancellationToken ct)
     {
-        try
-        {
-            await using var context = await factory.CreateDbContextAsync(ct);
-            var user = await context.Users
-                .Where(u => u.Email == email)
-                .Include(u => u.AccountSetupState)
-                .Include(u => u.Resources)
-                .Include(u => u.YearPlans)
-                .AsSplitQuery()
-                .AsNoTracking()
-                .FirstOrDefaultAsync(ct);
+        await using var context = await factory.CreateDbContextAsync(ct);
+        var user = await context.Users
+            .Where(u => u.Email == email)
+            .Include(u => u.AccountSetupState)
+            .Include(u => u.Resources)
+            .Include(u => u.YearPlans)
+            .AsSplitQuery()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct);
 
-            //if (user is null) return null;
-
-            //user.YearPlans.ForEach(yd =>
-            //{
-            //    foreach (var subject in yd.SubjectsTaught)
-            //    {
-            //        context.Entry(subject).State = EntityState.Detached;
-            //    }
-            //});
-
-            return user;
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            return null;
-        }
+        return user;
     }
 
     public async Task<AccountSetupState?> GetAccountSetupState(Guid userId,
@@ -60,35 +43,59 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         return user.AccountSetupState;
     }
 
-    public async Task UpdateAccountSetupState(Guid userId, AccountSetupState accountSetupState, CancellationToken ct)
+    public async Task UpdateAccountSetupState(Guid userId, AccountSetupState newState, CancellationToken ct)
     {
         var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(UpdateAccountSetupState)} must be called with a UnitOfWork");
+
         var user = await context.Users
             .Where(u => u.Id == userId)
+            .Include(u => u.AccountSetupState)
+                .ThenInclude(a => a!.WeekPlannerTemplate)
             .FirstOrDefaultAsync(ct) ?? throw new UserNotFoundException();
 
-        user.AccountSetupState = accountSetupState;
+        if (user.AccountSetupState is null)
+        {
+            user.AccountSetupState = newState;
+            await context.SaveChangesAsync(ct);
+            return;
+        }
+
+        user.AccountSetupState.Update(newState);
+
+        if (newState.WeekPlannerTemplate is not null)
+        {
+            context.AttachIfNotTracked(newState.WeekPlannerTemplate);
+            user.AccountSetupState.WeekPlannerTemplate = newState.WeekPlannerTemplate;
+        }
+
         await context.SaveChangesAsync(ct);
     }
 
-    public async Task CompleteAccountSetup(Guid userId, YearPlan yearPlan, CancellationToken ct)
+    public async Task<YearPlan> CompleteAccountSetup(Guid userId, AccountSetupState accountSetupState, CancellationToken ct)
     {
-        await using var context = await factory.CreateDbContextAsync(ct);
+        var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(CompleteAccountSetup)} must be called with a UnitOfWork");
         var user = await context.Users
             .Where(u => u.Id == userId)
-            .Include(u => u.YearPlans)
-            .Include(u => u.AccountSetupState)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(ct);
 
         if (user is null)
         {
             throw new Exception("User not found");
         }
 
-        user.CompleteAccountSetup();
-        user.AddYearPlan(yearPlan);
+        var subjects = await context.Subjects
+            .Where(s => accountSetupState.SubjectsTaught.Contains(s.Name))
+            .ToListAsync(ct);
 
-        await context.SaveChangesAsync();
+        var yearPlan = new YearPlan(user.Id, accountSetupState, subjects);
+
+        user.CompleteAccountSetup();
+
+        context.Attach(yearPlan.WeekPlannerTemplate);
+        context.YearPlans.Add(yearPlan);
+        await context.SaveChangesAsync(ct);
+
+        return yearPlan;
     }
 
     public async Task<User?> GetById(Guid userId, CancellationToken ct)

@@ -116,6 +116,12 @@ public class WeekPlannerTemplate : Entity<WeekPlannerTemplateId>
         return Periods.Count(p => p.StartPeriod >= startPeriod && p.PeriodType == PeriodType.Lesson);
     }
 
+    public void UpdateFrom(WeekPlannerTemplate other)
+    {
+        SetPeriods(other.Periods);
+        SetDayTemplates(other.DayTemplates);
+    }
+
     public WeekPlannerTemplate(Guid userId, List<TemplatePeriod> periods,
         List<DayTemplate> dayTemplates)
     {

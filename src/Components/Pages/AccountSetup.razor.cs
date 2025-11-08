@@ -1,6 +1,5 @@
 ﻿using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components;
@@ -16,6 +15,7 @@ public partial class AccountSetup : ComponentBase, IDisposable
     [Inject] ICurriculumService CurriculumService { get; set; } = null!;
     [Inject] IUserRepository UserRepository { get; set; } = null!;
     [Inject] ILogger<AccountSetup> Logger { get; set; } = null!;
+    [Inject] IUnitOfWorkFactory UnitOfWorkFactory { get; set; } = null!;
 
     public AccountSetupState AccountSetupState { get; set; } = null!;
     private AccountSetupStep _accountSetupStep { get; set; } = default!;
@@ -88,6 +88,7 @@ public partial class AccountSetup : ComponentBase, IDisposable
     {
         try
         {
+            await using var uow = UnitOfWorkFactory.Create();
             if (User is null) throw new UserNotFoundException();
             await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState, new CancellationToken());
             User.AccountSetupState = AccountSetupState;
@@ -101,17 +102,25 @@ public partial class AccountSetup : ComponentBase, IDisposable
 
     private async void ChangeAccountSetupStep(ChangeDirection direction)
     {
-        var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
-        if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
+        try
         {
-            return;
+            var idx = AccountSetupState.StepOrder.IndexOf(_accountSetupStep);
+            if (idx == 0 && direction == ChangeDirection.Back || idx == AccountSetupState.StepOrder.Count - 1 && direction == ChangeDirection.Forward)
+            {
+                return;
+            }
+
+            _accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
+
+            await SaveAccountSetupState();
+
+            StateHasChanged();
         }
-
-        _accountSetupStep = direction == ChangeDirection.Back ? AccountSetupState.StepOrder[idx - 1] : AccountSetupState.StepOrder[idx + 1];
-
-        await UserRepository.UpdateAccountSetupState(User.Id, AccountSetupState, new CancellationToken());
-
-        StateHasChanged();
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error changing account setup step");
+            AccountSetupState.SetError("An error occurred while changing steps. Please try again.");
+        }
     }
 
     private async Task CompleteAccountSetup()
@@ -123,9 +132,9 @@ public partial class AccountSetup : ComponentBase, IDisposable
             return;
         }
 
-        var yearPlan = new YearPlan(User.Id, AccountSetupState);
-        
-        await UserRepository.CompleteAccountSetup(AppState.User.Id, yearPlan, new CancellationToken());
+        await using var uow = UnitOfWorkFactory.Create();
+        var yearPlan = await UserRepository.CompleteAccountSetup(AppState.User.Id, AccountSetupState, new CancellationToken());
+
         AppState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
     }
 

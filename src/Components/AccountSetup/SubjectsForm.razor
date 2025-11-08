@@ -37,21 +37,15 @@
             Back
         </Button>
 
-        <Button Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@State.IsLoading">
+        <Button Id="next-step" Type="ButtonType.Submit" OnClick="HandleSubmit" Disabled="@State.IsLoading">
             Next
         </Button>
     </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    private AccountSetupState State { get; set; } = null!;
-
-    [Parameter]
-    public List<string> Subjects { get; set; } = [];
-
-    [Parameter]
-    public Func<Task> SaveChanges { get; set; } = null!;
+    [CascadingParameter] private AccountSetupState State { get; set; } = null!;
+    [Parameter] public List<string> Subjects { get; set; } = [];
 
     private void ToggleSubject(string subject, bool isChecked)
     {
@@ -68,8 +62,6 @@
     private async Task HandleBack()
     {
         State.ClearError();
-
-        await SaveChanges();
         State.UpdateStep(AccountSetupStep.BasicInfo, ChangeDirection.Back);
     }
 
@@ -87,8 +79,6 @@
         {
             Logger.LogWarning(subject);
         }
-
-        await SaveChanges();
 
         State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Forward);
     }

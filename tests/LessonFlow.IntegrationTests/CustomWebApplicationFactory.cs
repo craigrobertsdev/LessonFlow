@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using LessonFlow.Shared.Interfaces.Persistence;
+using Microsoft.Extensions.Logging;
 
 namespace LessonFlow.IntegrationTests;
 
@@ -39,7 +40,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             {
                 options.UseNpgsql(connectionString)
                 .EnableDetailedErrors()
-                .EnableSensitiveDataLogging();
+                .EnableSensitiveDataLogging()
+                .LogTo(Console.WriteLine, LogLevel.Information);
             });
 
             services.AddScoped(sp =>

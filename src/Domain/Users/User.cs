@@ -37,6 +37,7 @@ public class User : IdentityUser<Guid>
         return YearPlans.FirstOrDefault(yd => yd.CalendarYear == year) is not null;
     }
 
+
     public void CompleteAccountSetup()
     {
         if (AccountSetupState is null) return;

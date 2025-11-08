@@ -11,7 +11,6 @@ namespace LessonFlow.Components.AccountSetup;
 public partial class ScheduleForm
 {
     [CascadingParameter] public AccountSetupState State { get; set; } = default!;
-    [Parameter] public Func<Task> SaveChanges { get; set; } = default!;
     [Parameter] public Func<Task> CompleteAccountSetup { get; set; } = default!;
     [Inject] public NavigationManager NavigationManager { get; set; } = default!;
     internal WeekPlannerTemplate WeekPlannerTemplate => State.WeekPlannerTemplate;
@@ -275,10 +274,9 @@ public partial class ScheduleForm
         }
     }
 
-    private async Task HandleBack()
+    private void HandleBack()
     {
         State.ClearError();
-        await SaveChanges();
         State.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Back);
     }
 

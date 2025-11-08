@@ -3,6 +3,7 @@ using Bunit.TestDoubles;
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
+using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -30,8 +31,8 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         _factoryScope = factory.Services.CreateScope();
 
         this.AddTestAuthorization()
-            .SetAuthorized("accountsetupnotcomplete@test.com")
-            .SetClaims(new Claim(ClaimTypes.Name, "accountsetupnotcomplete@test.com"));
+            .SetAuthorized(TestUserNoAccountEmail)
+            .SetClaims(new Claim(ClaimTypes.Name, TestUserNoAccountEmail));
 
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
@@ -40,7 +41,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ICurriculumService>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IYearPlanRepository>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ISubjectRepository>());
-        Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUnitOfWork>());
+        Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<IUnitOfWorkFactory>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ITermDatesService>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<AppState>());
         Services.AddScoped(_ => _factoryScope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
@@ -69,7 +70,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
     {
         var user = _dbContext.Users
             .Include(u => u.AccountSetupState)
-            .First(u => u.Email == "accountsetupnotcomplete@test.com");
+            .First(u => u.Email == TestUserNoAccountEmail);
         var accountSetupState = new AccountSetupState(user.Id);
         var weekPlannerTemplate = IntegrationTestHelpers.GenerateWeekPlannerTemplate(user.Id);
         var weekPlannerTemplateId = weekPlannerTemplate.Id;
@@ -81,9 +82,9 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         accountSetupState.WeekPlannerTemplate.DayTemplates[0].Periods.AddRange([
             new LessonTemplate("Mathematics", 1, 2),
             new BreakTemplate("", 3, 1),
-            new LessonTemplate("Science", 3, 1),
-            new NitTemplate(4, 2),
-            new BreakTemplate("", 5, 1),
+            new LessonTemplate("Science", 4, 1),
+            new NitTemplate(5, 2),
+            new BreakTemplate("", 6, 1),
             new LessonTemplate("Mathematics", 7, 2)
         ]);
         accountSetupState.GetType().GetProperty("CurrentStep")!.SetValue(accountSetupState, AccountSetupStep.Schedule);
@@ -112,6 +113,75 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         Assert.Equal(typeof(NitTemplate), dayTemplate.Periods[3].GetType());
         Assert.Equal(typeof(BreakTemplate), dayTemplate.Periods[4].GetType());
         Assert.Equal(typeof(LessonTemplate), dayTemplate.Periods[5].GetType());
+    }
+
+    [Fact]
+    public async Task CompleteAccountSetup_WhenSubjectsTaughtSelected_ArePersistedToDatabase()
+    {
+        var user = _dbContext.Users
+            .Include(u => u.AccountSetupState)
+            .First(u => u.Email == TestUserNoAccountEmail);
+        var accountSetupState = new AccountSetupState(user.Id);
+        var weekPlannerTemplate = IntegrationTestHelpers.GenerateWeekPlannerTemplate(user.Id);
+        var weekPlannerTemplateId = weekPlannerTemplate.Id;
+        accountSetupState.WeekPlannerTemplate = weekPlannerTemplate;
+        accountSetupState.SetSchoolName("Test");
+        accountSetupState.SetCalendarYear(2025);
+        List<string> subjectNames = ["Mathematics", "Science"];
+        accountSetupState.SetSubjectsTaught(subjectNames);
+        accountSetupState.UpdateStep(AccountSetupStep.Subjects, ChangeDirection.Forward);
+        accountSetupState.UpdateStep(AccountSetupStep.Timing, ChangeDirection.Forward);
+        accountSetupState.UpdateStep(AccountSetupStep.Schedule, ChangeDirection.Forward);
+        user.AccountSetupState = accountSetupState;
+        _dbContext.SaveChanges();
+
+        var appState = Services.GetRequiredService<AppState>();
+        await appState.InitialiseAsync();
+
+        var component = RenderAccountSetup();
+        component.WaitForElement("#complete-account-setup").Click();
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var yearPlan = db.YearPlans
+            .Where(yp => yp.UserId == user.Id)
+            .Include(yp => yp.SubjectsTaught)
+            .FirstOrDefault();
+
+        Assert.NotNull(yearPlan);
+        Assert.Equal(2, yearPlan.SubjectsTaught.Count);
+        var subjectsTaught = yearPlan.SubjectsTaught.Select(s => s.Name).ToList();
+        subjectsTaught.Sort();
+        subjectNames.Sort();
+        Assert.Equal(subjectNames, subjectsTaught);
+    }
+
+    [Fact]
+    public void GoToNextStep_WhenStateValid_PersistsToDatabase()
+    {
+        List<DayOfWeek> workingDays = [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday];
+        var component = RenderAccountSetup();
+        component.WaitForState(() => component.Instance.AppState.IsInitialised);
+        component.Instance.AccountSetupState.SetSchoolName("Test School");
+        component.Instance.AccountSetupState.SetCalendarYear(2025);
+        component.Instance.AccountSetupState.SetSubjectsTaught(["Mathematics", "Science"]);
+        component.Instance.AccountSetupState.YearLevelsTaught.Add(YearLevelValue.Year6);
+        component.Instance.AccountSetupState.WorkingDays.Clear();
+        component.Instance.AccountSetupState.WorkingDays.AddRange(workingDays);
+        component.WaitForElement("#next-step").Click();
+
+        var context = _factory.Services.CreateScope()
+            .ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var user = context.Users
+            .Where(u => u.Email == TestUserNoAccountEmail)
+            .Include(u => u.AccountSetupState)
+            .First();
+
+        Assert.Equal(AccountSetupStep.Subjects, user.AccountSetupState!.CurrentStep);
+        Assert.Equal("Test School", user.AccountSetupState.SchoolName);
+        Assert.Equal(2025, user.AccountSetupState.CalendarYear);
+        user.AccountSetupState.WorkingDays.Sort();
+        Assert.Equal(workingDays, user.AccountSetupState.WorkingDays);
     }
 
     private IRenderedComponent<AccountSetup> RenderAccountSetup()

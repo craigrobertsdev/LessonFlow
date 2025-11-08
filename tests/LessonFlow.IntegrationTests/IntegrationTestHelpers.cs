@@ -1,19 +1,13 @@
 ﻿using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Database;
-using LessonFlow.Database.Repositories;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
-using LessonFlow.Services;
-using LessonFlow.Shared;
-using LessonFlow.Shared.Interfaces.Persistence;
-using LessonFlow.Shared.Interfaces.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Radzen;
+using System.Data;
 
 namespace LessonFlow.IntegrationTests;
 internal static class IntegrationTestHelpers
@@ -22,6 +16,8 @@ internal static class IntegrationTestHelpers
     internal readonly static int FirstMonthOfSchool = 1;
     internal readonly static int FirstDayOfSchool = 27;
     internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
+    internal const string TestUserEmail = "test@test.com";
+    internal const string TestUserNoAccountEmail = "accountsetupnotcomplete@test.com";
 
     internal static WeekPlannerTemplate GenerateWeekPlannerTemplate(Guid userId)
     {
@@ -60,7 +56,7 @@ internal static class IntegrationTestHelpers
         dbContext.Database.EnsureDeleted();
         dbContext.Database.EnsureCreated();
 
-        List<(string, bool)> userDetails = [("accountsetupnotcomplete@test.com", false), ("test@test.com", true)];
+        List<(string, bool)> userDetails = [(TestUserNoAccountEmail, false), (TestUserEmail, true)];
         foreach (var (email, accountSetupComplete) in userDetails)
         {
 
@@ -81,6 +77,8 @@ internal static class IntegrationTestHelpers
 
             dbContext.Users.Add(user);
             dbContext.SaveChanges();
+
+            if (!accountSetupComplete) continue;
 
             user = dbContext.Users.First(u => u.Email == email);
 

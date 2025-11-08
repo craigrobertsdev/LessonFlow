@@ -43,16 +43,16 @@ else if (AccountSetupState is not null)
                         @switch (_accountSetupStep)
                         {
                             case AccountSetupStep.BasicInfo:
-                                <BasicInfoForm SaveChanges="SaveAccountSetupState" />
+                                <BasicInfoForm />
                                 break;
                             case AccountSetupStep.Subjects:
-                                <SubjectsForm Subjects="_subjectNames" SaveChanges="SaveAccountSetupState" />
+                                <SubjectsForm Subjects="_subjectNames" />
                                 break;
                             case AccountSetupStep.Timing:
-                                <TimingForm SaveChanges="SaveAccountSetupState" />
+                                <TimingForm />
                                 break;
                             case AccountSetupStep.Schedule:
-                                <ScheduleForm SaveChanges="SaveAccountSetupState" CompleteAccountSetup="CompleteAccountSetup" />
+                                <ScheduleForm CompleteAccountSetup="CompleteAccountSetup" />
                                 break;
                         }
                     </div>

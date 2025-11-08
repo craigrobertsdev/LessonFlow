@@ -18,7 +18,9 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Radzen;
 using LessonFlow.Domain.YearPlans;
-using LessonFlow.Database;
+using AngleSharp.Dom;
+using LessonFlow.Components.Shared;
+using Microsoft.JSInterop;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
 public class LessonPlannerTests : TestContext
@@ -30,6 +32,8 @@ public class LessonPlannerTests : TestContext
         _appState = CreateAppState();
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
+        JSInterop.SetupVoid("ModalFunctions.showModal", _ => true);
+        JSInterop.SetupVoid("ModalFunctions.closeModal", _ => true);
     }
 
     [Fact]
@@ -327,7 +331,7 @@ public class LessonPlannerTests : TestContext
     {
         var appState = CreateAppState();
         AddThreeSubjectsToYearPlan(appState.CurrentYearPlan);
-        var component = RenderLessonPlanner(appState,  TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
 
         component.Find("#edit-lesson-plan").Click();
         var selectSubject = component.Find("select#subject-name");
@@ -354,20 +358,33 @@ public class LessonPlannerTests : TestContext
     [Fact]
     public void SaveLessonPlan_WhenChangesOverlapLaterPlannedLesson_ShouldConfirmOverwrite()
     {
-        //var appState = CreateAppState();
-        //var lessonPlanRepository = new Mock<ILessonPlanRepository>();
-        //lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), 2, default))
-        //   .ReturnsAsync(new LessonPlan(appState.CurrentYearPlan, new Subject([], "Science"), PeriodType.Lesson, "", 1, 2, new DateOnly(2025, 1, 29), []));
-        //Services.AddScoped(sp => lessonPlanRepository.Object);
-        //var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
-        //component.Find("#edit-lesson-plan").Click();
-        //var selectNumberOfPeriods = component.Find("select#number-of-periods");
-        //selectNumberOfPeriods.Change("2");
-        //component.Find("#save-lesson-plan").Click();
-        //var overwriteDialog = component.FindComponent<Radzen.Dialog>();
-        //Assert.NotNull(overwriteDialog);
-        //Assert.Contains("The changes you made will overwrite an existing lesson plan.", overwriteDialog.Markup);
-        throw new NotImplementedException();
+        var appState = CreateAppState();
+
+        var lessonPlanRepository = new Mock<ILessonPlanRepository>();
+        var lessonPlan = new LessonPlan(It.IsAny<DayPlanId>(), new Subject([], "Science"), PeriodType.Lesson, "", 1, 2, new DateOnly(2025, 1, 29), []);
+        lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), 2, default))
+           .ReturnsAsync(lessonPlan);
+        lessonPlanRepository.Setup(r => r.GetConflictingLessonPlans(It.IsAny<DayPlanId>(), It.IsAny<LessonPlan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync([lessonPlan]);
+
+        Services.AddScoped(sp => lessonPlanRepository.Object);
+        var component = RenderLessonPlanner(appState, 2025, 1, 29, 1);
+
+        var noOverwriteDialogBefore = () => component.Find("#overwrite-confirmation-dialog");
+
+        component.Find("#edit-lesson-plan").Click();
+        var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        selectNumberOfPeriods.Change("2");
+        component.Find("#save-lesson-plan").Click();
+
+        Assert.Throws<ElementNotFoundException>(noOverwriteDialogBefore);
+
+        var overwriteDialog = component.FindComponent<ConfirmationDialog>();
+        Assert.NotNull(overwriteDialog);
+        Assert.Equal("Confirm Overwrite", overwriteDialog.Instance.Title);
+        Assert.NotNull(component.Find("dialog#confirm-dialog"));
+
+        Assert.Single(JSInterop.Invocations, i => i.Identifier == "ModalFunctions.showModal");
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
@@ -402,9 +419,9 @@ public class LessonPlannerTests : TestContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(TestYear);
 
-        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState);
+        var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
         var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
-        for (int i  = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
         {
             var date = FirstDateOfSchool.AddDays(i);
             var dayPlan = new DayPlan(weekPlanner.Id, date, [], []);
@@ -420,7 +437,7 @@ public class LessonPlannerTests : TestContext
             new Subject("Science", [], "")
         };
 
-        var subject = subjects.First(s => s.Name == "English")  ;
+        var subject = subjects.First(s => s.Name == "English");
         yearPlanRepository.Setup(r => r.GetWeekPlanner(It.IsAny<YearPlanId>(), FirstDateOfSchool, default))
             .ReturnsAsync(weekPlanner);
         yearPlanRepository.Setup(r => r.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()))
@@ -429,6 +446,8 @@ public class LessonPlannerTests : TestContext
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
            [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
+        lessonPlanRepository.Setup(r => r.GetConflictingLessonPlans(It.IsAny<DayPlanId>(), It.IsAny<LessonPlan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<LessonPlan>());
 
         subjectRepository.Setup(cr => cr.GetSubjectById(It.IsAny<SubjectId>(), It.IsAny<CancellationToken>())).ReturnsAsync(curriculumService.CurriculumSubjects.First(s => s.Name == "Mathematics"));
 
