@@ -45,8 +45,8 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
 
         this.AddTestAuthorization()
-            .SetAuthorized("test@test.com")
-            .SetClaims(new Claim(ClaimTypes.Name, "test@test.com"));
+            .SetAuthorized(TestUserEmail)
+            .SetClaims(new Claim(ClaimTypes.Name, TestUserEmail));
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
     [Fact]
     public async Task SaveLessonPlan_WhenPreExistingLessonPlan_ShouldUpdateThatLessonPlan()
     {
-        var dayPlan = _dbContext.Users.First(u => u.Email == "test@test.com")
+        var dayPlan = _dbContext.Users.First(u => u.Email == TestUserEmail)
             .YearPlans.First(yd => yd.CalendarYear == TestYear)
                 .WeekPlanners.First().DayPlans.First();
         var subject = _dbContext.Subjects.First(s => s.Name == "English");

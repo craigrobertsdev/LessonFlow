@@ -2,11 +2,15 @@
 using Bunit.TestDoubles;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
+using LessonFlow.Domain.Enums;
+using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Shared;
+using LessonFlow.Shared.Extensions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
@@ -14,6 +18,8 @@ using System.Security.Claims;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.UI;
+
+[Collection("Non-ParallelTests")]
 public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
     private readonly ApplicationDbContext _dbContext;
@@ -79,9 +85,32 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
     }
 
     [Fact]
-    public async Task HandleSaveChanges_WhenExistingLessonPlan_ShouldCreateAndPersistNewLessonPlanWithChanges()
+    public async Task HandleSaveChanges_WhenExistingWeekPlanner_ShouldUpdate()
     {
-        throw new NotImplementedException();
+        var appState = await CreateAppState();
+        appState.CurrentYear = TestYear;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
+
+        var component = RenderWeekPlanner(appState);
+
+        component.Find("#edit-week-planner").Click();
+        component.Find("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
+        await component.Find("#save-changes").ClickAsync(new());
+
+        var db = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var yearPlan = db.YearPlans.First(yp => yp.Id == appState.CurrentYearPlan.Id);
+
+        var weekPlannerFromYearPlan = yearPlan.GetWeekPlanner(FirstDateOfSchool);
+        Assert.NotNull(weekPlannerFromYearPlan);
+        Assert.Equal("Yard duty", weekPlannerFromYearPlan!.GetDayPlan(FirstDateOfSchool)!.BeforeSchoolDuty);
+
+        var weekPlannerFromDb = db.WeekPlanners
+            .Where(wp => wp.YearPlanId == appState.CurrentYearPlan.Id)
+            .FirstOrDefault(wp => wp.WeekStart == weekPlannerFromYearPlan.WeekStart);
+
+        Assert.NotNull(weekPlannerFromDb);
+        Assert.Equal("Yard duty", weekPlannerFromDb!.GetDayPlan(FirstDateOfSchool)!.BeforeSchoolDuty);
     }
 
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlanner(AppState appState)

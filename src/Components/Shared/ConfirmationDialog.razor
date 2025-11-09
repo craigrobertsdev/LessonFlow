@@ -1,0 +1,36 @@
+﻿@using LessonFlow.Components.Enums
+
+<dialog id="confirm-dialog" @ref=Element>
+    <p>@Title</p>
+    <p>@Message</p>
+    <div>
+        <Button Type="ButtonType.Submit" OnClick="Confirm">Confirm</Button>
+        <Button Type="ButtonType.Cancel" OnClick="Cancel">Cancel</Button>
+    </div>
+</dialog>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Message { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    [Inject] IJSRuntime JSRuntime { get; set; } = default!;
+
+    public ElementReference? Element { get; set; }
+
+    public async Task Show() => await JSRuntime.InvokeVoidAsync("ModalFunctions.showModal", Element);
+    public async Task Close() => await JSRuntime.InvokeVoidAsync("ModalFunctions.close", Element);
+
+    private async Task Confirm()
+    {
+        await OnConfirm.InvokeAsync();
+        await Close();
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        await Close();
+    }
+}

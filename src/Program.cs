@@ -7,8 +7,6 @@ using LessonFlow.Services;
 using LessonFlow.Services.CurriculumParser.SACurriculum;
 using LessonFlow.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Radzen;
 
 namespace LessonFlow;

@@ -13,7 +13,7 @@ public interface ILessonPlanRepository
     Task<LessonPlan?> GetLessonPlan(DayPlanId dayPlanId, DateOnly date, int period, CancellationToken ct);
     Task<List<LessonPlan>> GetLessonPlan(DayPlanId dayPlanId, DateOnly date,
         CancellationToken ct);
-
+    Task<List<LessonPlan>> GetConflictingLessonPlans(DayPlanId dayPlanId, LessonPlan lessonPlan, CancellationToken ct);
     Task<List<LessonPlan>> GetByDate(DayPlanId dayPlanId, DateOnly date, CancellationToken ct);
     Task<bool> UpdateLessonPlan(LessonPlan lessonPlan, CancellationToken ct);
     void DeleteLessonPlans(IEnumerable<LessonPlan> lessonPlans);

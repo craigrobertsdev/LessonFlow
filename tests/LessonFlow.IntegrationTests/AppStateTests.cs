@@ -1,11 +1,9 @@
 ﻿using Bunit;
 using Bunit.TestDoubles;
-using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -15,6 +13,8 @@ using TestComponents;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests;
+
+[Collection("Non-ParallelTests")]
 public class AppStateTests : TestContext, IClassFixture<CustomWebApplicationFactory>
 {
         

@@ -1,4 +1,5 @@
-﻿using LessonFlow.Domain.Curriculum;
+﻿using LessonFlow.Components.Shared;
+using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
@@ -28,6 +29,8 @@ public partial class LessonPlanner
     [Inject] public IUnitOfWorkFactory UnitOfWorkFactory { get; set; } = default!;
 
     private bool _loading = true;
+    private bool _dayPlanFromDb;
+    private bool _cancelSaveOperation;
 
     internal LessonPlan LessonPlan { get; set; } = default!;
     internal DateOnly Date { get; set; }
@@ -39,8 +42,7 @@ public partial class LessonPlanner
     internal List<Subject> SubjectsTaught => AppState.CurrentYearPlan.SubjectsTaught;
     internal bool IsInEditMode { get; set; }
     internal LessonPlan? EditingLessonPlan { get; set; }
-
-    private bool _dayPlanFromDb;
+    internal ConfirmationDialog? OverwriteConfirmationDialog { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,7 +223,10 @@ public partial class LessonPlanner
     private async Task SaveChanges()
     {
         if (EditingLessonPlan is null) return;
+
         var ct = new CancellationToken();
+        await CheckLessonPlanOverwrite(ct);
+        if (_cancelSaveOperation) return;
 
         LessonPlan.UpdateValuesFrom(EditingLessonPlan);
 
@@ -265,6 +270,21 @@ public partial class LessonPlanner
 
         IsInEditMode = false;
         EditingLessonPlan = null;
+    }
+
+    private async Task CheckLessonPlanOverwrite(CancellationToken ct)
+    {
+        if (EditingLessonPlan is null || EditingLessonPlan.NumberOfPeriods == 1) return;
+
+        var conflictingLessonPlans = await LessonPlanRepository.GetConflictingLessonPlans(DayPlan.Id, EditingLessonPlan, ct);
+        if (conflictingLessonPlans.Count == 0) return;
+
+        await OverwriteConfirmationDialog!.Show();
+    }
+
+    private async Task OpenModal()
+    {
+        await OverwriteConfirmationDialog.Show();
     }
 
     void LessonTextChanged(string? text)

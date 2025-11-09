@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LessonFlow.UnitTests", "tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LessonFlow.IntegrationTests", "tests\LessonFlow.IntegrationTests\LessonFlow.IntegrationTests.csproj", "{10397A95-3A65-C7E2-4019-997651F07940}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestComponents", "tests\TestComponents\TestComponents.csproj", "{8041E9C0-5837-43E4-92FC-609F0259E145}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{10397A95-3A65-C7E2-4019-997651F07940}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10397A95-3A65-C7E2-4019-997651F07940}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10397A95-3A65-C7E2-4019-997651F07940}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8041E9C0-5837-43E4-92FC-609F0259E145}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8041E9C0-5837-43E4-92FC-609F0259E145}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8041E9C0-5837-43E4-92FC-609F0259E145}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8041E9C0-5837-43E4-92FC-609F0259E145}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

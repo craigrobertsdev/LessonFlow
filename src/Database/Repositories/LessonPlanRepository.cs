@@ -70,6 +70,17 @@ public class LessonPlanRepository(IDbContextFactory<ApplicationDbContext> factor
             .ToListAsync(ct);
     }
 
+    public async Task<List<LessonPlan>> GetConflictingLessonPlans(DayPlanId dayPlanId, LessonPlan lessonPlan, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.LessonPlans
+            .Where(lp => lp.DayPlanId == dayPlanId)
+            .Where(lp => lp.LessonDate == lessonPlan.LessonDate)
+            .Where(lp => lp.Id != lessonPlan.Id)
+            .Where(lp => lp.StartPeriod > lessonPlan.StartPeriod && lp.StartPeriod <= lessonPlan.StartPeriod + lessonPlan.NumberOfPeriods)
+            .ToListAsync(ct);
+    }
+
     public async Task<List<LessonPlan>> GetByDate(DayPlanId dayPlanId, DateOnly date,
         CancellationToken ct)
     {

@@ -491,6 +491,8 @@ public partial class WeekPlannerPage : ComponentBase
                 originalDayPlan.BreakDutyOverrides = dayPlan.BreakDutyOverrides;
                 originalDayPlan.BeforeSchoolDuty = dayPlan.BeforeSchoolDuty;
                 originalDayPlan.AfterSchoolDuty = dayPlan.AfterSchoolDuty;
+
+                weekPlanner.UpdateDayPlan(originalDayPlan);
             }
 
             WeekPlanner = weekPlanner;

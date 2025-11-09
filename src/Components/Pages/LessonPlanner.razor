@@ -108,4 +108,10 @@
             </div>
         </div>
     }
+
+    <button @onclick="OpenModal">Open Modal</button>
+
+    <ConfirmationDialog @ref="OverwriteConfirmationDialog" Title="Confirm Overwrite"
+                        Message="The duration of this lesson now conflicts with lessons planned later in this day"
+                        OnConfirm="@(() => _cancelSaveOperation = false)" OnCancel="@(() => _cancelSaveOperation = true)" />
 </div>
