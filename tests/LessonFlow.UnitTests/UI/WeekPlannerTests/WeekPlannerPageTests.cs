@@ -194,7 +194,8 @@ public class WeekPlannerPageTests : TestContext
     [Fact]
     public void SetRowSpans_WithMultiPeriodLessonAfterFirstBreak_ShouldSetCorrectly()
     {
-        _appState.CurrentYearPlan!.WeekPlannerTemplate = CreateWeekPlannerTemplateWithMultiPeriodLessons();
+        var yearPlan = _appState.CurrentYearPlan!;
+        yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, CreateWeekPlannerTemplateWithMultiPeriodLessons());
         var component = RenderWeekPlannerPage(_appState);
 
         var col = component.Instance.GridCols[0];
@@ -594,7 +595,7 @@ public class WeekPlannerPageTests : TestContext
         var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
-        yearPlan.WeekPlannerTemplate = weekPlannerTemplate;
+        yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, weekPlannerTemplate);
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
         appState.User = new User() { AccountSetupComplete = true };
 

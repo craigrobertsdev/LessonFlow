@@ -3,6 +3,7 @@ using LessonFlow.Shared.Exceptions;
 using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.Shared;
 using LessonFlow.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace LessonFlow.Services;
 
@@ -154,7 +155,7 @@ public class TermDatesService : ITermDatesService
 
     private Dictionary<int, List<SchoolTerm>> LoadTermDates()
     {
-        var termDates = _dbContext.TermDates.ToList();
+        var termDates = _dbContext.TermDates.AsNoTracking().ToList();
         if (termDates.Count == 0)
         {
             return [];

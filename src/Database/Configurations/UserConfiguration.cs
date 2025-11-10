@@ -30,7 +30,8 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
 
         builder.HasOne(a => a.WeekPlannerTemplate)
             .WithOne()
-            .HasForeignKey<AccountSetupState>("WeekPlannerTemplateId");
+            .HasForeignKey<AccountSetupState>("WeekPlannerTemplateId")
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Property(x => x.YearLevelsTaught)
             .HasConversion(
@@ -59,7 +60,5 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
             .HasColumnName("WorkingDays")
             .HasMaxLength(128)
             .IsRequired();
-
-        builder.Navigation(x => x.WeekPlannerTemplate).AutoInclude();
     }
 }

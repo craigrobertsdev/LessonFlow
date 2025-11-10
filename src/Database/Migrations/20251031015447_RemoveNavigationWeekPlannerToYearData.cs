@@ -10,28 +10,28 @@ namespace LessonFlow.Database.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_WeekPlanners_YearPlanId",
-                table: "WeekPlanners");
+            //migrationBuilder.DropIndex(
+            //    name: "IX_WeekPlanners_YearPlanId",
+            //    table: "WeekPlanners");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_WeekPlanners_YearPlanId_WeekStart",
-                table: "WeekPlanners",
-                columns: new[] { "YearPlanId", "WeekStart" },
-                unique: true);
+            //migrationBuilder.CreateIndex(
+            //    name: "IX_WeekPlanners_YearPlanId_WeekStart",
+            //    table: "WeekPlanners",
+            //    columns: new[] { "YearPlanId", "WeekStart" },
+            //    unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_WeekPlanners_YearPlanId_WeekStart",
-                table: "WeekPlanners");
+            //migrationBuilder.DropIndex(
+            //    name: "IX_WeekPlanners_YearPlanId_WeekStart",
+            //    table: "WeekPlanners");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_WeekPlanners_YearPlanId",
-                table: "WeekPlanners",
-                column: "YearPlanId");
+            //migrationBuilder.CreateIndex(
+            //    name: "IX_WeekPlanners_YearPlanId",
+            //    table: "WeekPlanners",
+            //    column: "YearPlanId");
         }
     }
 }

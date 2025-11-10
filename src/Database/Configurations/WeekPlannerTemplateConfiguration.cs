@@ -16,10 +16,6 @@ public class WeekPlannerTemplateConfiguration : IEntityTypeConfiguration<WeekPla
         builder.Property(dp => dp.Id)
             .HasConversion(new WeekPlannerTemplateId.StronglyTypedIdEfValueConverter());
 
-
-        //builder.HasOne<AccountSetupState>()
-        //    .WithOne(a => a.WeekPlannerTemplate);
-
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(dp => dp.UserId);

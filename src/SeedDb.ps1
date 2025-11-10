@@ -9,11 +9,7 @@ $schemaFile = "./schema.sql"
 Write-Host "Dropping and recreating database"
 
 $env:PGPASSWORD = $dbPassword
-& 'C:\Program Files\PostgreSQL\17\bin\dropdb.exe' -h $dbHost -p $dbPort -U $dbUser --if-exists $dbName
-# & 'C:\Program Files\PostgreSQL\17\bin\createdb.exe' -h $dbHost -p $dbPort -U $dbUser $dbName
-
-# Write-Host "Applying schema"
-# & 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -h $dbHost -p $dbPort -U $dbUser -d $dbName -f $schemaFile
+& 'C:\Program Files\PostgreSQL\17\bin\dropdb.exe' -f -h $dbHost -p $dbPort -U $dbUser --if-exists $dbName
 
 Write-Host "Starting API..."
 $apiProcess = Start-Process "dotnet" -ArgumentList "run" -PassThru

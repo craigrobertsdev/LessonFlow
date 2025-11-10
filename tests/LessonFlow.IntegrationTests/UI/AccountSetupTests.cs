@@ -66,7 +66,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
     }
 
     [Fact]
-    public async Task AccountSetup_WhenUserCompletesProcess_DataCorrectlySaved()
+    public async Task CompleteAccountSetup_WhenDataValid_DataCorrectlySaved()
     {
         var user = _dbContext.Users
             .Include(u => u.AccountSetupState)
@@ -124,6 +124,8 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         var accountSetupState = new AccountSetupState(user.Id);
         var weekPlannerTemplate = IntegrationTestHelpers.GenerateWeekPlannerTemplate(user.Id);
         var weekPlannerTemplateId = weekPlannerTemplate.Id;
+        weekPlannerTemplate.DayTemplates[0].BeforeSchoolDuty = "Before";
+        weekPlannerTemplate.DayTemplates[0].AfterSchoolDuty = "After";
         accountSetupState.WeekPlannerTemplate = weekPlannerTemplate;
         accountSetupState.SetSchoolName("Test");
         accountSetupState.SetCalendarYear(2025);
@@ -146,6 +148,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         var yearPlan = db.YearPlans
             .Where(yp => yp.UserId == user.Id)
             .Include(yp => yp.SubjectsTaught)
+            .Include(yp => yp.WeekPlannerTemplate)
             .FirstOrDefault();
 
         Assert.NotNull(yearPlan);
@@ -154,6 +157,15 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         subjectsTaught.Sort();
         subjectNames.Sort();
         Assert.Equal(subjectNames, subjectsTaught);
+
+        weekPlannerTemplate = yearPlan.WeekPlannerTemplate;
+        weekPlannerTemplate.DayTemplates.Sort((d1, d2) => d1.DayOfWeek.CompareTo(d2.DayOfWeek));
+        Assert.NotNull(weekPlannerTemplate);
+        Assert.Equal(weekPlannerTemplateId, weekPlannerTemplate.Id);
+        Assert.Equal(5, weekPlannerTemplate.DayTemplates.Count);
+        Assert.Equal(8, weekPlannerTemplate.Periods.Count);
+        Assert.Equal("Before", weekPlannerTemplate.DayTemplates[0].BeforeSchoolDuty);
+        Assert.Equal("After", weekPlannerTemplate.DayTemplates[0].AfterSchoolDuty);
     }
 
     [Fact]
@@ -183,6 +195,16 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         user.AccountSetupState.WorkingDays.Sort();
         Assert.Equal(workingDays, user.AccountSetupState.WorkingDays);
     }
+
+    // There are 2 issues occurring during account setup.
+    // 1. When the user completes account setup, they are not redirected to weekplanner
+    // 2. No daytemplates are being saved to the database resulting in an exception when trying to initialise the weekplanner
+    
+    /*
+     * Need to update completed steps and current step when saving changes to accountsetupstate
+     * Remove errorText as a column in the database
+     * 
+     */
 
     private IRenderedComponent<AccountSetup> RenderAccountSetup()
     {

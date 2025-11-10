@@ -18,7 +18,8 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
     private Dictionary<(int term, int week), WeekPlanner> _weekPlannersByTermAndWeek = [];
     private Dictionary<DateOnly, WeekPlanner> _weekPlannersByWeekStart = [];
     public string SchoolName { get; private set; } = string.Empty;
-    public WeekPlannerTemplate WeekPlannerTemplate { get; set; }
+    public WeekPlannerTemplate WeekPlannerTemplate { get; private set; }
+    public WeekPlannerTemplateId WeekPlannerTemplateId { get; private set; }
     public Guid UserId { get; init; }
     public TermPlanner? TermPlanner { get; private set; }
     public int CalendarYear { get; init; }
@@ -156,6 +157,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         SchoolName = schoolName;
         CalendarYear = calendarYear;
         WeekPlannerTemplate = weekPlannerTemplate;
+        WeekPlannerTemplateId = weekPlannerTemplate.Id;
     }
 
     public YearPlan(Guid userId, AccountSetupState accountSetupState, List<Subject> subjects)
@@ -165,7 +167,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         SubjectsTaught = subjects;
         SchoolName = accountSetupState.SchoolName;
         CalendarYear = accountSetupState.CalendarYear;
-        WeekPlannerTemplate = accountSetupState.WeekPlannerTemplate;
+        WeekPlannerTemplateId = accountSetupState.WeekPlannerTemplate.Id;
         YearLevelsTaught = accountSetupState.YearLevelsTaught;
         YearLevelsTaught.Sort();
         WorkingDays = accountSetupState.WorkingDays;

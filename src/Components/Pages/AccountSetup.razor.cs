@@ -38,6 +38,13 @@ public partial class AccountSetup : ComponentBase, IDisposable
             NavigationManager.NavigateTo("/Account/Login", true);
         }
 
+        if (User is null)
+        {
+            _redirectToLogin = true;
+            NavigationManager.NavigateTo("/Account/Login", true);
+            return;
+        }
+
         if (User.AccountSetupComplete)
         {
             _redirectToWeekPlanner = true;

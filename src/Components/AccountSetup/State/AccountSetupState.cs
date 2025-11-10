@@ -75,7 +75,7 @@ public class AccountSetupState
         StartTime = startTime;
         EndTime = endTime;
         WeekPlannerTemplate.SetPeriods(periods);
-        
+
         NotifyStateChanged();
     }
 
@@ -93,11 +93,10 @@ public class AccountSetupState
         WorkingDays = newState.WorkingDays;
         StartTime = newState.StartTime;
         EndTime = newState.EndTime;
+        CompletedSteps = newState.CompletedSteps;
+        CurrentStep = newState.CurrentStep;
 
-        if (newState.WeekPlannerTemplate is not null)
-        {
-            WeekPlannerTemplate?.UpdateFrom(newState.WeekPlannerTemplate);
-        }
+        WeekPlannerTemplate.UpdateFrom(newState.WeekPlannerTemplate);
     }
 
     public void ClearError()

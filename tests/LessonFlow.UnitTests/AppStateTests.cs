@@ -66,6 +66,7 @@ public class AppStateTests
             .ReturnsAsync(() =>
             {
                 var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
+                yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, accountSetupState.WeekPlannerTemplate);
                 return yearPlan;
             });
 

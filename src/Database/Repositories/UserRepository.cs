@@ -4,7 +4,6 @@ using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Exceptions;
-using LessonFlow.Shared.Extensions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,14 +16,38 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         await using var context = await factory.CreateDbContextAsync(ct);
         var user = await context.Users
             .Where(u => u.Email == email)
-            .Include(u => u.AccountSetupState)
-            .Include(u => u.Resources)
-            .Include(u => u.YearPlans)
-            .AsSplitQuery()
-            .AsNoTracking()
+            //.Include(u => u.AccountSetupState)
+            //.Include(u => u.Resources)
+            //.Include(u => u.YearPlans)
+            //.AsSplitQuery()
+            //.AsNoTracking()
             .FirstOrDefaultAsync(ct);
 
-        return user;
+        if (user is null)
+        {
+            return null;
+        }
+
+        if (user.AccountSetupComplete)
+        {
+            return await context.Users
+                .Where(u => u.Email == email)
+                .Include(u => u.Resources)
+                .Include(u => u.YearPlans)
+                .AsSplitQuery()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ct);
+        }
+        else
+        {
+            return await context.Users
+                .Where(u => u.Email == email)
+                .Include(u => u.AccountSetupState)
+                .ThenInclude(a => a!.WeekPlannerTemplate)
+                .AsSplitQuery()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ct);
+        }
     }
 
     public async Task<AccountSetupState?> GetAccountSetupState(Guid userId,
@@ -60,13 +83,12 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
             return;
         }
 
+        var weekPlannerTemplate = await context.WeekPlannerTemplates
+            .Where(wp => wp.Id == user.AccountSetupState.WeekPlannerTemplate.Id)
+            .FirstOrDefaultAsync(ct);
+
         user.AccountSetupState.Update(newState);
 
-        if (newState.WeekPlannerTemplate is not null)
-        {
-            context.AttachIfNotTracked(newState.WeekPlannerTemplate);
-            user.AccountSetupState.WeekPlannerTemplate = newState.WeekPlannerTemplate;
-        }
 
         await context.SaveChangesAsync(ct);
     }
@@ -76,6 +98,8 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(CompleteAccountSetup)} must be called with a UnitOfWork");
         var user = await context.Users
             .Where(u => u.Id == userId)
+            .Include(u => u.AccountSetupState)
+                .ThenInclude(a => a!.WeekPlannerTemplate)
             .FirstOrDefaultAsync(ct);
 
         if (user is null)
@@ -91,7 +115,12 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
 
         user.CompleteAccountSetup();
 
-        context.Attach(yearPlan.WeekPlannerTemplate);
+        //var weekPlannerTemplateEntry = context.Entry(accountSetupState.WeekPlannerTemplate);
+        //if (weekPlannerTemplateEntry.State == EntityState.Detached)
+        //{
+        //    context.Attach(accountSetupState.WeekPlannerTemplate);
+        //}
+
         context.YearPlans.Add(yearPlan);
         await context.SaveChangesAsync(ct);
 

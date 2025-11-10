@@ -414,7 +414,7 @@ namespace LessonFlow.Database.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
-                    YearPlanId = table.Column<Guid>(type: "uuid", nullable: true)
+                    //YearPlanId = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -425,11 +425,11 @@ namespace LessonFlow.Database.Migrations
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_WeekPlannerTemplates_YearPlan_YearPlanId",
-                        column: x => x.YearPlanId,
-                        principalTable: "YearPlans",
-                        principalColumn: "Id");
+                    //table.ForeignKey(
+                    //    name: "FK_WeekPlannerTemplates_YearPlan_YearPlanId",
+                    //    column: x => x.YearPlanId,
+                    //    principalTable: "YearPlans",
+                    //    principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -1210,11 +1210,11 @@ namespace LessonFlow.Database.Migrations
                 table: "WeekPlannerTemplates",
                 column: "UserId");
 
-            migrationBuilder.CreateIndex(
-                name: "IX_WeekPlannerTemplates_YearPlanId",
-                table: "WeekPlannerTemplates",
-                column: "YearPlanId",
-                unique: true);
+            //migrationBuilder.CreateIndex(
+            //    name: "IX_WeekPlannerTemplates_YearPlanId",
+            //    table: "WeekPlannerTemplates",
+            //    column: "YearPlanId",
+            //    unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_YearPlan_UserId",

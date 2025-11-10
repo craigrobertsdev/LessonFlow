@@ -15,41 +15,42 @@ public class YearPlanConfiguration : IEntityTypeConfiguration<YearPlan>
 {
     public void Configure(EntityTypeBuilder<YearPlan> builder)
     {
-        builder.HasKey(yd => yd.Id);
+        builder.HasKey(yp => yp.Id);
 
-        builder.Property(yd => yd.Id)
+        builder.Property(yp => yp.Id)
             .HasColumnName("Id")
             .HasConversion(new StronglyTypedIdConverter.YearPlanIdConverter());
 
-        builder.HasMany(yd => yd.Students)
+        builder.HasMany(yp => yp.Students)
             .WithOne();
 
-        builder.HasOne(yd => yd.TermPlanner)
+        builder.HasOne(yp => yp.TermPlanner)
             .WithOne()
             .HasForeignKey<TermPlanner>(tp => tp.YearPlanId);
 
         builder.HasOne<User>()
             .WithMany(u => u.YearPlans)
-            .HasForeignKey(yd => yd.UserId);
+            .HasForeignKey(yp => yp.UserId);
 
-        builder.HasMany(yd => yd.WeekPlanners)
+        builder.HasMany(yp => yp.WeekPlanners)
             .WithOne()
             .HasForeignKey(wp => wp.YearPlanId);
 
-        builder.HasOne(yd => yd.WeekPlannerTemplate)
+        builder.HasOne(yp => yp.WeekPlannerTemplate)
             .WithOne()
-            .HasForeignKey<WeekPlannerTemplate>("YearPlanId");
+            .HasForeignKey<YearPlan>(yp => yp.WeekPlannerTemplateId);
+            //.HasForeignKey<WeekPlannerTemplate>("YearPlanId");
 
-        builder.HasMany(yd => yd.SubjectsTaught)
+        builder.HasMany(yp => yp.SubjectsTaught)
             .WithMany();
 
-        builder.Navigation(yd => yd.WeekPlannerTemplate).AutoInclude();
-        builder.Navigation(yd => yd.Students).AutoInclude();
-        builder.Navigation(yd => yd.SubjectsTaught).AutoInclude();
-        builder.Navigation(yd => yd.WeekPlanners).AutoInclude();
+        builder.Navigation(yp => yp.WeekPlannerTemplate).AutoInclude();
+        builder.Navigation(yp => yp.Students).AutoInclude();
+        builder.Navigation(yp => yp.SubjectsTaught).AutoInclude();
+        builder.Navigation(yp => yp.WeekPlanners).AutoInclude();
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
-        builder.Property(yd => yd.WorkingDays)
+        builder.Property(yp => yp.WorkingDays)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
                 v => JsonSerializer.Deserialize<List<DayOfWeek>>(v, (JsonSerializerOptions)null),
@@ -58,7 +59,7 @@ public class YearPlanConfiguration : IEntityTypeConfiguration<YearPlan>
                     c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     c => c.ToList()));
 
-        builder.Property(yd => yd.YearLevelsTaught)
+        builder.Property(yp => yp.YearLevelsTaught)
             .HasMaxLength(100)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),

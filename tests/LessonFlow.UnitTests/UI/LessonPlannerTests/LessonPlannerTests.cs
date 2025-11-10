@@ -451,7 +451,7 @@ public class LessonPlannerTests : TestContext
 
         subjectRepository.Setup(cr => cr.GetSubjectById(It.IsAny<SubjectId>(), It.IsAny<CancellationToken>())).ReturnsAsync(curriculumService.CurriculumSubjects.First(s => s.Name == "Mathematics"));
 
-        yearPlan.WeekPlannerTemplate = weekPlannerTemplate;
+        yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, weekPlannerTemplate);
         yearPlan.SubjectsTaught.AddRange(subjects);
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
 
