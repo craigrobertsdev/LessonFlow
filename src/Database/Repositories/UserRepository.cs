@@ -115,11 +115,19 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
 
         user.CompleteAccountSetup();
 
-        //var weekPlannerTemplateEntry = context.Entry(accountSetupState.WeekPlannerTemplate);
-        //if (weekPlannerTemplateEntry.State == EntityState.Detached)
-        //{
-        //    context.Attach(accountSetupState.WeekPlannerTemplate);
-        //}
+        var weekPlannerTemplate = await context.WeekPlannerTemplates
+            .Where(wp => wp.Id == accountSetupState.WeekPlannerTemplate.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (weekPlannerTemplate is null)
+        {
+            context.WeekPlannerTemplates.Add(accountSetupState.WeekPlannerTemplate);
+        }
+        else
+        {
+            weekPlannerTemplate.UpdateFrom(accountSetupState.WeekPlannerTemplate);
+        }
+        await context.SaveChangesAsync(ct);
 
         context.YearPlans.Add(yearPlan);
         await context.SaveChangesAsync(ct);
@@ -191,12 +199,14 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
-        return await context.YearPlans
+        var yearPlan = await context.YearPlans
             .Where(y => y.UserId == userId && y.CalendarYear == calendarYear)
             .Include(yd => yd.WeekPlannerTemplate)
             .Include(yd => yd.SubjectsTaught)
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
+
+        return yearPlan;
     }
 
     public void Delete(User user)

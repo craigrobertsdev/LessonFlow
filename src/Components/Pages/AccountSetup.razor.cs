@@ -143,6 +143,9 @@ public partial class AccountSetup : ComponentBase, IDisposable
         var yearPlan = await UserRepository.CompleteAccountSetup(AppState.User.Id, AccountSetupState, new CancellationToken());
 
         AppState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
+        AppState.User.CompleteAccountSetup();
+
+        NavigationManager.NavigateTo("/WeekPlanner");
     }
 
     public void Dispose()

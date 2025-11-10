@@ -160,6 +160,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         WeekPlannerTemplateId = weekPlannerTemplate.Id;
     }
 
+#pragma warning disable CS8618 // This function is called during database operation with WeekPlannerTemplate explicitly not set to prevent tracking issues.
     public YearPlan(Guid userId, AccountSetupState accountSetupState, List<Subject> subjects)
     {
         Id = new YearPlanId(Guid.NewGuid());

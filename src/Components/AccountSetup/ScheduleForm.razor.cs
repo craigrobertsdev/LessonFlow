@@ -288,7 +288,6 @@ public partial class ScheduleForm
             State.ClearError();
 
             await CompleteAccountSetup();
-            NavigationManager.NavigateTo("/WeekPlanner");
         }
         catch (Exception ex)
         {

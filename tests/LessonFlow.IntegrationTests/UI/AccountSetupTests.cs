@@ -196,16 +196,6 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         Assert.Equal(workingDays, user.AccountSetupState.WorkingDays);
     }
 
-    // There are 2 issues occurring during account setup.
-    // 1. When the user completes account setup, they are not redirected to weekplanner
-    // 2. No daytemplates are being saved to the database resulting in an exception when trying to initialise the weekplanner
-    
-    /*
-     * Need to update completed steps and current step when saving changes to accountsetupstate
-     * Remove errorText as a column in the database
-     * 
-     */
-
     private IRenderedComponent<AccountSetup> RenderAccountSetup()
     {
         var accountSetupComponent = RenderComponent<AccountSetup>();
