@@ -48,7 +48,7 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
                 v => string.Join(',', v),
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
             .HasColumnName("SubjectsTaught")
-            .HasMaxLength(256)
+            .HasMaxLength(512)
             .IsRequired();
 
         builder.Property(x => x.WorkingDays)
@@ -60,5 +60,8 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
             .HasColumnName("WorkingDays")
             .HasMaxLength(128)
             .IsRequired();
+
+        builder.Ignore(a => a.Error);
+        builder.Ignore(a => a.IsLoading);
     }
 }
