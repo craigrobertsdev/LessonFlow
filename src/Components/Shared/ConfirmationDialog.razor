@@ -19,8 +19,8 @@
 
     public ElementReference? Element { get; set; }
 
-    public async Task Show() => await JSRuntime.InvokeVoidAsync("ModalFunctions.showModal", Element);
-    public async Task Close() => await JSRuntime.InvokeVoidAsync("ModalFunctions.close", Element);
+    public async Task Open() => await JSRuntime.InvokeVoidAsync("ModalFunctions.openModal", Element);
+    public async Task Close() => await JSRuntime.InvokeVoidAsync("ModalFunctions.closeModal", Element);
 
     private async Task Confirm()
     {

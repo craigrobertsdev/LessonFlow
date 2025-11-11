@@ -279,12 +279,12 @@ public partial class LessonPlanner
         var conflictingLessonPlans = await LessonPlanRepository.GetConflictingLessonPlans(DayPlan.Id, EditingLessonPlan, ct);
         if (conflictingLessonPlans.Count == 0) return;
 
-        await OverwriteConfirmationDialog!.Show();
+        await OverwriteConfirmationDialog!.Open();
     }
 
     private async Task OpenModal()
     {
-        await OverwriteConfirmationDialog.Show();
+        await OverwriteConfirmationDialog.Open();
     }
 
     void LessonTextChanged(string? text)
