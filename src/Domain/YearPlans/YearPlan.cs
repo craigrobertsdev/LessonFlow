@@ -108,33 +108,39 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
 
     public void AddWeekPlanner(WeekPlanner weekPlanner)
     {
-        RebuildWeekPlannerDictionaries();
-
-        if (_weekPlannersByTermAndWeek.TryAdd((weekPlanner.TermNumber, weekPlanner.WeekNumber), weekPlanner) && _weekPlannersByWeekStart.TryAdd(weekPlanner.WeekStart, weekPlanner))
+        if (!WeekPlanners.Any(wp => wp.WeekStart == weekPlanner.WeekStart))
         {
             WeekPlanners.Add(weekPlanner);
+            _weekPlannersByTermAndWeek.Add((weekPlanner.TermNumber, weekPlanner.WeekNumber), weekPlanner);
+            _weekPlannersByWeekStart.Add(weekPlanner.WeekStart, weekPlanner);
+            BuildDictionaries();
         }
-    }
-
-    private void RebuildWeekPlannerDictionaries()
-    {
-        if (_weekPlannersByTermAndWeek.Count != WeekPlanners.Count || _weekPlannersByWeekStart.Count != WeekPlanners.Count)
+        else
         {
-            _weekPlannersByWeekStart = WeekPlanners.ToDictionary(wp => wp.WeekStart, wp => wp);
-            _weekPlannersByTermAndWeek = WeekPlanners.ToDictionary(wp => (wp.TermNumber, wp.WeekNumber), wp => wp);
+            BuildDictionaries();
+            var existingWeekPlanner = GetWeekPlanner(weekPlanner.TermNumber, weekPlanner.WeekNumber);
+            existingWeekPlanner!.UpdateDayPlans(weekPlanner.DayPlans);
         }
     }
 
     public WeekPlanner? GetWeekPlanner(DateOnly weekStart)
     {
-        RebuildWeekPlannerDictionaries();
+        if (_weekPlannersByWeekStart.Count == 0)
+        {
+            BuildDictionaries();
+        }
+
         _weekPlannersByWeekStart.TryGetValue(weekStart, out var weekPlanner);
         return weekPlanner;
     }
 
     public WeekPlanner? GetWeekPlanner(int termNumber, int weekNumber)
     {
-        RebuildWeekPlannerDictionaries();
+        if (_weekPlannersByTermAndWeek.Count == 0)
+        {
+            BuildDictionaries();
+        }
+
         _weekPlannersByTermAndWeek.TryGetValue((termNumber, weekNumber), out var weekPlanner);
         return weekPlanner;
     }
@@ -150,6 +156,12 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         return weekPlanner.DayPlans.First(dp => dp.Date == date); // Should never be null as WeekPlanner creates DayPlans for all days in its constructor
     }
 
+    private void BuildDictionaries()
+    {
+        _weekPlannersByWeekStart = WeekPlanners.ToDictionary(wp => wp.WeekStart, wp => wp);
+        _weekPlannersByTermAndWeek = WeekPlanners.ToDictionary(wp => (wp.TermNumber, wp.WeekNumber), wp => wp);
+    }
+
     public YearPlan(Guid userId, WeekPlannerTemplate weekPlannerTemplate, string schoolName, int calendarYear)
     {
         Id = new YearPlanId(Guid.NewGuid());
@@ -158,6 +170,8 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         CalendarYear = calendarYear;
         WeekPlannerTemplate = weekPlannerTemplate;
         WeekPlannerTemplateId = weekPlannerTemplate.Id;
+
+        BuildDictionaries();
     }
 
 #pragma warning disable CS8618 // This function is called during database operation with WeekPlannerTemplate explicitly not set to prevent tracking issues.
@@ -172,12 +186,13 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         YearLevelsTaught = accountSetupState.YearLevelsTaught;
         YearLevelsTaught.Sort();
         WorkingDays = accountSetupState.WorkingDays;
+
+        BuildDictionaries();
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private YearPlan()
     {
-        _weekPlannersByWeekStart ??= WeekPlanners.ToDictionary(wp => wp.WeekStart, wp => wp);
-        _weekPlannersByTermAndWeek ??= WeekPlanners.ToDictionary(wp => (wp.TermNumber, wp.WeekNumber), wp => wp);
+        BuildDictionaries();
     }
 }

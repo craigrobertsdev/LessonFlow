@@ -27,6 +27,7 @@ public sealed class LessonPlan : Entity<LessonPlanId>, IAggregateRoot, ILessonPe
     public List<LessonComment> Comments { get; private set; } = [];
     public string SubjectName => Subject.Name;
     public List<TodoItem> ToDos { get; private set; } = [];
+    public bool LessonIsPlanned => true;
 
     public void AddResource(Resource resource)
     {

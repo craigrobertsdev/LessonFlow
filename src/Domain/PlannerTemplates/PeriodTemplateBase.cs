@@ -9,6 +9,7 @@ public abstract class PeriodTemplateBase : IPlannerPeriod
     public PeriodType PeriodType { get; private set; }
     public int StartPeriod { get; set; }
     public int NumberOfPeriods { get; set; }
+    public bool LessonIsPlanned => false;
 
     protected PeriodTemplateBase(PeriodType periodType, int startPeriod, int numberOfPeriods)
     {

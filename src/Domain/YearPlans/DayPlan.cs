@@ -21,8 +21,8 @@ public class DayPlan : Entity<DayPlanId>
     public List<LessonPlan> LessonPlans { get; set; } = [];
     public List<SchoolEvent> SchoolEvents { get; set; } = [];
     public Dictionary<int, string> BreakDutyOverrides { get; set; } = [];
-    public string? BeforeSchoolDuty { get; set; } 
-    public string? AfterSchoolDuty { get; set; } 
+    public string? BeforeSchoolDuty { get; set; }
+    public string? AfterSchoolDuty { get; set; }
 
     public void AddLessonPlan(LessonPlan lessonPlan)
     {
@@ -58,6 +58,54 @@ public class DayPlan : Entity<DayPlanId>
     public string? GetBreakDutyOverride(int periodNumber)
     {
         return BreakDutyOverrides.GetValueOrDefault(periodNumber);
+    }
+
+    public void UpdateFrom(DayPlan other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+
+        BeforeSchoolDuty = other.BeforeSchoolDuty;
+        AfterSchoolDuty = other.AfterSchoolDuty;
+        BreakDutyOverrides = new Dictionary<int, string>(other.BreakDutyOverrides);
+
+        List<LessonPlan> newLessonPlans = [.. LessonPlans];
+        foreach (var lessonPlan in other.LessonPlans)
+        {
+            for (int i = lessonPlan.StartPeriod; i < lessonPlan.StartPeriod + lessonPlan.NumberOfPeriods; i++)
+            {
+                var overlappingLessonPlans = newLessonPlans.Where(lp =>
+                    lp.StartPeriod < lessonPlan.StartPeriod + lessonPlan.NumberOfPeriods &&
+                    lessonPlan.StartPeriod < lp.StartPeriod + lp.NumberOfPeriods).ToList();
+
+                foreach (var overlappingLessonPlan in overlappingLessonPlans)
+                {
+                    newLessonPlans.Remove(overlappingLessonPlan);
+                }
+            }
+
+            //var existingLessonPlan = LessonPlans.FirstOrDefault(lp => lp.StartPeriod == lessonPlan.StartPeriod);
+            //if (existingLessonPlan != null)
+            //{
+            //    newLessonPlans.Remove(existingLessonPlan);
+            //}
+
+            newLessonPlans.Add(lessonPlan);
+        }
+
+        LessonPlans = newLessonPlans;
+
+        List<SchoolEvent> newSchoolEvents = [.. SchoolEvents];
+        foreach (var schoolEvent in other.SchoolEvents)
+        {
+            var existingSchoolEvent = SchoolEvents.FirstOrDefault(se => se.Id == schoolEvent.Id);
+            if (existingSchoolEvent != null)
+            {
+                newSchoolEvents.Remove(existingSchoolEvent);
+            }
+            newSchoolEvents.Add(schoolEvent);
+        }
+
+        SchoolEvents = newSchoolEvents;
     }
 
     public DayPlan(WeekPlannerId weekPlannerId, DateOnly date, List<LessonPlan> lessonPlans, List<SchoolEvent>? schoolEvents)

@@ -16,7 +16,6 @@ public record GridCell
         PeriodNumber = periodNumber;
     }
 
-    public LessonPlanId LessonPlanId { get; set; } = default!;
     public GridColumn Column { get; set; }
     public IPlannerPeriod Period { get; set; }
     public int PeriodNumber { get; set; }

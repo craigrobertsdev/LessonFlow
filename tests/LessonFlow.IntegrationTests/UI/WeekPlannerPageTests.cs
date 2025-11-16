@@ -4,13 +4,12 @@ using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
+using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared;
-using LessonFlow.Shared.Extensions;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
@@ -49,8 +48,42 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         SeedDbContext(_dbContext);
 
         this.AddTestAuthorization()
-            .SetAuthorized("test@test.com")
-            .SetClaims(new Claim(ClaimTypes.Name, "test@test.com"));
+            .SetAuthorized(TestUserEmail)
+            .SetClaims(new Claim(ClaimTypes.Name, TestUserEmail));
+    }
+
+    [Fact]
+    public async Task Initialise_WhenWeekPlannerExistsButNoDayPlansLoaded_LoadDayPlans()
+    {
+        var dbDayPlan = _dbContext.WeekPlanners.First().DayPlans.First();
+        var subject = _dbContext.Subjects.First();
+        var lessonPlan = new LessonPlan(dbDayPlan.Id, subject, PeriodType.Lesson, string.Empty, 1, 1, FirstDateOfSchool, []);
+        dbDayPlan.AddLessonPlan(lessonPlan);
+        var user = _dbContext.Users.First(u => u.Email == TestUserEmail);
+        var yearPlan = _dbContext.YearPlans.First(yp => yp.CalendarYear == TestYear && yp.UserId == user.Id);
+        var weekPlanner = _dbContext.WeekPlanners.First();
+        weekPlanner.UpdateDayPlan(dbDayPlan);
+        yearPlan.AddWeekPlanner(weekPlanner);
+        _dbContext.SaveChanges();
+
+        var appState = await CreateAppState();
+        appState.CurrentWeek = 1;
+        appState.CurrentTerm = 1;
+        appState.CurrentYear = TestYear;
+
+        //var dayPlans = appState.CurrentYearPlan.GetWeekPlanner(FirstDateOfSchool)!.DayPlans;
+        //var initialLessonPlans = dayPlans[0].LessonPlans;
+        var component = RenderWeekPlanner(appState);
+
+        //Assert.Empty(initialLessonPlans);
+        component.WaitForState(() => component.Instance.GridCols.Count == 5);
+        var appStateWeekPlanner = component.Instance.WeekPlanner;
+        Assert.NotNull(appStateWeekPlanner);
+
+        var componentLessonPlan = appStateWeekPlanner.DayPlans[0].LessonPlans.First();
+        Assert.Single(appStateWeekPlanner.DayPlans[0].LessonPlans);
+        Assert.Equal(lessonPlan.Id, componentLessonPlan.Id);
+        Assert.Equal(lessonPlan.Subject.Name, componentLessonPlan.Subject.Name);
     }
 
     [Fact]
@@ -64,11 +97,12 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         var existingWeekPlanner = appState.CurrentYearPlan.GetWeekPlanner(testDate);
 
         var component = RenderWeekPlanner(appState);
-        component.Find("#edit-week-planner").Click();
+        component.WaitForElement("#edit-week-planner").Click();
         component.Find("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
         await component.Find("#save-changes").ClickAsync(new());
 
-        var db = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var yearPlan = db.YearPlans.First(yp => yp.Id == appState.CurrentYearPlan.Id);
 
         Assert.Null(existingWeekPlanner);
@@ -94,11 +128,12 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
 
         var component = RenderWeekPlanner(appState);
 
-        component.Find("#edit-week-planner").Click();
-        component.Find("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
-        await component.Find("#save-changes").ClickAsync(new());
+        component.WaitForElement("#edit-week-planner").Click();
+        component.WaitForElement("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
+        await component.WaitForElement("#save-changes").ClickAsync(new());
 
-        var db = _factory.Services.CreateScope().ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var yearPlan = db.YearPlans.First(yp => yp.Id == appState.CurrentYearPlan.Id);
 
         var weekPlannerFromYearPlan = yearPlan.GetWeekPlanner(FirstDateOfSchool);

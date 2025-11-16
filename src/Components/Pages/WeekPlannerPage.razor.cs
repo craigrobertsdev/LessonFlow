@@ -46,7 +46,7 @@ public partial class WeekPlannerPage : ComponentBase
     internal WeekPlanner? EditingWeekPlanner { get; set; }
     internal DateOnly WeekStart { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         try
         {
@@ -85,9 +85,7 @@ public partial class WeekPlannerPage : ComponentBase
 
             if (AppState.CurrentYearPlan?.WeekPlannerTemplate != null)
             {
-                var weekStart = TermDatesService.GetFirstDayOfWeek(Year, TermNumber, WeekNumber);
-                WeekPlanner = YearPlan.GetWeekPlanner(weekStart);
-
+                await LoadWeekPlannerForDate(WeekStart);
                 InitialiseGrid();
             }
         }
@@ -363,12 +361,12 @@ public partial class WeekPlannerPage : ComponentBase
         AppState.CurrentYear = date.Year;
 
         var weekPlanner = AppState.CurrentYearPlan.GetWeekPlanner(date);
-        if (weekPlanner is null)
+        if (weekPlanner is null || !weekPlanner.HasLessonPlansLoaded)
         {
             weekPlanner = await YearPlanRepository.GetWeekPlanner(AppState.CurrentYearPlan.Id, date, new CancellationToken());
             if (weekPlanner is not null)
             {
-                YearPlan.WeekPlanners.Add(weekPlanner);
+                YearPlan.AddWeekPlanner(weekPlanner);
             }
         }
 

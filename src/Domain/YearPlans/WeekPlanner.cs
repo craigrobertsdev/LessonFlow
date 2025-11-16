@@ -21,6 +21,7 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     public int WeekNumber { get; private set; }
     public int TermNumber { get; private set; }
     public int Year { get; private set; }
+    public bool HasLessonPlansLoaded { get; private set; }
     public List<DayPlan> DayPlans { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
@@ -33,12 +34,21 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
             throw new InvalidOperationException("DayPlan's date does not match this WeekPlanner.");
         }
 
-        DayPlans[idx] = dayPlan;
+        var existingDayPlan = DayPlans[idx];
+        existingDayPlan.UpdateFrom(dayPlan);
+    }
+
+    public void UpdateDayPlans(List<DayPlan> dayPlans)
+    {
+        foreach (var dayPlan in dayPlans)
+        {
+            UpdateDayPlan(dayPlan);
+        }
     }
 
     public DayPlan? GetDayPlan(DateOnly date)
     {
-        return DayPlans.FirstOrDefault(d =>  d.Date == date);
+        return DayPlans.FirstOrDefault(d => d.Date == date);
     }
 
     public void SortDayPlans()
@@ -66,6 +76,11 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
         {
             DayPlans.Add(new DayPlan(Id, weekStart.AddDays(i), [], []));
         }
+    }
+
+    public void SetLessonPlansLoaded(bool loaded)
+    {
+        HasLessonPlansLoaded = loaded;
     }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.

@@ -18,21 +18,20 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Radzen;
 using LessonFlow.Domain.YearPlans;
-using AngleSharp.Dom;
 using LessonFlow.Components.Shared;
-using Microsoft.JSInterop;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
 public class LessonPlannerTests : TestContext
 {
     private readonly AppState _appState;
+    private static string LessonPlanText = "<p>This is a test lesson plan.</p>";
 
     public LessonPlannerTests()
     {
         _appState = CreateAppState();
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
-        JSInterop.SetupVoid("ModalFunctions.showModal", _ => true);
+        JSInterop.SetupVoid("ModalFunctions.openModal", _ => true);
         JSInterop.SetupVoid("ModalFunctions.closeModal", _ => true);
     }
 
@@ -42,11 +41,13 @@ public class LessonPlannerTests : TestContext
         var periodStart = 1;
         var component = RenderLessonPlanner(_appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, periodStart);
 
-        Assert.NotNull(component.Instance.LessonPlan);
-        Assert.Equal(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), component.Instance.LessonPlan.LessonDate);
-        Assert.Equal(periodStart, component.Instance.LessonPlan.StartPeriod);
-        Assert.Equal("English", component.Instance.LessonPlan.Subject.Name);
-        Assert.Single(component.Instance.LessonPlan.Resources);
+        var lessonPlan = component.Instance.LessonPlan;
+        Assert.NotNull(lessonPlan);
+        Assert.Equal(FirstDateOfSchool, lessonPlan.LessonDate);
+        Assert.Equal(periodStart, lessonPlan.StartPeriod);
+        Assert.Equal("English", lessonPlan.Subject.Name);
+        Assert.Equal(LessonPlanText, lessonPlan.PlanningNotesHtml);
+        Assert.Single(lessonPlan.Resources);
         var textEditor = component.Find("#lesson-plan-editor");
         var todoList = component.Find("#lesson-plan-todo-list");
         Assert.NotNull(textEditor);
@@ -155,10 +156,6 @@ public class LessonPlannerTests : TestContext
         Assert.Single(componentLessonPlan.ToDos);
     }
 
-    /* Editing a lesson plan will require the user to click a button to enable editing.
-     * If they change the number of periods, they may overwrite existing data.
-     * These changes will need to be confirmed by the user.
-     */
     [Fact]
     public void CanEditLessonPlan_WhenLessonPlanExists_ShouldNotLoadIntoEditMode()
     {
@@ -384,7 +381,13 @@ public class LessonPlannerTests : TestContext
         Assert.Equal("Confirm Overwrite", overwriteDialog.Instance.Title);
         Assert.NotNull(component.Find("dialog#confirm-dialog"));
 
-        Assert.Single(JSInterop.Invocations, i => i.Identifier == "ModalFunctions.showModal");
+        Assert.Single(JSInterop.Invocations, i => i.Identifier == "ModalFunctions.openModal");
+    }
+
+    [Fact]
+    public void HeaderBanner_WhenNotInEditMode_ShouldDisplayCorrectDate()
+    {
+        throw new NotImplementedException();
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
@@ -431,11 +434,11 @@ public class LessonPlannerTests : TestContext
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
 
         appState.User = new User();
-        var subjects = new List<Subject>() {
+        List<Subject> subjects = [
             new Subject("English", [], ""),
             new Subject("Mathematics", [], ""),
             new Subject("Science", [], "")
-        };
+        ];
 
         var subject = subjects.First(s => s.Name == "English");
         yearPlanRepository.Setup(r => r.GetWeekPlanner(It.IsAny<YearPlanId>(), FirstDateOfSchool, default))
@@ -444,7 +447,7 @@ public class LessonPlannerTests : TestContext
             .ReturnsAsync(weekPlanner);
 
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
-           .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
+           .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, LessonPlanText, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
            [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
         lessonPlanRepository.Setup(r => r.GetConflictingLessonPlans(It.IsAny<DayPlanId>(), It.IsAny<LessonPlan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<LessonPlan>());

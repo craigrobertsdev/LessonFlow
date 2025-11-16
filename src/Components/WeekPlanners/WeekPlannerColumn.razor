@@ -34,7 +34,7 @@
     {
         if (cell.Period.PeriodType == PeriodType.Break)
         {
-            <div class="border border-gray-300 bg-gray-200 text-center"
+            <div id="break-cell-@(Column.Col)-@cell.PeriodNumber" class="border border-gray-300 bg-gray-200 text-center"
                  style="grid-column-start:@Column.Col; grid-row-start:@cell.RowSpans[0].Start">
                 <div class="w-full h-full p-1 flex justify-center items-center">
                     @if (WeekPlanner.EditingDuties)

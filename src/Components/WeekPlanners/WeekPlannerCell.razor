@@ -5,7 +5,7 @@
 @using LessonFlow.Shared
 @using LessonFlow.Shared.Interfaces
 
-<div class="border border-gray-200 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
+<div id="cell-@(Column.Col)-@Cell.PeriodNumber" class="border border-gray-200 flex justify-center items-center cursor-pointer @GetCellColour(Cell) select-none
          @(Cell.IsMouseDown ? "opacity-75 scale-99 transition duration-100 ease-in-ease-out" : "")
          @(Cell.IsHovered ? "bg-gray-200 border-gray-300" : "")
          @(string.IsNullOrEmpty(Period.SubjectName) ? "text-gray-700" : "font-semibold")"
@@ -17,6 +17,11 @@
      @onmouseup="@(() => Cell.IsMouseDown = false)">
 
     @CellText
+
+    @if (Cell.Period.LessonIsPlanned)
+    {
+        <div class="lesson-planned-indicator">Lesson Planned - Placeholder</div>
+    }
 
 </div>
 

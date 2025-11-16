@@ -14,6 +14,8 @@ public class WeekPlannerConfiguration : IEntityTypeConfiguration<WeekPlanner>
             .HasColumnName("Id")
             .HasConversion(new StronglyTypedIdConverter.WeekPlannerIdConverter());
 
+        builder.Ignore(w => w.HasLessonPlansLoaded);
+
         builder.HasMany(wp => wp.DayPlans)
             .WithOne()
             .HasForeignKey("WeekPlannerId");

@@ -105,7 +105,6 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         var lessonPlanId = lessonPlan.Id;
 
         var appState = await CreateAppState();
-        //appState.CurrentYearPlan.WeekPlanners.First().DayPlans[0] = dayPlan;
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
 
         component.WaitForElement("#edit-lesson-plan").Click();
@@ -131,6 +130,36 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
             Assert.Equal(lessonPlanId, savedLessonPlan.Id);
             Assert.Equal("Mathematics", savedLessonPlan.Subject.Name);
             Assert.Equal(2, savedLessonPlan.NumberOfPeriods);
+        });
+    }
+
+    [Fact]
+    public async Task SaveChanges_OnSuccess_UpdatesAppState()
+    {        
+        var appState = await CreateAppState();
+        var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
+
+        component.WaitForElement("#edit-lesson-plan").Click();
+        var selectSubject = component.WaitForElement("select#subject-name");
+        selectSubject.Change("Mathematics");
+        var selectNumberOfPeriods = component.Find("select#number-of-periods");
+        selectNumberOfPeriods.Change("2");
+        component.Find("#save-lesson-plan").Click();
+
+        component.WaitForState(() => !component.Instance.IsInEditMode && component.Instance.EditingLessonPlan is null);
+
+        component.WaitForAssertion(() =>
+        {
+            var dbFactory = _factory.Services.CreateScope()
+                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+            var dbContext = dbFactory.CreateDbContext();
+            var savedLessonPlan = dbContext.LessonPlans
+                .Include(lp => lp.Subject)
+                .First(lp => lp.Id == component.Instance.LessonPlan.Id);
+
+            Assert.Single(appState.CurrentYearPlan.WeekPlanners[0].DayPlans[0].LessonPlans);
+            var appStateLessonPlan = appState.CurrentYearPlan.WeekPlanners[0].DayPlans[0].LessonPlans[0];
+            Assert.Equal(savedLessonPlan.Id, appStateLessonPlan.Id);
         });
     }
 

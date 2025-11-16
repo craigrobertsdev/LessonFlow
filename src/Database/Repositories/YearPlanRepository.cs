@@ -109,10 +109,20 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory,
     public async Task<WeekPlanner?> GetWeekPlanner(YearPlanId yearPlanId, DateOnly weekStart, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
-        return await context.WeekPlanners
+        var weekPlanner = await context.WeekPlanners
             .Where(wp => wp.YearPlanId == yearPlanId && wp.WeekStart == weekStart)
             .Include(wp => wp.DayPlans)
+                .ThenInclude(dp => dp.LessonPlans)
+                    .ThenInclude(lp => lp.Subject)
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
+
+        if (weekPlanner is not null)
+        {
+            weekPlanner.SetLessonPlansLoaded(true);
+            weekPlanner.SortDayPlans();
+        }
+
+        return weekPlanner;
     }
 }
