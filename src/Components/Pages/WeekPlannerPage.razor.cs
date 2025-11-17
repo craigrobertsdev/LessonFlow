@@ -158,11 +158,6 @@ public partial class WeekPlannerPage : ComponentBase
                             filledGridCells[i, k] = true;
                             cellsFilled++;
                         }
-                        while (k < WeekPlannerTemplate.Periods.Count - 1 && WeekPlannerTemplate.Periods[k + 1].StartPeriod > lessonPlan.StartPeriod + 1 && cellsFilled < lessonPlan.NumberOfPeriods)
-                        {
-                            filledGridCells[i, k + 1] = true;
-                            cellsFilled++;
-                        }
                     }
                 }
             }
