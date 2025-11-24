@@ -1,5 +1,4 @@
 ﻿using Bunit;
-using Bunit.TestDoubles;
 using LessonFlow.Database;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -15,7 +14,7 @@ using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 namespace LessonFlow.IntegrationTests;
 
 [Collection("Non-ParallelTests")]
-public class AppStateTests : TestContext, IClassFixture<CustomWebApplicationFactory>
+public class AppStateTests : BunitContext, IClassFixture<CustomWebApplicationFactory>
 {
         
     private readonly ApplicationDbContext _dbContext;
@@ -42,7 +41,7 @@ public class AppStateTests : TestContext, IClassFixture<CustomWebApplicationFact
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
 
-        this.AddTestAuthorization()
+        AddAuthorization()
             .SetAuthorized("test@test.com")
             .SetClaims(new Claim(ClaimTypes.Name, "test@test.com"));
 
@@ -58,7 +57,7 @@ public class AppStateTests : TestContext, IClassFixture<CustomWebApplicationFact
             _scope.ServiceProvider.GetRequiredService<ILogger<AppState>>(),
             _scope.ServiceProvider.GetRequiredService<ITermDatesService>());
 
-        var component = RenderComponent<AppStateTestComponent>(p => p.Add(c => c.AppState, appState));
+        var component = Render<AppStateTestComponent>(p => p.Add(c => c.AppState, appState));
 
         component.WaitForState(() => appState.IsInitialised);
 

@@ -1,5 +1,4 @@
 ﻿using Bunit;
-using Bunit.TestDoubles;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
@@ -18,7 +17,7 @@ using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 namespace LessonFlow.IntegrationTests.UI;
 
 [Collection("Non-ParallelTests")]
-public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
+public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly CustomWebApplicationFactory _factory;
@@ -44,7 +43,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
         JSInterop.SetupVoid("Radzen.createEditor", _ => true);
         JSInterop.SetupVoid("Radzen.innerHTML", _ => true);
 
-        this.AddTestAuthorization()
+        AddAuthorization()
             .SetAuthorized(TestUserEmail)
             .SetClaims(new Claim(ClaimTypes.Name, TestUserEmail));
     }
@@ -165,7 +164,7 @@ public class LessonPlannerTests : TestContext, IClassFixture<CustomWebApplicatio
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
     {
-        return RenderComponent<LessonPlanner>(parameters => parameters
+        return Render<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
             .Add(p => p.Month, month)
             .Add(p => p.Day, day)

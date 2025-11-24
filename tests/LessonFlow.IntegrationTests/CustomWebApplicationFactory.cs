@@ -30,7 +30,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
             }
 
             var dbContextOptionsDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
-            var dbContextDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(ApplicationDbContext));
+            var dbContextDescriptor = services.FirstOrDefault(d => d.ServiceType == typeof(ApplicationDbContext));
             var dbContextFactoryDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(IDbContextFactory<ApplicationDbContext>));
             if (dbContextDescriptor is not null) services.Remove(dbContextDescriptor);
             if (dbContextOptionsDescriptor is not null) services.Remove(dbContextOptionsDescriptor);

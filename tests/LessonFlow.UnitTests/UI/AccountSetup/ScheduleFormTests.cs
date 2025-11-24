@@ -3,14 +3,14 @@ using LessonFlow.Components.AccountSetup;
 using LessonFlow.Components.AccountSetup.State;
 
 namespace LessonFlow.UnitTests.UI.AccountSetup;
-public class ScheduleFormTests : TestContext
+public class ScheduleFormTests : BunitContext
 {
     [Fact]
     public void HandleLessonDurationChange_CorrectlyUpdatesColumnCells_1_6_6_1()
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("6");
@@ -27,7 +27,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("2");
@@ -52,7 +52,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("4");
@@ -77,7 +77,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("4");
@@ -100,7 +100,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("3");
@@ -130,7 +130,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("3");
@@ -156,7 +156,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("6");
@@ -184,7 +184,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         component.InvokeAsync(() => component.Instance.SelectedCell = component.Instance.GridCols[0].Cells[0]);
         component.Find("select#lesson-duration").Change("6");
@@ -213,7 +213,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[0]);
@@ -253,7 +253,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[0]);
@@ -285,7 +285,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[0]);
@@ -319,7 +319,7 @@ public class ScheduleFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[0]);
@@ -350,7 +350,7 @@ public class ScheduleFormTests : TestContext
     { 
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[3]);
@@ -385,7 +385,7 @@ public class ScheduleFormTests : TestContext
     { 
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[3]);
@@ -417,7 +417,7 @@ public class ScheduleFormTests : TestContext
     { 
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
         var col = component.Instance.GridCols[0];
 
         component.InvokeAsync(() => component.Instance.SelectedCell = col.Cells[3]);

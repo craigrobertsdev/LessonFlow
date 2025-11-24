@@ -12,8 +12,7 @@ public class EnglishParser() : BaseParser("English", _contentDescriptionEndings)
 
     protected override void ParseDispositionsAndCapabilities(PdfDocument document, YearLevel yearLevel)
     {
-        var extractor = new ObjectExtractor(document);
-        var pageArea = extractor.Extract(_currentPageNum);
+        var pageArea = ObjectExtractor.Extract(document, _currentPageNum);
         var detector = new SimpleNurminenDetectionAlgorithm();
         var regions = detector.Detect(pageArea);
         var ea = new BasicExtractionAlgorithm();

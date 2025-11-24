@@ -1,5 +1,4 @@
 ﻿using Bunit;
-using Bunit.TestDoubles;
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
@@ -19,7 +18,7 @@ using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 namespace LessonFlow.IntegrationTests.UI;
 
 [Collection("Non-ParallelTests")]
-public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
+public class AccountSetupTests : BunitContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
     private readonly CustomWebApplicationFactory _factory;
     private readonly IServiceScope _factoryScope;
@@ -30,7 +29,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
         _factory = factory;
         _factoryScope = factory.Services.CreateScope();
 
-        this.AddTestAuthorization()
+        AddAuthorization()
             .SetAuthorized(TestUserNoAccountEmail)
             .SetClaims(new Claim(ClaimTypes.Name, TestUserNoAccountEmail));
 
@@ -198,7 +197,7 @@ public class AccountSetupTests : TestContext, IClassFixture<CustomWebApplication
 
     private IRenderedComponent<AccountSetup> RenderAccountSetup()
     {
-        var accountSetupComponent = RenderComponent<AccountSetup>();
+        var accountSetupComponent = Render<AccountSetup>();
 
         return accountSetupComponent;
     }

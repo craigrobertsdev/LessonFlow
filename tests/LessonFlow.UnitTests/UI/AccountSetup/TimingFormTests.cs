@@ -12,7 +12,7 @@ public class TimingFormTests : TestContext
     {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
-        var component = RenderComponent<TimingForm>(parameters => parameters.Add(p => p.State, accountSetupState));
+        var component = Render<TimingForm>(parameters => parameters.Add(p => p.State, accountSetupState));
 
         var select = component.FindAll("select[data-testid='period-type']")[0];
         select.Change("Break");

@@ -775,7 +775,7 @@ public class WeekPlannerPageTests : TestContext
 
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlannerPage(AppState appState)
     {
-        var component = base.RenderComponent<WeekPlannerPage>(p => p.Add(c => c.AppState, appState));
+        var component = base.Render<WeekPlannerPage>(p => p.Add(c => c.AppState, appState));
         return component;
     }
 

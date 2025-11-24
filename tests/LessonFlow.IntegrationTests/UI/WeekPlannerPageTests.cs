@@ -1,5 +1,4 @@
 ﻿using Bunit;
-using Bunit.TestDoubles;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
@@ -19,7 +18,7 @@ using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 namespace LessonFlow.IntegrationTests.UI;
 
 [Collection("Non-ParallelTests")]
-public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
+public class WeekPlannerPageTests : BunitContext, IClassFixture<CustomWebApplicationFactory>, IDisposable
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly CustomWebApplicationFactory _factory;
@@ -47,7 +46,7 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
 
         SeedDbContext(_dbContext);
 
-        this.AddTestAuthorization()
+        AddAuthorization()
             .SetAuthorized(TestUserEmail)
             .SetClaims(new Claim(ClaimTypes.Name, TestUserEmail));
     }
@@ -95,7 +94,7 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
 
         var component = RenderWeekPlanner(appState);
         component.WaitForElement("#edit-week-planner").Click();
-        component.Find("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
+        component.WaitForElement("#before-school-duty-2").Change(new ChangeEventArgs() { Value = "Yard duty" });
         await component.Find("#save-changes").ClickAsync(new());
 
         using var scope = _factory.Services.CreateScope();
@@ -190,7 +189,7 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
 
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlanner(AppState appState)
     {
-        return RenderComponent<WeekPlannerPage>(parameters => parameters
+        return Render<WeekPlannerPage>(parameters => parameters
         .Add(w => w.AppState, appState));
     }
 

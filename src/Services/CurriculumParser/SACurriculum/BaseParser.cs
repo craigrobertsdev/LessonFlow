@@ -149,8 +149,7 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
 
     protected virtual void ParseDispositionsAndCapabilities(PdfDocument document, YearLevel yearLevel)
     {
-        var extractor = new ObjectExtractor(document);
-        var pageArea = extractor.Extract(_currentPageNum);
+        var pageArea = ObjectExtractor.Extract(document, _currentPageNum);
         var detector = new SimpleNurminenDetectionAlgorithm();
         var regions = detector.Detect(pageArea);
         var ea = new BasicExtractionAlgorithm();
@@ -295,18 +294,17 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
 
     protected virtual List<ConceptualOrganiser> ParseConceptualOrganisers(PdfDocument document)
     {
-        var extractor = new ObjectExtractor(document);
         var detector = new SimpleNurminenDetectionAlgorithm();
         var ea = new BasicExtractionAlgorithm();
         PageArea pageArea;
-        List<TableRectangle> regions;
+        IReadOnlyList<TableRectangle> regions;
         Table table;
 
         var conceptualOrganisers = new List<ConceptualOrganiser>();
 
         while (_currentPageNum < document.NumberOfPages && _currentPageType != PageType.LearningStandard)
         {
-            pageArea = extractor.Extract(_currentPageNum);
+            pageArea = ObjectExtractor.Extract(document, _currentPageNum);
             regions = detector.Detect(pageArea);
             table = ea.Extract(pageArea.GetArea(regions[0].BoundingBox))[0];
 

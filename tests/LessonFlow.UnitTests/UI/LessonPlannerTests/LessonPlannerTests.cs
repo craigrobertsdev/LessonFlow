@@ -7,7 +7,6 @@ using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
-using LessonFlow.Domain.ValueObjects;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -19,9 +18,10 @@ using Moq;
 using Radzen;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Components.Shared;
+using LessonFlow.Domain.Resources;
 
 namespace LessonFlow.UnitTests.UI.LessonPlannerTests;
-public class LessonPlannerTests : TestContext
+public class LessonPlannerTests : BunitContext
 {
     private readonly AppState _appState;
     private static string LessonPlanText = "<p>This is a test lesson plan.</p>";
@@ -267,7 +267,7 @@ public class LessonPlannerTests : TestContext
         var subject = new Subject("English", [], "");
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), startPeriod, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
-           [new Resource(appState.User!.Id, "Test", "Url", false, subject, [])]));
+           [new Resource(appState.User!.Id, "Test", "Url", subject, [], ResourceType.Video)]));
         Services.AddScoped(sp => lessonPlanRepository.Object);
 
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
@@ -383,7 +383,7 @@ public class LessonPlannerTests : TestContext
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
     {
-        var component = RenderComponent<LessonPlanner>(parameters => parameters
+        var component = Render<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
             .Add(p => p.Month, month)
             .Add(p => p.Day, day)
@@ -439,7 +439,7 @@ public class LessonPlannerTests : TestContext
 
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, LessonPlanText, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
-           [new Resource(appState.User.Id, "Test", "Url", false, subject, [])]));
+           [new Resource(appState.User.Id, "Test", "Url", subject, [], ResourceType.Video)]));
         lessonPlanRepository.Setup(r => r.GetConflictingLessonPlans(It.IsAny<DayPlanId>(), It.IsAny<LessonPlan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<LessonPlan>());
 
