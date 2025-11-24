@@ -87,6 +87,11 @@ internal static class IntegrationTestHelpers
             var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
             var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
             weekPlanner.UpdateDayPlan(dayPlan);
+            var todoList = new List<TodoItem>()
+            {
+                new TodoItem(weekPlanner.Id, "Test Todo Item")
+            };
+            weekPlanner.Todos.AddRange(todoList);
             yearPlan.AddWeekPlanner(weekPlanner);
             dbContext.YearPlans.Add(yearPlan);
             dbContext.SaveChanges();

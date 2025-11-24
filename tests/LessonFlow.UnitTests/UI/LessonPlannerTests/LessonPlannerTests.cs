@@ -138,8 +138,6 @@ public class LessonPlannerTests : TestContext
 
         var lessonPlanRepository = new Mock<ILessonPlanRepository>();
         var lessonPlan = new LessonPlan(It.IsAny<DayPlanId>(), Subject.Nit, PeriodType.Nit, "", 2, 1, new DateOnly(TestYear, FirstMonthOfSchool, 31), []);
-        var todoItem = new TodoItem(lessonPlan.Id, "Test");
-        lessonPlan.ToDos.Add(todoItem);
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), 1, default))
            .ReturnsAsync(lessonPlan);
         Services.AddScoped(sp => lessonPlanRepository.Object);
@@ -153,7 +151,6 @@ public class LessonPlannerTests : TestContext
         Assert.NotNull(componentLessonPlan);
         Assert.Equal(PeriodType.Nit, componentLessonPlan.PeriodType);
         Assert.Equal(Subject.Nit, componentLessonPlan.Subject);
-        Assert.Single(componentLessonPlan.ToDos);
     }
 
     [Fact]
@@ -382,12 +379,6 @@ public class LessonPlannerTests : TestContext
         Assert.NotNull(component.Find("dialog#confirm-dialog"));
 
         Assert.Single(JSInterop.Invocations, i => i.Identifier == "ModalFunctions.openModal");
-    }
-
-    [Fact]
-    public void HeaderBanner_WhenNotInEditMode_ShouldDisplayCorrectDate()
-    {
-        throw new NotImplementedException();
     }
 
     private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)

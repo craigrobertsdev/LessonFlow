@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LessonFlow.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251110174526_UpdateColumnsAccountSetupState")]
-    partial class UpdateColumnsAccountSetupState
+    [Migration("20251118204252_MoveTodoListToWeekPlanner")]
+    partial class MoveTodoListToWeekPlanner
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1277,37 +1277,9 @@ namespace LessonFlow.Database.Migrations
                                 .HasForeignKey("LessonPlanId");
                         });
 
-                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "Todos", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("LessonPlanId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<bool>("IsComplete")
-                                .HasColumnType("boolean");
-
-                            b1.Property<string>("Text")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.HasKey("Id", "LessonPlanId");
-
-                            b1.HasIndex("LessonPlanId");
-
-                            b1.ToTable("TodoItem", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("LessonPlanId");
-                        });
-
                     b.Navigation("Comments");
 
                     b.Navigation("Subject");
-
-                    b.Navigation("Todos");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.DayTemplate", b =>
@@ -1511,6 +1483,34 @@ namespace LessonFlow.Database.Migrations
                         .HasForeignKey("YearPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "Todos", b1 =>
+                        {
+                            b1.Property<Guid>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("WeekPlannerId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<bool>("IsComplete")
+                                .HasColumnType("boolean");
+
+                            b1.Property<string>("Text")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.HasKey("Id", "WeekPlannerId");
+
+                            b1.HasIndex("WeekPlannerId");
+
+                            b1.ToTable("TodoItem", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("WeekPlannerId");
+                        });
+
+                    b.Navigation("Todos");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.YearPlans.YearPlan", b =>

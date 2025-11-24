@@ -1,5 +1,6 @@
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.StronglyTypedIds;
+using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -124,5 +125,21 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory,
         }
 
         return weekPlanner;
+    }
+
+    public async Task UpdateTodoList(WeekPlannerId weekPlannerId, List<TodoItem> todos, CancellationToken ct)
+    {
+        var context = ambient.Current ?? throw new InvalidOperationException("Must be called within a UnitOfWork");
+
+        var weekPlanner = await context.WeekPlanners
+            .Where(wp => wp.Id == weekPlannerId)
+            .Include(wp => wp.Todos)
+            .FirstOrDefaultAsync(ct);
+
+        if (weekPlanner is not null)
+        {
+            weekPlanner.UpdateTodos(todos);
+            context.WeekPlanners.Update(weekPlanner);
+        }
     }
 }

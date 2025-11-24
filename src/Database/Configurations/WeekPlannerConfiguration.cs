@@ -24,5 +24,14 @@ public class WeekPlannerConfiguration : IEntityTypeConfiguration<WeekPlanner>
             .IsUnique();
 
         builder.Navigation(wp => wp.DayPlans).AutoInclude();
+
+        builder.OwnsMany(wp => wp.Todos, wptd =>
+        {
+            wptd.ToTable("TodoItem");
+            wptd.WithOwner().HasForeignKey(td => td.WeekPlannerId);
+            wptd.Property<Guid>("Id");
+            wptd.HasKey("Id", "WeekPlannerId");
+            wptd.Ignore(td => td.IsMouseOver);
+        });
     }
 }

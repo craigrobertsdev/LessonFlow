@@ -4,12 +4,12 @@ using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
-using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
@@ -71,11 +71,8 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
         appState.CurrentTerm = 1;
         appState.CurrentYear = TestYear;
 
-        //var dayPlans = appState.CurrentYearPlan.GetWeekPlanner(FirstDateOfSchool)!.DayPlans;
-        //var initialLessonPlans = dayPlans[0].LessonPlans;
         var component = RenderWeekPlanner(appState);
 
-        //Assert.Empty(initialLessonPlans);
         component.WaitForState(() => component.Instance.GridCols.Count == 5);
         var appStateWeekPlanner = component.Instance.WeekPlanner;
         Assert.NotNull(appStateWeekPlanner);
@@ -146,6 +143,49 @@ public class WeekPlannerPageTests : TestContext, IClassFixture<CustomWebApplicat
 
         Assert.NotNull(weekPlannerFromDb);
         Assert.Equal("Yard duty", weekPlannerFromDb!.GetDayPlan(FirstDateOfSchool)!.BeforeSchoolDuty);
+    }
+
+    [Fact]
+    public async Task DeleteTodoItem_WhenCalled_RemovesTodoItemFromWeekPlannerAndPersists()
+    {
+        var appState = await CreateAppState();
+        appState.CurrentYear = TestYear;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
+
+        var component = RenderWeekPlanner(appState);
+        component.WaitForElement("#todo-list");
+        var todoItem = component.Find(".todo-item");
+        todoItem.MouseOver();
+        var deleteButton = component.Find(".delete-todo-item");
+        await deleteButton.ClickAsync(new());
+
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var weekPlanner = db.WeekPlanners
+            .Include(wp => wp.Todos)
+            .First(wp => wp.Id == appState.CurrentYearPlan.WeekPlanners[0].Id);
+        Assert.Empty(weekPlanner.Todos);
+    }
+
+    [Fact]
+    public async Task AddTodoItem_WhenCalled_AddsTodoItemToWeekPlannerAndPersists()
+    {
+        var appState = await CreateAppState();
+        appState.CurrentYear = TestYear;
+        appState.CurrentTerm = 1;
+        appState.CurrentWeek = 1;
+        var component = RenderWeekPlanner(appState);
+        component.WaitForElement("#new-todo-input").Change(new ChangeEventArgs() { Value = "New Todo" });
+        await component.Find("#add-todo-button").ClickAsync(new());
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var weekPlanner = db.WeekPlanners
+            .Include(wp => wp.Todos)
+            .First(wp => wp.Id == appState.CurrentYearPlan.WeekPlanners[0].Id);
+        Assert.Equal(2, weekPlanner.Todos.Count);
+        var addedTodo = weekPlanner.Todos.FirstOrDefault(t => t.Text == "New Todo");
+        Assert.NotNull(addedTodo);
     }
 
     private IRenderedComponent<WeekPlannerPage> RenderWeekPlanner(AppState appState)

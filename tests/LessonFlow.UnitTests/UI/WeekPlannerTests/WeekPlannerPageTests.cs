@@ -1,4 +1,5 @@
-﻿using Bunit;
+﻿using AngleSharp.Html.Dom;
+using Bunit;
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Components.Pages;
 using LessonFlow.Domain.Curriculum;
@@ -528,12 +529,12 @@ public class WeekPlannerPageTests : TestContext
     public async Task SaveChanges_WhenSavingWithNoExistingWeekPlanner_ShouldUpdateAppStateToContainNewWeekPlanner()
     {
         var appState = CreateAppState(TestYear);
-        appState.CurrentTerm= 1;
+        appState.CurrentTerm = 1;
         appState.CurrentWeek = 2;
 
         var component = RenderWeekPlannerPage(appState);
         var initialWeekPlanner = component.Instance.WeekPlanner;
-        
+
         component.Find("button#edit-week-planner").Click();
         component.Find("input#break-duty-2-3").Change("Test");
         await component.Find("button#save-changes").ClickAsync(new MouseEventArgs());
@@ -566,9 +567,177 @@ public class WeekPlannerPageTests : TestContext
     }
 
     [Fact]
-    public void InitialiseGrid_WhenLessonsArePlanned_RenderThemInCorrectCells()
+    public void Initialise_WhenTodoListItemsExist_RendersItemsInList()
     {
-        throw new NotImplementedException();
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2"),
+            new TodoItem(weekPlannerId, "Item 3")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+
+        var toDoList = component.Find("#todo-list");
+        Assert.NotNull(toDoList);
+    }
+
+    [Fact]
+    public void Initialise_WhenNoTodoListItemsExist_RendersEmptyListMessage()
+    {
+        List<TodoItem> items = [];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        component.Instance.AppState.CurrentYearPlan.WeekPlanners[0].UpdateTodos(items);
+        var emptyMessage = component.Find("#empty-todo-list-message");
+        Assert.NotNull(emptyMessage);
+    }
+
+    [Fact]
+    public void Initialise_WhenTodoListItemsExist_RendersCorrectNumberOfItems()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2"),
+            new TodoItem(weekPlannerId, "Item 3"),
+            new TodoItem(weekPlannerId, "Item 4")
+        ];
+
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        var toDoItems = component.FindAll(".todo-item");
+        Assert.Equal(4, toDoItems.Count);
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            Assert.Contains(items[i].Text, toDoItems[i].InnerHtml);
+        }
+    }
+
+    [Fact]
+    public void TodoItem_WhenTodoItemClicked_ShouldMarkComplete()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        var toDoItems = component.FindAll(".todo-item");
+        toDoItems[0].Click();
+        Assert.True(component.Instance.WeekPlanner!.Todos[0].IsComplete);
+        Assert.False(component.Instance.WeekPlanner!.Todos[1].IsComplete);
+    }
+
+    [Fact]
+    public void TodoItem_WhenCompleted_ShouldCheckBoxAndStrikeThroughText()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        component.FindAll(".todo-item")[0].Click();
+
+        var firstItem = component.FindAll(".todo-item")[0];
+        var checkBoxEl = (IHtmlInputElement)firstItem.QuerySelector("input[type='checkbox']")!;
+        Assert.NotNull(checkBoxEl);
+        Assert.True(checkBoxEl.IsChecked);
+
+        var itemText = firstItem.QuerySelector("span.todo-item-text");
+        Assert.NotNull(itemText);
+        Assert.Contains("line-through", itemText!.ClassList);
+    }
+
+    [Fact]
+    public void TodoItem_WhenHovered_ShouldDisplayDeleteButton()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        var firstItem = component.FindAll(".todo-item")[0];
+        firstItem.MouseOver();
+        var hoveredFirstItem = component.FindAll(".todo-item")[0];
+        var deleteButton = hoveredFirstItem.QuerySelector("button.delete-todo-item");
+        Assert.NotNull(deleteButton);
+    }
+
+    [Fact]
+    public void TodoItem_WhenDeleteButtonClicked_ShouldRemoveItemFromList()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2"),
+            new TodoItem(weekPlannerId, "Item 3")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        var firstItem = component.FindAll(".todo-item")[0];
+        firstItem.MouseOver();
+        var hoveredFirstItem = component.FindAll(".todo-item")[0];
+        var deleteButton = hoveredFirstItem.QuerySelector("button.delete-todo-item")!;
+        deleteButton.Click();
+        var toDoItemsAfterDeletion = component.FindAll(".todo-item");
+        Assert.Equal(2, toDoItemsAfterDeletion.Count);
+        Assert.DoesNotContain(toDoItemsAfterDeletion, item => item.InnerHtml.Contains("Item 1"));
+    }
+
+    [Fact]
+    public void TodoList_WhenAddButtonClickedAndValidData_ShouldAddItemToList()
+    {
+        var weekPlannerId = new WeekPlannerId(Guid.NewGuid());
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlannerId, "Item 1"),
+            new TodoItem(weekPlannerId, "Item 2")
+        ];
+        var appState = CreateAppState(2025);
+        var component = RenderWeekPlannerPage(appState);
+        SetTodos(component, items);
+        component.Render();
+
+        var todoInput = component.Find("input#new-todo-input");
+        todoInput.Change("Item 3");
+        component.Find("button#add-todo-button").Click();
+
+        var toDoItemsAfterAddition = component.FindAll(".todo-item");
+        Assert.Equal(3, toDoItemsAfterAddition.Count);
+        Assert.Contains(toDoItemsAfterAddition, item => item.InnerHtml.Contains("Item 3"));
+    }
+
+    private void SetTodos(IRenderedComponent<WeekPlannerPage> component, List<TodoItem> items)
+    {
+        component.Instance.AppState.CurrentYearPlan.WeekPlanners[0].UpdateTodos(items);
     }
 
     public static TheoryData<int, int, int> GoToSelectedWeekDatesGenerator()
@@ -635,6 +804,13 @@ public class WeekPlannerPageTests : TestContext
         var week2Term3 = new DateOnly(2025, 7, 28);
         var week2Term3WeekPlanner = new WeekPlanner(yearPlan.Id, 2025, 3, 2, week2Term3);
         var weekPlanner = new WeekPlanner(yearPlan.Id, 2025, 1, 1, FirstDateOfSchool);
+        List<TodoItem> items =
+        [
+            new TodoItem(weekPlanner.Id, "Item 1"),
+            new TodoItem(weekPlanner.Id, "Item 2"),
+            new TodoItem(weekPlanner.Id, "Item 3")
+        ];
+        weekPlanner.UpdateTodos(items);
         yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result).Returns(weekPlanner);
         yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result).Returns(week2Term3WeekPlanner);
         yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result).Returns(week2Term3WeekPlanner);

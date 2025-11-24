@@ -68,11 +68,14 @@
                 }
             </div>
 
-            <div class="flex items-center gap-2">
-                <Button OnClick="PrintLessonText">
-                    Save
-                </Button>
-            </div>
+            @if (!IsInEditMode)
+            {
+                <div class="flex items-center gap-2">
+                    <Button OnClick="SaveChanges">
+                        Save
+                    </Button>
+                </div>
+            }
         </div>
     </div>
 
@@ -93,7 +96,7 @@
             </div>
 
             <div id="lesson-plan-todo-list">
-                <ToDoList />
+                <TodoList />
             </div>
         </div>
     }

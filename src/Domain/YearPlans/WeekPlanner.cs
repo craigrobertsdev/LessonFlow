@@ -7,6 +7,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
+using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
 
 namespace LessonFlow.Domain.YearPlans;
@@ -23,6 +24,7 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     public int Year { get; private set; }
     public bool HasLessonPlansLoaded { get; private set; }
     public List<DayPlan> DayPlans { get; private set; } = [];
+    public List<TodoItem> Todos { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
 
@@ -54,6 +56,22 @@ public sealed class WeekPlanner : Entity<WeekPlannerId>, IAggregateRoot
     public void SortDayPlans()
     {
         DayPlans.Sort((a, b) => a.DayOfWeek.CompareTo(b.DayOfWeek));
+    }
+
+    public void UpdateTodos(List<TodoItem> todos)
+    {
+        Todos = todos;
+    }
+
+    public void DeleteTodoItem(TodoItem todoItem)
+    {
+        Todos.Remove(todoItem);
+    }
+
+    public void AddTodoItem(string text)
+    {
+        var todoItem = new TodoItem(Id, text);
+        Todos.Add(todoItem);
     }
 
     public WeekPlanner(

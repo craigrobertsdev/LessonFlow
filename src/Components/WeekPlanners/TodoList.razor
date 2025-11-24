@@ -1,0 +1,53 @@
+﻿@using LessonFlow.Components.Pages
+@using LessonFlow.Domain.StronglyTypedIds
+@using LessonFlow.Domain.ValueObjects
+
+<div id="todo-list">
+    @if (!TodoItems.Any())
+    {
+        <p id="empty-todo-list-message">Nothing to do here</p>
+    }
+    else
+    {
+        @foreach (var item in TodoItems)
+        {
+            <div class="todo-item" @onclick="() => item.ToggleComplete()" @onmouseover="() => item.IsMouseOver = true" @onmouseout="() => item.IsMouseOver = false">
+                <input type="checkbox" @bind="@item.IsComplete" />
+                <span class="todo-item-text @(item.IsComplete ? "line-through" : "")">@item.Text</span>
+                @if (item.IsMouseOver)
+                {
+                    <button class="delete-todo-item" @onclick="() => DeleteItem(item)">Delete</button>
+                }
+            </div>
+        }
+    }
+
+    <div id="add-todo-item-section">
+        <input id="new-todo-input" @bind="_newTodoText" placeholder="New todo item" />
+        <button id="add-todo-button" @onclick="() => AddItem(_newTodoText)">Add</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public WeekPlannerPage Parent { get; set; } = default!;
+    public List<TodoItem> TodoItems => Parent.WeekPlanner?.Todos ?? [];
+    private string _newTodoText = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (Parent is null)
+        {
+            throw new InvalidOperationException("TodoList must be used within a WeekPlannerPage.");
+        }
+    }
+
+    private async Task DeleteItem(TodoItem item)
+    {
+        await Parent.HandleDeleteTodo(item);
+    }
+
+    private async Task AddItem(string text)
+    {
+        await Parent.HandleAddTodo(text);
+    }
+}

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components;
 using static LessonFlow.Shared.AppConstants;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Domain.YearPlans;
+using LessonFlow.Domain.ValueObjects;
 
 namespace LessonFlow.Components.Pages;
 
@@ -464,6 +465,41 @@ public partial class WeekPlannerPage : ComponentBase
         if (EditingWeekPlanner is null) return;
         var dayPlan = EditingWeekPlanner.DayPlans.First(dp => dp.DayOfWeek == day);
         dayPlan.AfterSchoolDuty = newName;
+    }
+
+    internal async Task HandleDeleteTodo(TodoItem item)
+    {
+        if (WeekPlanner is null) return;
+        try
+        {
+            var uow = UnitOfWorkFactory.Create();
+            var ct = new CancellationToken();
+            var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
+
+            weekPlanner.UpdateTodos(WeekPlanner.Todos);
+            await uow.SaveChangesAsync(ct);
+
+            WeekPlanner.DeleteTodoItem(item);
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Failed to delete todo item");
+            _error = "Failed to delete todo item. Please try again";
+        }
+    }
+
+    internal async Task HandleAddTodo(string text)
+    {
+        var uow = UnitOfWorkFactory.Create();
+        var ct = new CancellationToken();
+        if (WeekPlanner is null)
+        {
+            WeekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(AppState.CurrentYearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
+        }
+
+        WeekPlanner.AddTodoItem(text);
+        await YearPlanRepository.UpdateTodoList(WeekPlanner.Id, WeekPlanner.Todos, ct);
+        await uow.SaveChangesAsync(ct);
     }
 
     private async Task HandleSaveChanges()

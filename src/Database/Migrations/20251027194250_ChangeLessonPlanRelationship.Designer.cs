@@ -1282,7 +1282,7 @@ namespace LessonFlow.Database.Migrations
                                 .HasForeignKey("LessonPlanId");
                         });
 
-                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "ToDos", b1 =>
+                    b.OwnsMany("LessonFlow.Domain.ValueObjects.TodoItem", "Todos", b1 =>
                         {
                             b1.Property<Guid>("Id")
                                 .ValueGeneratedOnAdd()
@@ -1312,7 +1312,7 @@ namespace LessonFlow.Database.Migrations
 
                     b.Navigation("Subject");
 
-                    b.Navigation("ToDos");
+                    b.Navigation("Todos");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.DayTemplate", b =>

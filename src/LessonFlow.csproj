@@ -105,6 +105,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Components\LessonPlanner\" />
 	  <Folder Include="Database\Migrations\" />
 	</ItemGroup>
 
