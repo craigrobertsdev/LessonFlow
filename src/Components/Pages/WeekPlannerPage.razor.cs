@@ -469,17 +469,19 @@ public partial class WeekPlannerPage : ComponentBase
 
     internal async Task HandleDeleteTodo(TodoItem item)
     {
-        if (WeekPlanner is null) return;
         try
         {
             var uow = UnitOfWorkFactory.Create();
             var ct = new CancellationToken();
-            var weekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
-
-            weekPlanner.UpdateTodos(WeekPlanner.Todos);
-            await uow.SaveChangesAsync(ct);
+            if (WeekPlanner is null)
+            {
+                WeekPlanner = await YearPlanRepository.GetOrCreateWeekPlanner(YearPlan.Id, Year, TermNumber, WeekNumber, WeekStart, ct);
+            }
 
             WeekPlanner.DeleteTodoItem(item);
+            await YearPlanRepository.UpdateTodoList(WeekPlanner.Id, WeekPlanner.Todos, ct);
+            await uow.SaveChangesAsync(ct);
+
         }
         catch (Exception e)
         {
