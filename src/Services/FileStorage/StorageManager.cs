@@ -1,4 +1,3 @@
-using LessonFlow.Domain.Resources;
 using LessonFlow.Shared.Interfaces.Services;
 
 namespace LessonFlow.Services.FileStorage;
@@ -13,7 +12,7 @@ public class StorageManager : IStorageManager
     {
         _userId = Guid.NewGuid();
     }
-    public async Task<string> Save(string fileName, Stream file, CancellationToken ct)
+    public async Task<FileUploadResponse> Save(string fileName, Stream file, CancellationToken ct)
     {
         throw new NotImplementedException();
     }

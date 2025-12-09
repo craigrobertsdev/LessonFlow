@@ -176,7 +176,7 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         var user = await context.Users
             .Where(u => u.Id == userId)
             .Include(t => t.Resources
-                .Where(r => r.Subject.Id == subjectId))
+                .Where(r => r.Subjects.Any(s => s.Id == subjectId)))
             .AsSplitQuery()
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
@@ -224,5 +224,16 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
             .Where(r => resourceIds.Contains(r.Id))
             .AsNoTracking()
             .ToListAsync(ct);
+    }
+
+    public async Task AddResource(Guid userId, Resource resource, CancellationToken ct)
+    {
+        var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(CompleteAccountSetup)} must be called with a UnitOfWork");
+        var user = await context.Users
+            .Where(u => u.Id == userId)
+            .Include(u => u.Resources)
+            .FirstOrDefaultAsync(ct) ?? throw new UserNotFoundException();
+
+        user.Resources.Add(resource);
     }
 }

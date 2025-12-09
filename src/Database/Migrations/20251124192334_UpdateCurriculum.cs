@@ -63,7 +63,7 @@ namespace LessonFlow.Database.Migrations
                 table: "Resources");
 
             migrationBuilder.AddColumn<string>(
-                name: "AssociatedTopics",
+                name: "ConceptualOrganisers",
                 table: "Resources",
                 type: "text",
                 nullable: false,

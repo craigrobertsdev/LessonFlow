@@ -11,9 +11,10 @@ public class StorageManagerTests
         var storageManager = new StorageManager();
 
         using var stream = new MemoryStream(16000);
-        var resultUrl = await storageManager.UploadResource(stream, CancellationToken.None);
+        //var resultUrl = await storageManager.CreateResource(stream, CancellationToken.None);
 
-        Assert.Equal(filePath, resultUrl);
+        //Assert.Equal(filePath, resultUrl);
+        throw new NotImplementedException();
     }
 
     [Fact]
@@ -23,15 +24,16 @@ public class StorageManagerTests
         var filePath = Environment.CurrentDirectory + userId.ToString();
         var storageManager = new StorageManager();
         using var stream = new MemoryStream(16000);
-        var resultUrl = await storageManager.UploadResource(stream, CancellationToken.None);
-        var fileExists = File.Exists(resultUrl);
-        Assert.True(fileExists);
+        //var resultUrl = await storageManager.UploadResource(stream, CancellationToken.None);
+        //var fileExists = File.Exists(resultUrl);
+        //Assert.True(fileExists);
 
-        // Clean up
-        if (fileExists)
-        {
-            File.Delete(resultUrl);
-            Directory.Delete(filePath);
-        }
+        //// Clean up
+        //if (fileExists)
+        //{
+        //    File.Delete(resultUrl);
+        //    Directory.Delete(filePath);
+        //}
+        throw new NotImplementedException();
     }
 }

@@ -38,8 +38,8 @@ public static class DtoExtensions
     {
         return resources.Select(r => new ResourceDto(
                 r.Id,
-                r.Name,
-                r.Url,
+                r.FileName,
+                r.Link,
                 r.Type,
                 r.YearLevels))
             .ToList();

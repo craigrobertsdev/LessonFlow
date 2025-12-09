@@ -193,7 +193,7 @@ namespace LessonFlow.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -452,14 +452,14 @@ namespace LessonFlow.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("Id");
 
-                    b.Property<string>("AssociatedTopics")
+                    b.Property<string>("ConceptualOrganisers")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedDateTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -470,7 +470,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<DateTime>("UpdatedDateTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Url")
+                    b.Property<string>("Link")
                         .IsRequired()
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
@@ -610,7 +610,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("LocationId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -774,7 +774,7 @@ namespace LessonFlow.Database.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FileName")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
@@ -883,13 +883,13 @@ namespace LessonFlow.Database.Migrations
                     b.Property<string>("LoginProvider")
                         .HasColumnType("text");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("FileName")
                         .HasColumnType("text");
 
                     b.Property<string>("Value")
                         .HasColumnType("text");
 
-                    b.HasKey("UserId", "LoginProvider", "Name");
+                    b.HasKey("UserId", "LoginProvider", "FileName");
 
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
@@ -1108,7 +1108,7 @@ namespace LessonFlow.Database.Migrations
                                 .IsRequired()
                                 .HasColumnType("text[]");
 
-                            b1.Property<string>("Name")
+                            b1.Property<string>("FileName")
                                 .IsRequired()
                                 .HasColumnType("text");
 
@@ -1135,7 +1135,7 @@ namespace LessonFlow.Database.Migrations
                                 .IsRequired()
                                 .HasColumnType("text[]");
 
-                            b1.Property<string>("Name")
+                            b1.Property<string>("FileName")
                                 .IsRequired()
                                 .HasColumnType("text");
 
@@ -1344,7 +1344,7 @@ namespace LessonFlow.Database.Migrations
                             b1.Property<TimeOnly>("EndTime")
                                 .HasColumnType("time without time zone");
 
-                            b1.Property<string>("Name")
+                            b1.Property<string>("FileName")
                                 .HasMaxLength(50)
                                 .HasColumnType("character varying(50)");
 

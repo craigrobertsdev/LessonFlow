@@ -19,22 +19,21 @@ public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
             .HasColumnName("Id")
             .HasConversion(new StronglyTypedIdConverter.ResourceIdConverter());
 
-        builder.Property(r => r.Name)
+        builder.Property(r => r.FileName)
             .HasMaxLength(500);
 
-        builder.Property(r => r.Url)
+        builder.Property(r => r.Link)
             .HasMaxLength(300);
 
-        builder.HasMany(r => r.AssociatedTopics)
+        builder.HasMany(r => r.ConceptualOrganisers)
             .WithMany();
 
         builder.HasOne<User>()
             .WithMany(u => u.Resources)
             .HasForeignKey(r => r.UserId);
 
-        builder.HasOne(r => r.Subject)
-            .WithMany()
-            .IsRequired();
+        builder.HasMany(r => r.Subjects)
+            .WithMany();
 
         builder.HasMany(r => r.LessonPlans)
             .WithMany(lp => lp.Resources);

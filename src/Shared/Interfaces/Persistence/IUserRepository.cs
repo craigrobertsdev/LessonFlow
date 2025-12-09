@@ -22,4 +22,5 @@ public interface IUserRepository
     Task<List<Subject>> GetSubjectsTaughtByUserWithElaborations(Guid userId, CancellationToken ct);
     Task<YearPlan?> GetYearPlanByYear(Guid userId, int calendarYear, CancellationToken ct);
     void Delete(User user);
+    Task AddResource(Guid userId, Resource resource, CancellationToken ct);
 }
