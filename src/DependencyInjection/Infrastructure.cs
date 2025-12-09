@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using LessonFlow.Database;
 using LessonFlow.Database.Repositories;
 using LessonFlow.Services;
-using LessonFlow.Services.FileStorage;
 using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Services.FileStorage;
 //using LessonFlow.Services.CurriculumParser.SACurriculum;
 
 
@@ -73,7 +73,7 @@ public static class Infrastructure
     {
         services.AddSingleton<ICurriculumService, CurriculumService>();
         services.AddSingleton<ITermDatesService, TermDatesService>();
-        services.AddTransient<IStorageManager, StorageManager>();
+        services.AddTransient<StorageManager>();
         //services.AddScoped<ICurriculumParser, SACurriculumParser>();
 
         return services;
