@@ -5,6 +5,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Reports;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Students;
 using LessonFlow.Domain.TermPlanners;

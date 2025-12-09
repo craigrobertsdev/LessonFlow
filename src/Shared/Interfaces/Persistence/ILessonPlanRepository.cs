@@ -1,6 +1,6 @@
 using LessonFlow.Domain.LessonPlans;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Domain.Users;
 
 namespace LessonFlow.Shared.Interfaces.Persistence;
 

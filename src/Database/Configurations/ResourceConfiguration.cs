@@ -1,6 +1,7 @@
 using System.Text.Json;
 using LessonFlow.Database.Converters;
 using LessonFlow.Domain.Enums;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -24,11 +25,8 @@ public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
         builder.Property(r => r.Url)
             .HasMaxLength(300);
 
-        builder.Property(r => r.AssociatedStrands)
-            .HasConversion(
-                v => string.Join(',', v),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
-                null);
+        builder.HasMany(r => r.AssociatedTopics)
+            .WithMany();
 
         builder.HasOne<User>()
             .WithMany(u => u.Resources)

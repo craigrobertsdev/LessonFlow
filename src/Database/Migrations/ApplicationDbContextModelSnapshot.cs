@@ -18,7 +18,7 @@ namespace LessonFlow.Database.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "10.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -36,6 +36,21 @@ namespace LessonFlow.Database.Migrations
                     b.HasIndex("SchoolEventsId");
 
                     b.ToTable("CalendarSchoolEvent");
+                });
+
+            modelBuilder.Entity("ConceptualOrganiserResource", b =>
+                {
+                    b.Property<Guid>("AssociatedTopicsId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("AssociatedTopicsId", "ResourceId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("ConceptualOrganiserResource");
                 });
 
             modelBuilder.Entity("DayPlanSchoolEvent", b =>
@@ -178,6 +193,110 @@ namespace LessonFlow.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Calendar");
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.Capability", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<string>>("Descriptors")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("YearLevelId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("YearLevelId");
+
+                    b.ToTable("Capabilities", (string)null);
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.ConceptualOrganiser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<string>>("ConceptualUnderstandings")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("WhatItIs")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("WhyItMatters")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("YearLevelId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("YearLevelId");
+
+                    b.ToTable("ConceptualOrganisers", (string)null);
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.ContentDescription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ConceptualOrganiserId")
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<string[]>("CurriculumCodes")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConceptualOrganiserId");
+
+                    b.ToTable("ContentDescriptions", (string)null);
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.Disposition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.PrimitiveCollection<List<string>>("DevelopedWhen")
+                        .IsRequired()
+                        .HasColumnType("text[]");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("YearLevelId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("YearLevelId");
+
+                    b.ToTable("Dispositions", (string)null);
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Subject", b =>
@@ -371,6 +490,51 @@ namespace LessonFlow.Database.Migrations
                     b.ToTable("Reports");
                 });
 
+            modelBuilder.Entity("LessonFlow.Domain.Resources.Resource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("CreatedDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("SubjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("YearLevels")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubjectId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Resources");
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Students.Student", b =>
                 {
                     b.Property<Guid>("Id")
@@ -441,52 +605,6 @@ namespace LessonFlow.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("TermPlanners");
-                });
-
-            modelBuilder.Entity("LessonFlow.Domain.Users.Resource", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid")
-                        .HasColumnName("Id");
-
-                    b.Property<string>("AssociatedStrands")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("SubjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedDateTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("YearLevels")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubjectId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Resources");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.Users.User", b =>
@@ -964,6 +1082,21 @@ namespace LessonFlow.Database.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ConceptualOrganiserResource", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.ConceptualOrganiser", null)
+                        .WithMany()
+                        .HasForeignKey("AssociatedTopicsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LessonFlow.Domain.Resources.Resource", null)
+                        .WithMany()
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("DayPlanSchoolEvent", b =>
                 {
                     b.HasOne("LessonFlow.Domain.YearPlans.DayPlan", null)
@@ -1087,6 +1220,44 @@ namespace LessonFlow.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.Capability", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                        .WithMany("Capabilities")
+                        .HasForeignKey("YearLevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.ConceptualOrganiser", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                        .WithMany("ConceptualOrganisers")
+                        .HasForeignKey("YearLevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.ContentDescription", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.ConceptualOrganiser", "ConceptualOrganiser")
+                        .WithMany("ContentDescriptions")
+                        .HasForeignKey("ConceptualOrganiserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConceptualOrganiser");
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.Disposition", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                        .WithMany("Dispositions")
+                        .HasForeignKey("YearLevelId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Curriculum.Subject", null)
@@ -1094,132 +1265,6 @@ namespace LessonFlow.Database.Migrations
                         .HasForeignKey("SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.OwnsMany("LessonFlow.Domain.Curriculum.Capability", "Capabilities", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.PrimitiveCollection<List<string>>("Descriptors")
-                                .IsRequired()
-                                .HasColumnType("text[]");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<Guid>("YearLevelId")
-                                .HasColumnType("uuid");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("YearLevelId");
-
-                            b1.ToTable("Capabilities", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("YearLevelId");
-                        });
-
-                    b.OwnsMany("LessonFlow.Domain.Curriculum.ConceptualOrganiser", "ConceptualOrganisers", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.PrimitiveCollection<List<string>>("ConceptualUnderstandings")
-                                .IsRequired()
-                                .HasColumnType("text[]");
-
-                            b1.Property<string>("Name")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("WhatItIs")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<string>("WhyItMatters")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<Guid>("YearLevelId")
-                                .HasColumnType("uuid");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("YearLevelId");
-
-                            b1.ToTable("ConceptualOrganisers", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("YearLevelId");
-
-                            b1.OwnsMany("LessonFlow.Domain.Curriculum.ContentDescription", "ContentDescriptions", b2 =>
-                                {
-                                    b2.Property<Guid>("Id")
-                                        .ValueGeneratedOnAdd()
-                                        .HasColumnType("uuid");
-
-                                    b2.Property<Guid>("ConceptualOrganiserId")
-                                        .HasColumnType("uuid");
-
-                                    b2.PrimitiveCollection<string[]>("CurriculumCodes")
-                                        .IsRequired()
-                                        .HasColumnType("text[]");
-
-                                    b2.Property<string>("Text")
-                                        .IsRequired()
-                                        .HasColumnType("text");
-
-                                    b2.HasKey("Id");
-
-                                    b2.HasIndex("ConceptualOrganiserId");
-
-                                    b2.ToTable("ContentDescriptions", (string)null);
-
-                                    b2.WithOwner("ConceptualOrganiser")
-                                        .HasForeignKey("ConceptualOrganiserId");
-
-                                    b2.Navigation("ConceptualOrganiser");
-                                });
-
-                            b1.Navigation("ContentDescriptions");
-                        });
-
-                    b.OwnsMany("LessonFlow.Domain.Curriculum.Disposition", "Dispositions", b1 =>
-                        {
-                            b1.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("uuid");
-
-                            b1.PrimitiveCollection<List<string>>("DevelopedWhen")
-                                .IsRequired()
-                                .HasColumnType("text[]");
-
-                            b1.Property<string>("Title")
-                                .IsRequired()
-                                .HasColumnType("text");
-
-                            b1.Property<Guid>("YearLevelId")
-                                .HasColumnType("uuid");
-
-                            b1.HasKey("Id");
-
-                            b1.HasIndex("YearLevelId");
-
-                            b1.ToTable("Dispositions", (string)null);
-
-                            b1.WithOwner()
-                                .HasForeignKey("YearLevelId");
-                        });
-
-                    b.Navigation("Capabilities");
-
-                    b.Navigation("ConceptualOrganisers");
-
-                    b.Navigation("Dispositions");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.LessonPlans.LessonPlan", b =>
@@ -1403,6 +1448,23 @@ namespace LessonFlow.Database.Migrations
                     b.Navigation("Subject");
                 });
 
+            modelBuilder.Entity("LessonFlow.Domain.Resources.Resource", b =>
+                {
+                    b.HasOne("LessonFlow.Domain.Curriculum.Subject", "Subject")
+                        .WithMany()
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("LessonFlow.Domain.Users.User", null)
+                        .WithMany("Resources")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Subject");
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Students.Student", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Users.User", null)
@@ -1434,23 +1496,6 @@ namespace LessonFlow.Database.Migrations
                         .HasForeignKey("LessonFlow.Domain.TermPlanners.TermPlanner", "YearPlanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("LessonFlow.Domain.Users.Resource", b =>
-                {
-                    b.HasOne("LessonFlow.Domain.Curriculum.Subject", "Subject")
-                        .WithMany()
-                        .HasForeignKey("SubjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("LessonFlow.Domain.Users.User", null)
-                        .WithMany("Resources")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Subject");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.ValueObjects.SchoolEvent", b =>
@@ -1535,7 +1580,7 @@ namespace LessonFlow.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("LessonFlow.Domain.Users.Resource", null)
+                    b.HasOne("LessonFlow.Domain.Resources.Resource", null)
                         .WithMany()
                         .HasForeignKey("ResourcesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1623,9 +1668,23 @@ namespace LessonFlow.Database.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.ConceptualOrganiser", b =>
+                {
+                    b.Navigation("ContentDescriptions");
+                });
+
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Subject", b =>
                 {
                     b.Navigation("YearLevels");
+                });
+
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
+                {
+                    b.Navigation("Capabilities");
+
+                    b.Navigation("ConceptualOrganisers");
+
+                    b.Navigation("Dispositions");
                 });
 
             modelBuilder.Entity("LessonFlow.Domain.PlannerTemplates.DayTemplate", b =>

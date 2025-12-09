@@ -1,6 +1,5 @@
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -1,6 +1,7 @@
 using LessonFlow.Database.Converters;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
+using LessonFlow.Domain.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -40,36 +41,67 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Subject>
                     v => (int)v,
                     v => (YearLevelValue)v);
 
-            builder.OwnsMany(yl => yl.Capabilities, cb =>
-            {
-                cb.ToTable("Capabilities");
-                cb.Property<Guid>("Id");
-                cb.HasKey("Id");
-                cb.WithOwner().HasForeignKey("YearLevelId");
-            });
+            builder.HasMany(yl => yl.Capabilities)
+                .WithOne()
+                .HasForeignKey("YearLevelId")
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.OwnsMany(yl => yl.Dispositions, db =>
-            {
-                db.ToTable("Dispositions");
-                db.Property<Guid>("Id");
-                db.HasKey("Id");
-                db.WithOwner().HasForeignKey("YearLevelId");
-            });
+            builder.HasMany(yl => yl.Dispositions)
+                .WithOne()
+                .HasForeignKey("YearLevelId")
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
 
-            builder.OwnsMany(yl => yl.ConceptualOrganisers, cb =>
-            {
-                cb.ToTable("ConceptualOrganisers");
-                cb.Property<Guid>("Id");
-                cb.HasKey("Id");
-                cb.WithOwner().HasForeignKey("YearLevelId");
-
-                cb.OwnsMany(cb => cb.ContentDescriptions, cdb =>
-                {
-                    cdb.ToTable("ContentDescriptions");
-                    cdb.HasKey(cd => cd.Id);
-                    cdb.WithOwner(cd => cd.ConceptualOrganiser).HasForeignKey("ConceptualOrganiserId");
-                });
-            });
+            builder.HasMany(yl => yl.ConceptualOrganisers)
+                .WithOne()
+                .HasForeignKey("YearLevelId")
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
         }
+    }
+}
+
+public class CapabilityConfiguration : IEntityTypeConfiguration<Capability>
+{
+    public void Configure(EntityTypeBuilder<Capability> builder)
+    {
+        builder.ToTable("Capabilities");
+        builder.Property<Guid>("Id");
+        builder.HasKey("Id");
+    }
+}
+
+public class DispositionConfiguration : IEntityTypeConfiguration<Disposition>
+{
+    public void Configure(EntityTypeBuilder<Disposition> builder)
+    {
+        builder.ToTable("Dispositions");
+        builder.Property<Guid>("Id");
+        builder.HasKey("Id");
+    }
+}
+
+public class ConceptualOrganiserConfiguration : IEntityTypeConfiguration<ConceptualOrganiser>
+{
+    public void Configure(EntityTypeBuilder<ConceptualOrganiser> builder)
+    {
+        builder.ToTable("ConceptualOrganisers");
+        builder.HasKey(co => co.Id);
+
+        builder.HasMany(co => co.ContentDescriptions)
+            .WithOne(cd => cd.ConceptualOrganiser)
+            .HasForeignKey("ConceptualOrganiserId")
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class ContentDescriptionConfiguration : IEntityTypeConfiguration<ContentDescription>
+{
+    public void Configure(EntityTypeBuilder<ContentDescription> builder)
+    {
+        builder.ToTable("ContentDescriptions");
+        builder.HasKey(cd => cd.Id);
     }
 }

@@ -2,6 +2,12 @@ namespace LessonFlow.Domain.Curriculum;
 
 public record ConceptualOrganiser
 {
+    public ConceptualOrganiser()
+    {
+        Id = Guid.NewGuid();
+    }
+
+    public Guid Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string WhatItIs { get; set; } = string.Empty;
     public string WhyItMatters { get; set; } = string.Empty;

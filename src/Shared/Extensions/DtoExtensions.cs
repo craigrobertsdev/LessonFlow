@@ -2,7 +2,7 @@ using LessonFlow.Api.Contracts.Resources;
 using LessonFlow.Api.Contracts.WeekPlanners;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.LessonPlans;
-using LessonFlow.Domain.Users;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Shared.Extensions;
@@ -40,7 +40,7 @@ public static class DtoExtensions
                 r.Id,
                 r.Name,
                 r.Url,
-                r.IsAssessment,
+                r.Type,
                 r.YearLevels))
             .ToList();
     }

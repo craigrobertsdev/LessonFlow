@@ -1,5 +1,6 @@
 using LessonFlow.Components.AccountSetup.State;
 using LessonFlow.Domain.Curriculum;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearPlans;

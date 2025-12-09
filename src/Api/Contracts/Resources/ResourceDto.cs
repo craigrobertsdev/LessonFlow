@@ -7,5 +7,5 @@ public record ResourceDto(
     ResourceId Id,
     string Name,
     string Url,
-    bool IsAssessment,
+    ResourceType ResourceType,
     IEnumerable<YearLevelValue> YearLevels);

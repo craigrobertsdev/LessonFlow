@@ -464,7 +464,7 @@ namespace LessonFlow.Database.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("Id");
 
-                    b.Property<string>("AssociatedStrands")
+                    b.Property<string>("AssociatedTopics")
                         .IsRequired()
                         .HasColumnType("text");
 

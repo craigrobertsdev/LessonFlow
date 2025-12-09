@@ -5,8 +5,8 @@ using LessonFlow.Domain.Common.Primatives;
 using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.StronglyTypedIds;
-using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
 
