@@ -14,6 +14,7 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
     public List<YearLevelValue> YearLevels { get; private set; } = [];
     public YearPlanId YearPlanId { get; private set; }
     public int CalendarYear { get; private set; }
+    //public Dictionary<YearLevelValue, List<ConceptualOrganiser>> PlannedConceptualOrganisers { get; private set; } = [];
 
     private static List<YearLevelValue> RemoveDuplicateYearLevels(List<YearLevelValue> yearLevels)
     {
@@ -69,23 +70,23 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
         var subjectCounts = new[] { 0, 0, 0, 0 };
 
         for (var i = 0; i < subjectNumbersForTerms.Length; i++)
-        for (var j = 0; j < subjectNumbersForTerms[i]; j++)
-        {
-            if (subjectCounts[i] >= subjectNumbersForTerms[i])
+            for (var j = 0; j < subjectNumbersForTerms[i]; j++)
             {
-                break;
+                if (subjectCounts[i] >= subjectNumbersForTerms[i])
+                {
+                    break;
+                }
+
+                var subject = subjects.First(s => s.Id == TermPlans[i].Subjects[j].Id);
+
+                if (subject is null)
+                {
+                    continue;
+                }
+
+                TermPlans[i].SetSubjectAtIndex(subject, j);
+                subjectCounts[i]++;
             }
-
-            var subject = subjects.First(s => s.Id == TermPlans[i].Subjects[j].Id);
-
-            if (subject is null)
-            {
-                continue;
-            }
-
-            TermPlans[i].SetSubjectAtIndex(subject, j);
-            subjectCounts[i]++;
-        }
     }
 
     public TermPlanner(YearPlanId yearPlanId, int calendarYear,
@@ -97,6 +98,11 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
 
         YearLevels = RemoveDuplicateYearLevels(yearLevels);
         SortYearLevels();
+
+        for (var termNumber = 1; termNumber <= 4; termNumber++)
+        {
+            TermPlans.Add(new TermPlan(this, termNumber, []));
+        }
 
         AddDomainEvent(new TermPlannerCreatedDomainEvent(Guid.NewGuid(), this, yearPlanId));
     }

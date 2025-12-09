@@ -1,0 +1,7 @@
+﻿@using LessonFlow.Domain.StronglyTypedIds
+@using LessonFlow.Domain.TermPlanners
+<h3>TermPlannerPage</h3>
+
+@code {
+    public TermPlanner TermPlanner { get; set; } = new TermPlanner(new YearPlanId(Guid.NewGuid()), 2025, []);
+}

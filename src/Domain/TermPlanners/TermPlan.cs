@@ -5,7 +5,7 @@ namespace LessonFlow.Domain.TermPlanners;
 
 public record TermPlan
 {
-    private TermPlan(TermPlanner termPlanner, int termNumber, List<Subject> subjects)
+    public TermPlan(TermPlanner termPlanner, int termNumber, List<Subject> subjects)
     {
         TermPlanner = termPlanner;
         TermNumber = termNumber;
@@ -60,10 +60,6 @@ public record TermPlan
         // TODO:
     }
 
-    public static TermPlan Create(TermPlanner termPlanner, int termNumber, List<Subject> subjects)
-    {
-        return new TermPlan(termPlanner, termNumber, subjects);
-    }
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private TermPlan()
     {
