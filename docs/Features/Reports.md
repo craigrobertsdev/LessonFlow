@@ -16,3 +16,8 @@ Constraints can be added as to the length of the comment to ensure the comment f
 ### Aggregate grades from assessments
 
 This feature takes the grades entered for each student for each assessment and aggregates them into a single grade for each subject.
+
+
+Have a list of all the dispositions that appear in the South Australian curriculum so when I am writing reports I can talk about the kids in terms of the dispositions. These are typically talked about in the general comments section.
+
+
