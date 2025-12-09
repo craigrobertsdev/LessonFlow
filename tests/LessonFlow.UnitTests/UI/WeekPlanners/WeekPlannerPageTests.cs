@@ -19,8 +19,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
-namespace LessonFlow.UnitTests.UI.WeekPlannerTests;
-public class WeekPlannerPageTests : TestContext
+namespace LessonFlow.UnitTests.UI.WeekPlanners;
+public class WeekPlannerPageTests : BunitContext
 {
     private readonly AppState _appState;
 
