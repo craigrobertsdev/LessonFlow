@@ -26,9 +26,9 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Subject>
             .OnDelete(DeleteBehavior.Cascade);
     }
 
-    public class YearLevelConfiguration : IEntityTypeConfiguration<YearLevel>
+    public class YearLevelConfiguration : IEntityTypeConfiguration<CurriculumYearLevel>
     {
-        public void Configure(EntityTypeBuilder<YearLevel> builder)
+        public void Configure(EntityTypeBuilder<CurriculumYearLevel> builder)
         {
             builder.ToTable("YearLevels");
             builder.Property<Guid>("Id");
@@ -39,7 +39,7 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Subject>
             builder.Property(yl => yl.YearLevelValue)
                 .HasConversion(
                     v => (int)v,
-                    v => (YearLevelValue)v);
+                    v => (YearLevel)v);
 
             builder.HasMany(yl => yl.Capabilities)
                 .WithOne()

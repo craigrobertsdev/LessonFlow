@@ -9,13 +9,13 @@ public interface ICurriculumService
     List<Subject> CurriculumSubjects { get; }
     string GetSubjectName(SubjectId subjectId);
     List<string> GetSubjectNames();
-    List<Subject> GetSubjectsByYearLevel(YearLevelValue yearLevel);
+    List<Subject> GetSubjectsByYearLevel(YearLevel yearLevel);
     List<Subject> GetSubjectsByNames(IEnumerable<string> names);
     Subject? GetSubjectByName(string name);
 
     List<Subject> GetSubjectsByYearLevels(IEnumerable<SubjectId> subjectIds,
-        IEnumerable<YearLevelValue> yearLevelValues);
+        IEnumerable<YearLevel> yearLevelValues);
 
-    Dictionary<YearLevelValue, List<ContentDescription>> GetContentDescriptions(SubjectId subjectId,
-        List<YearLevelValue> yearLevels);
+    Dictionary<YearLevel, List<ContentDescription>> GetContentDescriptions(SubjectId subjectId,
+        List<YearLevel> yearLevels);
 }

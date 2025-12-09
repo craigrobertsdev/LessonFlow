@@ -176,7 +176,7 @@ public class AccountSetupTests : BunitContext, IClassFixture<CustomWebApplicatio
         component.Instance.AccountSetupState.SetSchoolName("Test School");
         component.Instance.AccountSetupState.SetCalendarYear(2025);
         component.Instance.AccountSetupState.SetSubjectsTaught(["Mathematics", "Science"]);
-        component.Instance.AccountSetupState.YearLevelsTaught.Add(YearLevelValue.Year6);
+        component.Instance.AccountSetupState.YearLevelsTaught.Add(YearLevel.Year6);
         component.Instance.AccountSetupState.WorkingDays.Clear();
         component.Instance.AccountSetupState.WorkingDays.AddRange(workingDays);
         component.WaitForElement("#next-step").Click();

@@ -8,7 +8,7 @@ public record CurriculumSubjectDto(
     IEnumerable<YearLevelDto> YearLevels);
 
 public record YearLevelDto(
-    YearLevelValue YearLevel,
+    YearLevel YearLevel,
     string LearningStandard,
     IEnumerable<CapabilityDto> Capabilities,
     IEnumerable<DispositionDto> Dispositions,

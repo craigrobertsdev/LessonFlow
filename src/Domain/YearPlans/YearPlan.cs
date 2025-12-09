@@ -24,7 +24,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
     public TermPlanner? TermPlanner { get; private set; }
     public int CalendarYear { get; init; }
     public List<Student> Students { get; private set; } = [];
-    public List<YearLevelValue> YearLevelsTaught { get; private set; } = [];
+    public List<YearLevel> YearLevelsTaught { get; private set; } = [];
     public List<Subject> SubjectsTaught { get; private set; } = [];
     public List<WeekPlanner> WeekPlanners { get; private set; } = [];
     public List<DayOfWeek> WorkingDays { get; private set; } = [];
@@ -56,7 +56,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         }
     }
 
-    public void AddYearLevel(YearLevelValue yearLevel)
+    public void AddYearLevel(YearLevel yearLevel)
     {
         if (!YearLevelsTaught.Contains(yearLevel))
         {
@@ -64,7 +64,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         }
     }
 
-    private bool NotInYearLevelsTaught(YearLevelValue yearLevel)
+    private bool NotInYearLevelsTaught(YearLevel yearLevel)
     {
         return YearLevelsTaught.Contains(yearLevel);
     }
@@ -79,7 +79,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         TermPlanner = termPlanner;
     }
 
-    public void AddYearLevelsTaught(List<YearLevelValue> yearLevelsTaught)
+    public void AddYearLevelsTaught(List<YearLevel> yearLevelsTaught)
     {
         foreach (var yearLevel in yearLevelsTaught)
         {
@@ -99,7 +99,7 @@ public class YearPlan : Entity<YearPlanId>, IAggregateRoot
         WeekPlannerTemplate.SetDayTemplates(weekPlannerTemplate.DayTemplates);
     }
 
-    public void SetYearLevelsTaught(List<YearLevelValue> yearLevels)
+    public void SetYearLevelsTaught(List<YearLevel> yearLevels)
     {
         yearLevels.Sort();
         YearLevelsTaught.Clear();

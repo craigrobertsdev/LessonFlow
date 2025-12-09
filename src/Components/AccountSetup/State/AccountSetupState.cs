@@ -21,7 +21,7 @@ public class AccountSetupState
     public List<AccountSetupStep> CompletedSteps { get; private set; } = [];
     public string SchoolName { get; private set; } = string.Empty;
     public int CalendarYear { get; private set; } = DateTime.Now.Year;
-    public List<YearLevelValue> YearLevelsTaught { get; private set; } = [];
+    public List<YearLevel> YearLevelsTaught { get; private set; } = [];
     public List<string> SubjectsTaught { get; private set; } = [];
     public List<DayOfWeek> WorkingDays { get; private set; } =
     [

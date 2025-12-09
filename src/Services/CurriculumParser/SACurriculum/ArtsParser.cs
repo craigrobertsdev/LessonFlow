@@ -9,7 +9,7 @@ public class ArtsParser(string subjectName) : BaseParser(subjectName, _contentDe
 {
     private static readonly char[] _contentDescriptionEndings = ['^'];
 
-    protected override YearLevel ParseLearningStandard(PdfDocument document, ref string description)
+    protected override CurriculumYearLevel ParseLearningStandard(PdfDocument document, ref string description)
     {
         var page = document.GetPage(_currentPageNum);
         var descriptionBuilder = new StringBuilder();
@@ -64,9 +64,9 @@ public class ArtsParser(string subjectName) : BaseParser(subjectName, _contentDe
             }
         } while (idx < words.Length);
 
-        YearLevelValue yearLevelValue;
+        YearLevel yearLevelValue;
         var desc = descriptionBuilder.ToString();
-        var wordIdx = desc.Length - 7; // The shortest YearLevelValue is 6 so start here.
+        var wordIdx = desc.Length - 7; // The shortest YearLevel is 6 so start here.
         do
         {
             if (wordIdx == 0)
@@ -77,19 +77,19 @@ public class ArtsParser(string subjectName) : BaseParser(subjectName, _contentDe
             {
                 if ((_subjectName == "Media" || _subjectName == "Music") && _currentPageNum == 14)
                 {
-                    yearLevelValue = YearLevelValue.Years7To8;
+                    yearLevelValue = YearLevel.Years7To8;
                     wordIdx = 361;
                 }
                 else if (_subjectName == "Visual Arts" && _currentPageNum == 14)
                 {
-                    yearLevelValue = YearLevelValue.Years7To8;
+                    yearLevelValue = YearLevel.Years7To8;
                     wordIdx = 356;
                 }
 
                 else
                 {
                     var formattedStr = desc[wordIdx..].Replace("to", "To").Replace(" ", string.Empty);
-                    yearLevelValue = Enum.Parse<YearLevelValue>(formattedStr);
+                    yearLevelValue = Enum.Parse<YearLevel>(formattedStr);
                 }
 
                 break;
@@ -127,6 +127,6 @@ public class ArtsParser(string subjectName) : BaseParser(subjectName, _contentDe
         var learningStandard = learningStandardBuilder.ToString().Trim();
         _currentPageNum++;
 
-        return new YearLevel(yearLevelValue, learningStandard);
+        return new CurriculumYearLevel(yearLevelValue, learningStandard);
     }
 }

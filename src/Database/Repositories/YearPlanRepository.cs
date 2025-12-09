@@ -38,7 +38,7 @@ public class YearPlanRepository(IDbContextFactory<ApplicationDbContext> factory,
             .FirstOrDefaultAsync(ct);
     }
 
-    public async Task<List<YearLevelValue>> GetYearLevelsTaught(Guid UserId, int calendarYear,
+    public async Task<List<YearLevel>> GetYearLevelsTaught(Guid UserId, int calendarYear,
         CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

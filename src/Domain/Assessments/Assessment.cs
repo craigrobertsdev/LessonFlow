@@ -14,7 +14,7 @@ public class Assessment : Entity<AssessmentId>, IAggregateRoot
         User user,
         Subject subject,
         Student student,
-        YearLevelValue yearLevel,
+        YearLevel yearLevel,
         string planningNotes,
         DateTime conductedDateTime)
     {
@@ -30,7 +30,7 @@ public class Assessment : Entity<AssessmentId>, IAggregateRoot
     public User User { get; private set; }
     public Subject Subject { get; private set; }
     public Student Student { get; private set; }
-    public YearLevelValue YearLevel { get; private set; }
+    public YearLevel YearLevel { get; private set; }
     public AssessmentType AssessmentType { get; }
     public AssessmentResult? AssessmentResult { get; private set; }
     public string PlanningNotes { get; private set; }

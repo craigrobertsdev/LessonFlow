@@ -14,7 +14,7 @@ public class ResourceTests
         //var resourceType = ResourceType.Video;
         //var resourceUrl = "https://example.com/resource";
         //var subject = new Subject([], "Mathematics");
-        //var yearLevels = new List<YearLevelValue> { YearLevelValue.Reception, YearLevelValue.Year1 };
+        //var yearLevels = new List<YearLevel> { YearLevel.Reception, YearLevel.Year1 };
 
         //var resource = new Resource(userId, resourceName, resourceUrl, subject, yearLevels, resourceType);
 

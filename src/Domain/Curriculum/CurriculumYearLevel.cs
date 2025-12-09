@@ -2,16 +2,16 @@ using LessonFlow.Domain.Enums;
 
 namespace LessonFlow.Domain.Curriculum;
 
-public sealed class YearLevel
+public sealed class CurriculumYearLevel
 {
     public List<Capability> Capabilities { get; private set; } = [];
     public List<Disposition> Dispositions { get; private set; } = [];
     public List<ConceptualOrganiser> ConceptualOrganisers { get; private set; } = [];
     public string LearningStandard { get; } = string.Empty;
     public string Name => YearLevelValue.ToDisplayString();
-    public YearLevelValue YearLevelValue { get; }
+    public YearLevel YearLevelValue { get; }
 
-    public YearLevelValue[] GetYearLevels()
+    public YearLevel[] GetYearLevels()
     {
         if ((int)YearLevelValue < 15)
         {
@@ -20,9 +20,9 @@ public sealed class YearLevel
 
         return YearLevelValue switch
         {
-            YearLevelValue.Years1To2 => [YearLevelValue.Year1, YearLevelValue.Year2],
-            YearLevelValue.Years3To4 => [YearLevelValue.Year3, YearLevelValue.Year4],
-            YearLevelValue.Years5To6 => [YearLevelValue.Year5, YearLevelValue.Year6],
+            YearLevel.Years1To2 => [YearLevel.Year1, YearLevel.Year2],
+            YearLevel.Years3To4 => [YearLevel.Year3, YearLevel.Year4],
+            YearLevel.Years5To6 => [YearLevel.Year5, YearLevel.Year6],
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -53,14 +53,14 @@ public sealed class YearLevel
         ConceptualOrganisers = conceptualOrganisers;
     }
 
-    public YearLevel(YearLevelValue yearLevelValue, string learningStandard)
+    public CurriculumYearLevel(YearLevel yearLevelValue, string learningStandard)
     {
         YearLevelValue = yearLevelValue;
         LearningStandard = learningStandard;
     }
 
-    public YearLevel(
-        YearLevelValue yearLevelValue,
+    public CurriculumYearLevel(
+        YearLevel yearLevelValue,
         string learningStandard,
         List<Capability> capabilities,
         List<Disposition> dispositions,
@@ -73,30 +73,30 @@ public sealed class YearLevel
         ConceptualOrganisers = conceptualOrganisers;
     }
 
-    private YearLevel()
+    private CurriculumYearLevel()
     {
     }
 }
 
 public static class YearLevelExtensions
 {
-    public static YearLevel? GetFromYearLevelValue(this IEnumerable<YearLevel> yearLevels,
-        YearLevelValue yearLevelValue)
+    public static CurriculumYearLevel? GetFromYearLevelValue(this IEnumerable<CurriculumYearLevel> yearLevels,
+        YearLevel yearLevelValue)
     {
         return yearLevels.FirstOrDefault(yl => yl.YearLevelValue == yearLevelValue
                                                || yl.GetYearLevels().Contains(yearLevelValue));
     }
 
-    public static List<YearLevel> FilterYearLevels(this IEnumerable<YearLevel> yearLevels,
-        IEnumerable<YearLevelValue> yearLevelValues)
+    public static List<CurriculumYearLevel> FilterYearLevels(this IEnumerable<CurriculumYearLevel> yearLevels,
+        IEnumerable<YearLevel> yearLevelValues)
     {
         return yearLevels.Where(s =>
                 yearLevelValues.Contains(s.YearLevelValue))
             .ToList();
     }
 
-    public static List<YearLevel> FilterYearLevels(this IEnumerable<YearLevel> yearLevels,
-        YearLevelValue yearLevelValue)
+    public static List<CurriculumYearLevel> FilterYearLevels(this IEnumerable<CurriculumYearLevel> yearLevels,
+        YearLevel yearLevelValue)
     {
         return yearLevels.Where(yl =>
                 yearLevelValue == yl.YearLevelValue
@@ -105,7 +105,7 @@ public static class YearLevelExtensions
             .ToList();
     }
 
-    public static void FilterContentDescriptions(this IEnumerable<YearLevel> yearLevels,
+    public static void FilterContentDescriptions(this IEnumerable<CurriculumYearLevel> yearLevels,
         IEnumerable<Guid> contentDescriptionIds)
     {
         foreach (var yl in yearLevels)
@@ -114,7 +114,7 @@ public static class YearLevelExtensions
         }
     }
 
-    public static void FilterContentDescriptions(this YearLevel yl, IEnumerable<Guid> contentDescriptionIds)
+    public static void FilterContentDescriptions(this CurriculumYearLevel yl, IEnumerable<Guid> contentDescriptionIds)
     {
         yl.SetConceptualOrganisers(yl.ConceptualOrganisers.FilterContentDescriptions(contentDescriptionIds));
     }

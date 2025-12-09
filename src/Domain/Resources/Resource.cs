@@ -18,7 +18,7 @@ public sealed class Resource : Entity<ResourceId>
     public ResourceType Type { get; set; }
     public List<LessonPlan> LessonPlans { get; private set; } = [];
     public List<Subject> Subjects { get; private set; } = [];
-    public List<YearLevelValue> YearLevels { get; private set; } = [];
+    public List<YearLevel> YearLevels { get; private set; } = [];
     public List<ConceptualOrganiser> ConceptualOrganisers { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
@@ -32,7 +32,7 @@ public sealed class Resource : Entity<ResourceId>
         string link,
         ResourceType type,
         List<Subject>? associatedSubjects = null,
-        List<YearLevelValue>? yearLevels = null,
+        List<YearLevel>? yearLevels = null,
         List<ConceptualOrganiser>? associatedConceptualOrganisers = null)
     {
         Id = new ResourceId(Guid.NewGuid());

@@ -10,7 +10,7 @@ public class EnglishParser() : BaseParser("English", _contentDescriptionEndings)
 {
     private static readonly char[] _contentDescriptionEndings = ['*'];
 
-    protected override void ParseDispositionsAndCapabilities(PdfDocument document, YearLevel yearLevel)
+    protected override void ParseDispositionsAndCapabilities(PdfDocument document, CurriculumYearLevel yearLevel)
     {
         var pageArea = ObjectExtractor.Extract(document, _currentPageNum);
         var detector = new SimpleNurminenDetectionAlgorithm();

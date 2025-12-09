@@ -7,5 +7,5 @@ public record CreateResourceRequest(
     string Name,
     Guid SubjectId,
     bool IsAssessment,
-    List<YearLevelValue> YearLevels,
+    List<YearLevel> YearLevels,
     List<string> AssociatedStrands);

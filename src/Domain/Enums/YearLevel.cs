@@ -1,6 +1,6 @@
 namespace LessonFlow.Domain.Enums;
 
-public enum YearLevelValue
+public enum YearLevel
 {
     Reception = 0,
     Year1 = 1,
@@ -22,13 +22,13 @@ public enum YearLevelValue
 
 public static class YearLevelValueExtensions
 {
-    public static string ToDisplayString(this YearLevelValue yearLevel)
+    public static string ToDisplayString(this YearLevel yearLevel)
     {
         return yearLevel switch
         {
-            YearLevelValue.Reception => "Reception",
-            YearLevelValue when (int)yearLevel > 0 && (int)yearLevel < 15 => $"Year {(int)yearLevel}",
-            YearLevelValue when (int)yearLevel >= 15 && (int)yearLevel <= 17 =>
+            YearLevel.Reception => "Reception",
+            YearLevel when (int)yearLevel > 0 && (int)yearLevel < 15 => $"Year {(int)yearLevel}",
+            YearLevel when (int)yearLevel >= 15 && (int)yearLevel <= 17 =>
                 $"Years {(int)yearLevel - 14} and {(int)yearLevel - 13}",
             _ => "No Value"
         };
@@ -39,7 +39,7 @@ public static class YearLevelValueExtensions
     /// </summary>
     /// <param name="yearLevels"></param>
     /// <returns></returns>
-    public static string ToQueryString(this List<YearLevelValue> yearLevels)
+    public static string ToQueryString(this List<YearLevel> yearLevels)
     {
         return string.Join("&", yearLevels.ConvertAll(yl => $"yearLevels={yl}"));
     }

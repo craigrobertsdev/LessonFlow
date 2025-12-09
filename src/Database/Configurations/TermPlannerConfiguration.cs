@@ -31,8 +31,8 @@ public class TermPlannerConfiguration : IEntityTypeConfiguration<TermPlanner>
         builder.Property(tp => tp.YearLevels)
             .HasConversion(
                 v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
-                v => JsonSerializer.Deserialize<List<YearLevelValue>>(v, (JsonSerializerOptions)null),
-                new ValueComparer<List<YearLevelValue>>(
+                v => JsonSerializer.Deserialize<List<YearLevel>>(v, (JsonSerializerOptions)null),
+                new ValueComparer<List<YearLevel>>(
                     (c1, c2) => c1.SequenceEqual(c2),
                     c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     c => c.ToList()));

@@ -2,18 +2,18 @@ namespace LessonFlow.Shared.Extensions;
 
 public static class YearLevelExtensions
 {
-    //public static YearLevel GetByYearLevelValue(this IEnumerable<YearLevel> yearLevels, YearLevelValue yearLevelValue) =>
-    //    yearLevels.First(yl => yl.YearLevelValue == yearLevelValue
+    //public static CurriculumYearLevel GetByYearLevelValue(this IEnumerable<CurriculumYearLevel> yearLevels, YearLevel yearLevelValue) =>
+    //    yearLevels.First(yl => yl.YearLevel == yearLevelValue
     //        || yl.GetYearLevels().Contains(yearLevelValue));
 
-    //public static List<YearLevel> FilterYearLevels(this IEnumerable<YearLevel> yearLevels, IEnumerable<YearLevelValue> yearLevelValues) =>
+    //public static List<CurriculumYearLevel> FilterYearLevels(this IEnumerable<CurriculumYearLevel> yearLevels, IEnumerable<YearLevel> yearLevelValues) =>
     //    yearLevels.Where(s =>
-    //        yearLevelValues.Contains(s.YearLevelValue))
+    //        yearLevelValues.Contains(s.YearLevel))
     //    .ToList();
 
-    //public static List<YearLevel> FilterYearLevels(this IEnumerable<YearLevel> yearLevels, YearLevelValue yearLevelValue) =>
+    //public static List<CurriculumYearLevel> FilterYearLevels(this IEnumerable<CurriculumYearLevel> yearLevels, YearLevel yearLevelValue) =>
     //    yearLevels.Where(s =>
-    //        yearLevelValue == s.YearLevelValue
+    //        yearLevelValue == s.YearLevel
     //        || yearLevelValue == s.GetYearLevels()[0]
     //        || s.GetYearLevels().Length > 1 && yearLevelValue == s.GetYearLevels()[1])
     //    .ToList();

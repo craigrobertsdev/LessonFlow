@@ -57,7 +57,7 @@ public class SubjectRepository(IDbContextFactory<ApplicationDbContext> factory) 
         return subject;
     }
 
-    public async Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevelValue> yearLevels,
+    public async Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevel> yearLevels,
         CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

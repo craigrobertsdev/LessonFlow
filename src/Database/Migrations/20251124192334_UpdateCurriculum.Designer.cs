@@ -156,7 +156,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("YearLevel")
+                    b.Property<string>("CurriculumYearLevel")
                         .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
@@ -322,7 +322,7 @@ namespace LessonFlow.Database.Migrations
                     b.ToTable("Subjects");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.CurriculumYearLevel", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -331,7 +331,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("SubjectId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("YearLevelValue")
+                    b.Property<int>("YearLevel")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
@@ -477,7 +477,7 @@ namespace LessonFlow.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("YearLevel")
+                    b.Property<string>("CurriculumYearLevel")
                         .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
@@ -1225,7 +1225,7 @@ namespace LessonFlow.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Capability", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                    b.HasOne("LessonFlow.Domain.Curriculum.CurriculumYearLevel", null)
                         .WithMany("Capabilities")
                         .HasForeignKey("YearLevelId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1234,7 +1234,7 @@ namespace LessonFlow.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.ConceptualOrganiser", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                    b.HasOne("LessonFlow.Domain.Curriculum.CurriculumYearLevel", null)
                         .WithMany("ConceptualOrganisers")
                         .HasForeignKey("YearLevelId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1254,14 +1254,14 @@ namespace LessonFlow.Database.Migrations
 
             modelBuilder.Entity("LessonFlow.Domain.Curriculum.Disposition", b =>
                 {
-                    b.HasOne("LessonFlow.Domain.Curriculum.YearLevel", null)
+                    b.HasOne("LessonFlow.Domain.Curriculum.CurriculumYearLevel", null)
                         .WithMany("Dispositions")
                         .HasForeignKey("YearLevelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.CurriculumYearLevel", b =>
                 {
                     b.HasOne("LessonFlow.Domain.Curriculum.Subject", null)
                         .WithMany("YearLevels")
@@ -1681,7 +1681,7 @@ namespace LessonFlow.Database.Migrations
                     b.Navigation("YearLevels");
                 });
 
-            modelBuilder.Entity("LessonFlow.Domain.Curriculum.YearLevel", b =>
+            modelBuilder.Entity("LessonFlow.Domain.Curriculum.CurriculumYearLevel", b =>
                 {
                     b.Navigation("Capabilities");
 

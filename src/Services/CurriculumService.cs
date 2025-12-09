@@ -38,13 +38,13 @@ public sealed class CurriculumService : ICurriculumService
         return CurriculumSubjects.FirstOrDefault(x => name == x.Name);
     }
 
-    public List<Subject> GetSubjectsByYearLevel(YearLevelValue yearLevel)
+    public List<Subject> GetSubjectsByYearLevel(YearLevel yearLevel)
     {
         return CurriculumSubjects.Select(s => s.FilterYearLevels(yearLevel)).ToList();
     }
 
     public List<Subject> GetSubjectsByYearLevels(IEnumerable<SubjectId> subjectIds,
-        IEnumerable<YearLevelValue> yearLevelValues)
+        IEnumerable<YearLevel> yearLevelValues)
     {
         var filteredSubjects = new List<Subject>();
         foreach (var subjectId in subjectIds)
@@ -70,9 +70,9 @@ public sealed class CurriculumService : ICurriculumService
     /// </summary>
     /// <param name="subjectId"></param>
     /// <param name="yearLevels"></param>
-    /// <returns>A collection of lists of content descriptions, one for each YearLevelValue passed</returns>
-    public Dictionary<YearLevelValue, List<ContentDescription>> GetContentDescriptions(SubjectId subjectId,
-        List<YearLevelValue> yearLevels)
+    /// <returns>A collection of lists of content descriptions, one for each YearLevel passed</returns>
+    public Dictionary<YearLevel, List<ContentDescription>> GetContentDescriptions(SubjectId subjectId,
+        List<YearLevel> yearLevels)
     {
         var filteredYearLevels = CurriculumSubjects
             .Where(s => s.Id == subjectId)
@@ -80,7 +80,7 @@ public sealed class CurriculumService : ICurriculumService
             .Where(yl => yearLevels.Contains(yl.YearLevelValue) || yl.GetYearLevels().Intersect(yearLevels).Any())
             .ToList();
 
-        var yearLevelContentDescriptions = new Dictionary<YearLevelValue, List<ContentDescription>>();
+        var yearLevelContentDescriptions = new Dictionary<YearLevel, List<ContentDescription>>();
         foreach (var yl in yearLevels)
         {
             var yearLevel = filteredYearLevels.GetFromYearLevelValue(yl);

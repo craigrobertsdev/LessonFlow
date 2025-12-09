@@ -11,6 +11,6 @@ public interface ISubjectRepository
     Task<List<Subject>> GetSubjectsByName(List<string> subjectNames, CancellationToken ct);
     Task<List<Subject>> GetSubjectsById(List<SubjectId> subjectIds, CancellationToken ct);
     Task<Subject?> GetSubjectById(SubjectId subjectId, CancellationToken ct);
-    Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevelValue> yearLevels,
+    Task<List<Subject>> GetSubjectsByYearLevels(List<YearLevel> yearLevels,
         CancellationToken ct);
 }

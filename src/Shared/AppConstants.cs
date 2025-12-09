@@ -13,11 +13,11 @@ public static class AppConstants
         DayOfWeek.Friday
     ];
 
-    public static readonly ImmutableArray<YearLevelValue> YearLevels =
+    public static readonly ImmutableArray<YearLevel> YearLevels =
     [
-        YearLevelValue.Reception, YearLevelValue.Year1, YearLevelValue.Year2, YearLevelValue.Year3,
-        YearLevelValue.Year4, YearLevelValue.Year5, YearLevelValue.Year6, YearLevelValue.Year7,
-        YearLevelValue.Year8, YearLevelValue.Year9, YearLevelValue.Year10
+        YearLevel.Reception, YearLevel.Year1, YearLevel.Year2, YearLevel.Year3,
+        YearLevel.Year4, YearLevel.Year5, YearLevel.Year6, YearLevel.Year7,
+        YearLevel.Year8, YearLevel.Year9, YearLevel.Year10
     ];
 
     public static Dictionary<string, string> SubjectColours = new()

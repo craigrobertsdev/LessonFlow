@@ -12,7 +12,7 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
     public Guid UserId { get; init; }
     public Student Student { get; init; }
     public Subject Subject { get; init; }
-    public YearLevelValue YearLevel { get; private set; }
+    public YearLevel YearLevel { get; private set; }
     public List<ReportComment> ReportComments { get; private set; } = [];
     public DateTime CreatedDateTime { get; private set; }
     public DateTime UpdatedDateTime { get; private set; }
@@ -22,7 +22,7 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
         Guid userId,
         Student student,
         Subject subject,
-        YearLevelValue yearLevel,
+        YearLevel yearLevel,
         DateTime createdDateTime,
         DateTime updatedDateTime)
     {

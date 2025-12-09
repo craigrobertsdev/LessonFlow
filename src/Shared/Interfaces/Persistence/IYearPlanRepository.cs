@@ -11,7 +11,7 @@ public interface IYearPlanRepository : IRepository<YearPlan>
     Task<YearPlan?> GetByUserIdAndYear(Guid UserId, int calendarYear, CancellationToken ct);
     Task<YearPlan?> GetById(YearPlanId yearPlanId, CancellationToken ct);
     Task<WeekPlannerTemplateId?> GetWeekPlannerTemplateId(YearPlanId yearPlanId, CancellationToken ct);
-    Task<List<YearLevelValue>> GetYearLevelsTaught(Guid UserId, int calendarYear,
+    Task<List<YearLevel>> GetYearLevelsTaught(Guid UserId, int calendarYear,
         CancellationToken ct);
     Task<WeekPlanner> GetOrCreateWeekPlanner(YearPlanId yearPlanId, int year, int termNumber, int weekNumber, DateOnly weekStart, 
         CancellationToken ct);

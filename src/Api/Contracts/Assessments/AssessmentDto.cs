@@ -6,7 +6,7 @@ namespace LessonFlow.Api.Contracts.Assessments;
 public record AssessmentDto(
     Guid SubjectId,
     Guid StudentId,
-    YearLevelValue YearLevel,
+    YearLevel YearLevel,
     AssessmentResultResponse AssessmentResult,
     string PlanningNotes,
     DateTime ConductedDateTime);

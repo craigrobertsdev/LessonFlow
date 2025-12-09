@@ -36,7 +36,7 @@ public class AccountSetupStateConfiguration : IEntityTypeConfiguration<AccountSe
             .HasConversion(
                 v => string.Join(',', v.Select(y => y.ToString())),
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                      .Select(y => Enum.Parse<YearLevelValue>(y))
+                      .Select(y => Enum.Parse<YearLevel>(y))
                       .ToList())
             .HasColumnName("YearLevelsTaught")
             .HasMaxLength(256)

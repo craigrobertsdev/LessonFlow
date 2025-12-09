@@ -9,7 +9,7 @@ public class LanguageParser(string subjectName) : BaseParser(subjectName, _conte
 {
     private static readonly char[] _contentDescriptionEndings = ['^'];
 
-    protected override YearLevel ParseLearningStandard(PdfDocument document, ref string description)
+    protected override CurriculumYearLevel ParseLearningStandard(PdfDocument document, ref string description)
     {
         var page = document.GetPage(_currentPageNum);
         var descriptionBuilder = new StringBuilder();
@@ -58,9 +58,9 @@ public class LanguageParser(string subjectName) : BaseParser(subjectName, _conte
             }
         } while (idx < words.Length);
 
-        YearLevelValue yearLevelValue;
+        YearLevel yearLevelValue;
         var desc = descriptionBuilder.ToString();
-        var wordIdx = desc.Length - 7; // The shortest YearLevelValue is 6 so start here.
+        var wordIdx = desc.Length - 7; // The shortest YearLevel is 6 so start here.
         do
         {
             if (wordIdx == 0)
@@ -73,7 +73,7 @@ public class LanguageParser(string subjectName) : BaseParser(subjectName, _conte
             {
                 var str = desc[wordIdx..];
                 var formattedStr = str.Replace(" to ", "To").Replace(" ", string.Empty);
-                yearLevelValue = Enum.Parse<YearLevelValue>(formattedStr);
+                yearLevelValue = Enum.Parse<YearLevel>(formattedStr);
                 break;
             }
             catch
@@ -109,7 +109,7 @@ public class LanguageParser(string subjectName) : BaseParser(subjectName, _conte
         var learningStandard = learningStandardBuilder.ToString().Trim();
         _currentPageNum++;
 
-        return new YearLevel(yearLevelValue, learningStandard);
+        return new CurriculumYearLevel(yearLevelValue, learningStandard);
     }
 
 

@@ -8,4 +8,4 @@ public record ResourceDto(
     string Name,
     string Url,
     ResourceType ResourceType,
-    IEnumerable<YearLevelValue> YearLevels);
+    IEnumerable<YearLevel> YearLevels);

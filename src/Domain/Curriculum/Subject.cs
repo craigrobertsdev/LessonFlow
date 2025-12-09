@@ -9,11 +9,11 @@ namespace LessonFlow.Domain.Curriculum;
 public class Subject : Entity<SubjectId>, IAggregateRoot
 {
     public string Name { get; } = string.Empty;
-    public List<YearLevel> YearLevels { get; private set; } = [];
+    public List<CurriculumYearLevel> YearLevels { get; private set; } = [];
     public string Description { get; private set; } = string.Empty;
     public static Subject Nit => _nitSubject;
 
-    public void AddYearLevel(YearLevel yearLevel)
+    public void AddYearLevel(CurriculumYearLevel yearLevel)
     {
         if (YearLevels.Any(yl => yl.YearLevelValue == yearLevel.YearLevelValue))
         {
@@ -23,9 +23,9 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
         YearLevels.Add(yearLevel);
     }
 
-    public List<YearLevel> RemoveYearLevelsNotTaught(List<YearLevelValue> yearLevels)
+    public List<CurriculumYearLevel> RemoveYearLevelsNotTaught(List<YearLevel> yearLevels)
     {
-        var redactedYearLevels = new List<YearLevel>();
+        var redactedYearLevels = new List<CurriculumYearLevel>();
         foreach (var yearLevel in YearLevels)
         {
             if (yearLevels.Contains(yearLevel.YearLevelValue))
@@ -50,14 +50,14 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
 
     private static readonly Subject _nitSubject = new Subject("NIT", [], "Non-Instructional Time");
 
-    public Subject(List<YearLevel> yearLevels, string name)
+    public Subject(List<CurriculumYearLevel> yearLevels, string name)
     {
         Id = new SubjectId(Guid.NewGuid());
         YearLevels = yearLevels;
         Name = name;
     }
 
-    public Subject(string name, List<YearLevel> yearLevels, string description)
+    public Subject(string name, List<CurriculumYearLevel> yearLevels, string description)
     {
         Id = new SubjectId(Guid.NewGuid());
         Name = name;
@@ -71,13 +71,13 @@ public class Subject : Entity<SubjectId>, IAggregateRoot
 public static class CurriculumSubjectExtensions
 {
     public static Subject FilterYearLevels(this Subject subject,
-        IEnumerable<YearLevelValue> yearLevelValues)
+        IEnumerable<YearLevel> yearLevelValues)
     {
         subject.FilterYearLevels(yearLevelValues);
         return subject;
     }
 
-    public static Subject FilterYearLevels(this Subject subject, YearLevelValue yearLevelValue)
+    public static Subject FilterYearLevels(this Subject subject, YearLevel yearLevelValue)
     {
         subject.FilterYearLevels(yearLevelValue);
         return subject;
@@ -98,7 +98,7 @@ public static class CurriculumSubjectDtoExtensions
         return new CurriculumSubjectDto(s.Id.Value, s.Name, s.YearLevels.Select(yl => yl.ToDto()).ToList());
     }
 
-    public static YearLevelDto ToDto(this YearLevel yl, bool withAllInformation = true)
+    public static YearLevelDto ToDto(this CurriculumYearLevel yl, bool withAllInformation = true)
     {
         var capabilities = withAllInformation ? yl.Capabilities.Select(c => c.ToDto()) : new List<CapabilityDto>();
         var dispositions = withAllInformation ? yl.Dispositions.Select(d => d.ToDto()) : new List<DispositionDto>();

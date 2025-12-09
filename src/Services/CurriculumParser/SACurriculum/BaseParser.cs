@@ -18,7 +18,7 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
 
     public Subject ParseFile(string file)
     {
-        var yearLevels = new List<YearLevel>();
+        var yearLevels = new List<CurriculumYearLevel>();
         var description = string.Empty;
 
         using var document = PdfDocument.Open(file);
@@ -36,7 +36,7 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
         return new Subject(_subjectName, yearLevels, description);
     }
 
-    protected virtual YearLevel ParseLearningStandard(PdfDocument document, ref string description)
+    protected virtual CurriculumYearLevel ParseLearningStandard(PdfDocument document, ref string description)
     {
         var page = document.GetPage(_currentPageNum);
         var descriptionBuilder = new StringBuilder();
@@ -90,9 +90,9 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
             }
         } while (idx < words.Length);
 
-        YearLevelValue yearLevelValue;
+        YearLevel yearLevelValue;
         var desc = descriptionBuilder.ToString();
-        var wordIdx = desc.Length - 7; // The shortest YearLevelValue is 6 so start here.
+        var wordIdx = desc.Length - 7; // The shortest YearLevel is 6 so start here.
         do
         {
             if (wordIdx == 0)
@@ -102,7 +102,7 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
 
             try
             {
-                yearLevelValue = Enum.Parse<YearLevelValue>(desc[wordIdx..].Replace(" ", string.Empty));
+                yearLevelValue = Enum.Parse<YearLevel>(desc[wordIdx..].Replace(" ", string.Empty));
                 break;
             }
             catch
@@ -144,10 +144,10 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
         var learningStandard = learningStandardBuilder.ToString().Trim();
         _currentPageNum++;
 
-        return new YearLevel(yearLevelValue, learningStandard);
+        return new CurriculumYearLevel(yearLevelValue, learningStandard);
     }
 
-    protected virtual void ParseDispositionsAndCapabilities(PdfDocument document, YearLevel yearLevel)
+    protected virtual void ParseDispositionsAndCapabilities(PdfDocument document, CurriculumYearLevel yearLevel)
     {
         var pageArea = ObjectExtractor.Extract(document, _currentPageNum);
         var detector = new SimpleNurminenDetectionAlgorithm();
@@ -816,7 +816,7 @@ public abstract class BaseParser(string subjectName, char[] charsToRemove)
         };
     }
 
-    private static void RemoveUnusedConceptualOrganisers(YearLevel yearLevel)
+    private static void RemoveUnusedConceptualOrganisers(CurriculumYearLevel yearLevel)
     {
         var conceptualOrganisers = new List<ConceptualOrganiser>();
         foreach (var conceptualOrganiser in yearLevel.ConceptualOrganisers)

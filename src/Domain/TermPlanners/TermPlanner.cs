@@ -11,17 +11,17 @@ namespace LessonFlow.Domain.TermPlanners;
 public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
 {
     public List<TermPlan> TermPlans { get; private set; } = [];
-    public List<YearLevelValue> YearLevels { get; private set; } = [];
+    public List<YearLevel> YearLevels { get; private set; } = [];
     public YearPlanId YearPlanId { get; private set; }
     public int CalendarYear { get; private set; }
-    //public Dictionary<YearLevelValue, List<ConceptualOrganiser>> PlannedConceptualOrganisers { get; private set; } = [];
+    //public Dictionary<YearLevel, List<ConceptualOrganiser>> PlannedConceptualOrganisers { get; private set; } = [];
 
-    private static List<YearLevelValue> RemoveDuplicateYearLevels(List<YearLevelValue> yearLevels)
+    private static List<YearLevel> RemoveDuplicateYearLevels(List<YearLevel> yearLevels)
     {
         return yearLevels.Distinct().ToList();
     }
 
-    public void AddYearLevel(YearLevelValue yearLevel)
+    public void AddYearLevel(YearLevel yearLevel)
     {
         if (YearLevels.Contains(yearLevel))
         {
@@ -90,7 +90,7 @@ public sealed class TermPlanner : Entity<TermPlannerId>, IAggregateRoot
     }
 
     public TermPlanner(YearPlanId yearPlanId, int calendarYear,
-        List<YearLevelValue> yearLevels)
+        List<YearLevel> yearLevels)
     {
         Id = new TermPlannerId(Guid.NewGuid());
         YearPlanId = yearPlanId;

@@ -11,9 +11,9 @@ public class TermPlannerTests
     public void TermPlanner_WhenCreated_ShouldHaveListOfYearLevels()
     {
         var yearPlanId = new YearPlanId(Guid.NewGuid());
-        var yearLevels = new List<YearLevelValue>
+        var yearLevels = new List<YearLevel>
         {
-            YearLevelValue.Reception, YearLevelValue.Year1
+            YearLevel.Reception, YearLevel.Year1
         };
         var calendarYear = 2025;
 
@@ -28,9 +28,9 @@ public class TermPlannerTests
     public void TermPlanner_WhenCreated_ShouldBuildListOfConceptualOrganisers()
     {
         //var yearPlanId = new YearPlanId(Guid.NewGuid());
-        //var yearLevels = new List<YearLevelValue>
+        //var yearLevels = new List<YearLevel>
         //{
-        //    YearLevelValue.Reception, YearLevelValue.Year1
+        //    YearLevel.Reception, YearLevel.Year1
         //};
         //var calendarYear = 2025;
 
@@ -44,9 +44,9 @@ public class TermPlannerTests
     public void TermPlan_WhenCreated_ShouldCreateTermPlansForEachTerm()
     {
         var yearPlanId = new YearPlanId(Guid.NewGuid());
-        var yearLevels = new List<YearLevelValue>
+        var yearLevels = new List<YearLevel>
         {
-            YearLevelValue.Reception, YearLevelValue.Year1
+            YearLevel.Reception, YearLevel.Year1
         };
         var calendarYear = 2025;
         var termPlanner = new TermPlanner(yearPlanId, calendarYear, yearLevels);

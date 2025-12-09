@@ -87,7 +87,7 @@
     [CascadingParameter]
     private AccountSetupState AccountSetupState { get; set; } = null!;
 
-    private void ToggleYearLevel(YearLevelValue level)
+    private void ToggleYearLevel(YearLevel level)
     {
         if (AccountSetupState.YearLevelsTaught.Contains(level))
             AccountSetupState.YearLevelsTaught.Remove(level);
