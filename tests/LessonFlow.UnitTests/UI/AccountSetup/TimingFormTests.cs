@@ -5,7 +5,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 
 namespace LessonFlow.UnitTests.UI.AccountSetup;
-public class TimingFormTests : TestContext
+public class TimingFormTests : BunitContext
 {
     [Fact]
     public void ChangePeriodType_CorrectlyUpdatesWeekPlannerTemplate()
