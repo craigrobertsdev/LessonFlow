@@ -6,6 +6,9 @@ namespace LessonFlow.Shared;
 public static class AppConstants
 {
     public const int WEEK_PLANNER_GRID_START_ROW_OFFSET = 2;
+    public const int MAX_RESOURCE_UPLOAD_SIZE_IN_BYTES = 1024 * 1024 * 50;
+    public const long MAX_USER_STORAGE_IN_BYTES = (long)1024 * 1024 * 1024 * 2; // 2GB
+    public const int SOFT_DELETION_PERIOD_DAYS = 30;
 
     public static readonly ImmutableArray<DayOfWeek> WeekDays =
     [
@@ -20,7 +23,7 @@ public static class AppConstants
         YearLevel.Year8, YearLevel.Year9, YearLevel.Year10
     ];
 
-    public static Dictionary<string, string> SubjectColours = new()
+    public static IReadOnlyDictionary<string, string> SubjectColours = new Dictionary<string, string>()
     {
         { "English", "bg-blue-200" },
         { "Mathematics", "bg-red-200" },
@@ -32,6 +35,5 @@ public static class AppConstants
         { "Technologies", "bg-orange-200" },
         { "Other", "bg-gray-200" }
     };
-
 
 }

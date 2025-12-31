@@ -9,6 +9,8 @@ using LessonFlow.Database.Repositories;
 using LessonFlow.Services;
 using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Services.FileStorage;
+using Microsoft.Extensions.Azure;
+using Azure.Identity;
 //using LessonFlow.Services.CurriculumParser.SACurriculum;
 
 
@@ -20,7 +22,7 @@ public static class Infrastructure
     {
         services.AddPersistence(configuration);
         services.AddServices();
-        services.AddAuth();
+        services.AddAuth(configuration);
         services.AddCurriculumParser();
         return services;
     }
@@ -79,7 +81,7 @@ public static class Infrastructure
         return services;
     }
 
-    private static void AddAuth(this IServiceCollection services)
+    private static void AddAuth(this IServiceCollection services, IConfiguration config)
     {
         services.AddAuthentication(options =>
             {
@@ -87,6 +89,18 @@ public static class Infrastructure
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
             })
             .AddIdentityCookies();
+
+        services.AddAzureClients(builder =>
+        {
+            var azureConfig = config.GetSection("Azure");
+            var tenantId = azureConfig.GetRequiredSection("TenantId").Value;
+            var clientId = azureConfig.GetRequiredSection("ClientId").Value;
+            var clientSecret = azureConfig.GetRequiredSection("ClientSecret").Value;
+            var blobUri = azureConfig.GetRequiredSection("BlobUri").Value;
+
+            builder.AddBlobServiceClient(blobUri!);
+            builder.UseCredential(new ClientSecretCredential(tenantId, clientId, clientSecret));
+        });
     }
 
     /// <summary>

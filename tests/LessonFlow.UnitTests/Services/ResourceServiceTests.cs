@@ -7,44 +7,91 @@ using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearPlans;
 using LessonFlow.Services;
+using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Services;
 using LessonFlow.UnitTests.Utils;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests.Services;
 
-public class ResourceServiceTests
+public class ResourceServiceTests : IDisposable
 {
     private readonly User _user;
-    private readonly ApplicationDbContext _db;
-    private readonly string _dbName = Guid.NewGuid().ToString();
     private readonly string _resourceName;
     private readonly ResourceType _resourceType;
     private readonly List<Subject> _subjects;
     private readonly List<YearLevel> _yearLevels;
 
+    private readonly SqliteConnection _connection;
+
     public ResourceServiceTests()
     {
-        _user = new User();
-        _db = GetTestDb();
+        _connection = new SqliteConnection("DataSource=:memory:");
+        _connection.Open();
+
+        _user = new User() { Id = Guid.NewGuid() };
         _resourceName = "Sample Resource";
         _resourceType = ResourceType.Video;
-        _subjects = [new Subject([], "Mathematics")];
+        _subjects = [
+            new Subject([], "Mathematics"),
+            new Subject([], "Science")
+        ];
         _yearLevels = [YearLevel.Reception, YearLevel.Year1];
+    }
 
+    public void Dispose()
+    {
+        _connection.Dispose();
+    }
+
+    [Fact]
+    public async Task Initialise_WhenMultipleUsersExist_ShouldOnlyLoadCurrentUserResources()
+    {
+        var db = GetTestDb();
+        var user2 = new User()
+        {
+            Email = "seconduser@test.com"
+        };
+        db.Users.Add(user2);
+
+        var subject = _subjects.First();
+
+        var user2Resource = new Resource(user2.Id, "user2File", "user2File", 1024, "testLink", ResourceType.Worksheet, [subject], [YearLevel.Year1]);
+        user2.Resources.Add(user2Resource);
+        db.Resources.Add(user2Resource);
+        db.SaveChanges();
+
+        var user1Resource = new Resource(_user.Id, "user1File", "user1File", 1024, "testLink", ResourceType.Worksheet, [subject], [YearLevel.Year1]);
+
+        var user1 = db.Users
+            .Include(u => u.Resources)
+            .First(u => u.Id == _user.Id);
+        user1.AddResource(user1Resource);
+        db.SaveChanges();
+
+        var resourceService = await GetTestResourceService(db);
+
+        Assert.True(resourceService.ResourceCache.ContainsKey(subject));
+        Assert.Single(resourceService.ResourceCache[subject]);
+        Assert.Equal(resourceService.ResourceCache[subject].First().UserId, _user.Id);
+        Assert.Equal(resourceService.ResourceCache[subject].First().Id, user1Resource.Id);
     }
 
     [Fact]
     public async Task CreateResource_WhenCalledWithValidParameters_ShouldCreateResource()
     {
-
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
 
-        var resource = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        var resource = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
 
         Assert.NotNull(resource);
         Assert.Equal(_resourceName, resource.DisplayName);
@@ -55,60 +102,34 @@ public class ResourceServiceTests
     }
 
     [Fact]
-    public async Task CreateResource_WhenFileUploadedAndMetadataProvided_ShouldUploadFileAndPersistAndMetadata()
+    public async Task ResourceCache_WhenNoResourcesCreated_ShouldBeEmpty()
     {
-        var resourceService = GetTestResourceService();
-        var user = _db.Users.First();
-        var subject = _db.Subjects.First();
-        var file = new Mock<IBrowserFile>();
-        file.Setup(f => f.Name).Returns("testfile.pdf");
-        file.Setup(f => f.Size).Returns(1024);
-        file.Setup(f => f.ContentType).Returns("application/pdf");
-
-        var resource = await resourceService.CreateResource(file.Object, "Test Resource", [subject], [YearLevel.Year1], ResourceType.Worksheet, [], new CancellationToken());
-
-        Assert.NotNull(resource);
-        Assert.Equal("testfile.pdf", resource.FileName);
-        Assert.Equal("Test Resource", resource.DisplayName);
-        Assert.Equal(1024, resource.FileSize);
-        Assert.Equal("application/pdf", resource.MimeType);
-        Assert.Equal(user.Id, resource.UserId);
-        Assert.NotEqual(string.Empty, resource.Link);
-        Assert.Single(resource.Subjects);
-        Assert.Equal(subject.Id, resource.Subjects.First().Id);
-        Assert.Single(resource.YearLevels);
-        Assert.Equal(YearLevel.Year1, resource.YearLevels.First());
-
-        var storedResource = _db.Resources.FirstOrDefault(r => r.Id == resource.Id);
-        Assert.NotNull(storedResource);
-    }
-
-    [Fact]
-    public void ResourceCache_WhenNoResourcesCreated_ShouldBeEmpty()
-    {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         Assert.Empty(resourceService.ResourceCache);
     }
 
     [Fact]
     public async Task CreateResource_WhenCalled_CreatedResourceAddedToResourceCache()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
 
-        var resource = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        var resource = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
 
         Assert.Single(resourceService.ResourceCache);
-        Assert.Contains(resource, resourceService.ResourceCache);
+        Assert.Contains(resource, resourceService.ResourceCache[_subjects.First()]);
     }
 
     [Fact]
     public async Task CreateResource_WhenCalledWithNullStrands_ShouldCreateResourceWithEmptyStrands()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
 
-        var resource = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        var resource = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
         Assert.NotNull(resource);
         Assert.Empty(resource.ConceptualOrganisers);
     }
@@ -116,11 +137,12 @@ public class ResourceServiceTests
     [Fact]
     public async Task CreateResource_WhenCalledWithStrands_ShouldCreateResourceWithGivenStrands()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
 
-        var topics = new List<ConceptualOrganiser> { new ConceptualOrganiser() { Name = "Algebra" }, new ConceptualOrganiser() { Name = "Number" } };
-        var resource = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, topics, new CancellationToken());
+        var topics = new List<ConceptualOrganiser> { new() { Name = "Algebra" }, new() { Name = "Number" } };
+        var resource = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, topics, new CancellationToken());
         Assert.NotNull(resource);
         Assert.Equal(topics, resource.ConceptualOrganisers);
     }
@@ -128,54 +150,77 @@ public class ResourceServiceTests
     [Fact]
     public async Task CreateResource_WhenAddingTwoResourcesWithSameName_ShouldCreateDistinctResources()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
-        var resource1 = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
-        var resource2 = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
         Assert.NotNull(resource1);
         Assert.NotNull(resource2);
         Assert.NotEqual(resource1.Id, resource2.Id);
-        Assert.Equal(2, resourceService.ResourceCache.Count);
+        Assert.Equal(2, resourceService.ResourceCache[resource1.Subjects[0]].Count);
     }
 
     [Fact]
     public async Task DeleteResource_WhenResourceExists_ShouldRemoveFromCache()
     {
-        var resourceService = GetTestResourceService();
-        var file = new Mock<IBrowserFile>();
-        var resource = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        Resource resource;
+        using (var db = GetTestDb())
+        {
+            var resourceService = await GetTestResourceService(db);
+            var file = new Mock<IBrowserFile>();
+            file.Setup(f => f.Name).Returns("TestResource");
+            resource = new Resource(_user.Id, file.Name, "TestResource", 1024, "TestResource", ResourceType.Assessment, _subjects, [], []);
+            db.Resources.Add(resource);
+            db.SaveChanges();
+        }
 
-        resourceService.DeleteResource(resource!);
-        Assert.DoesNotContain(resource, resourceService.ResourceCache);
+        using (var db = CreateContext())
+        {
+            var resourceService = await GetTestResourceService(db);
+            await resourceService.SoftDeleteResourceAsync(resource!, new CancellationToken());
+
+            Assert.DoesNotContain(resource, resourceService.ResourceCache[_subjects.First()]);
+        }
     }
 
     [Fact]
     public async Task DeleteResource_WhenTwoResourcesWithSameNameExist_ShouldRemoveOnlySpecifiedResource()
     {
-        var resourceService = GetTestResourceService();
-        var file = new Mock<IBrowserFile>();
-        var resource1 = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
-        var resource2 = await resourceService.CreateResource(file.Object, _resourceName, _subjects, _yearLevels, _resourceType, [], new CancellationToken());
+        Resource resource1, resource2;
+        using (var db = GetTestDb())
+        {
+            var resourceService = await GetTestResourceService(db);
+            var file = new Mock<IBrowserFile>();
+            resource1 = new Resource(_user.Id, file.Name, "TestResource", 1024, "TestResource", ResourceType.Assessment, _subjects, [], []);
+            resource2 = new Resource(_user.Id, file.Name, "TestResource", 1024, "TestResource", ResourceType.Assessment, _subjects, [], []);
+            db.Resources.AddRange(resource1, resource2);
+            db.SaveChanges();
+        }
 
-        Assert.NotNull(resource1);
-        resourceService.DeleteResource(resource1);
-        Assert.DoesNotContain(resource1, resourceService.ResourceCache);
-        Assert.Contains(resource2, resourceService.ResourceCache);
+        using (var db = CreateContext())
+        {
+            var resourceService = await GetTestResourceService(db);
+            await resourceService.SoftDeleteResourceAsync(resource1, new CancellationToken());
+            Assert.DoesNotContain(resource1, resourceService.ResourceCache[_subjects.First()]);
+            Assert.Contains(resource2, resourceService.ResourceCache[_subjects.First()]);
+        }
     }
 
     [Fact]
     public async Task FilterResources_WhenSubjectIsSpecifiedAndResourcesExist_ShouldReturnOnlyResourcesOfThatSubject()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
-        var subjectMath = new Subject([], "Mathematics");
-        var subjectScience = new Subject([], "Science");
+        var subjectMath = _subjects.First(s => s.Name == "Mathematics");
+        var subjectScience = _subjects.First(s => s.Name == "Science");
         var ct = new CancellationToken();
-        var resource1 = await resourceService.CreateResource(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Science Resource", [subjectScience], _yearLevels, ResourceType.Video, [], ct);
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Science Resource", [subjectScience], _yearLevels, ResourceType.Video, [], ct);
         var filteredResources = resourceService.FilterResources(subjectMath);
 
-        var flattenedResources = filteredResources.Values;
+        List<Resource> flattenedResources = filteredResources.SelectMany(k => k.Value).ToList();
         Assert.Single(flattenedResources);
         Assert.Contains(resource1, flattenedResources);
         Assert.DoesNotContain(resource2, flattenedResources);
@@ -184,12 +229,13 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenNoResourcesOfSubjectExist_ShouldReturnEmptyList()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
-        var subjectMath = new Subject([], "Mathematics");
-        var subjectScience = new Subject([], "Science");
+        var subjectMath = _subjects.First(s => s.Name == "Mathematics");
+        var subjectScience = _subjects.First(s => s.Name == "Science");
         var ct = new CancellationToken();
-        var resource1 = await resourceService.CreateResource(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
         var filteredResources = resourceService.FilterResources(subjectScience);
         Assert.Empty(filteredResources);
     }
@@ -197,17 +243,18 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenMultipleResourcesOfSubjectExist_ShouldReturnAllResourcesOfThatSubject()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
-        var subjectMath = new Subject([], "Mathematics");
-        var subjectScience = new Subject([], "Science");
+        var subjectMath = _subjects.First(s => s.Name == "Mathematics");
+        var subjectScience = _subjects.First(s => s.Name == "Science");
         var ct = new CancellationToken();
-        var resource1 = await resourceService.CreateResource(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Science Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
-        var resource3 = await resourceService.CreateResource(file.Object, "Science Resource", [subjectScience], _yearLevels, ResourceType.Video, [], ct);
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Math Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Science Resource", [subjectMath], _yearLevels, ResourceType.Video, [], ct);
+        var resource3 = await resourceService.UploadResourceAsync(file.Object, "Science Resource", [subjectScience], _yearLevels, ResourceType.Video, [], ct);
         var filteredResources = resourceService.FilterResources(subjectMath);
 
-        var flattenedResources = filteredResources.Values;
+        List<Resource> flattenedResources = filteredResources.SelectMany(k => k.Value).ToList();
         Assert.Equal(2, flattenedResources.Count);
         Assert.Contains(resource1, flattenedResources);
         Assert.Contains(resource2, flattenedResources);
@@ -216,34 +263,36 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenResourcesInCacheExistForSpecifiedYearLevel_ReturnThoseResources()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
         var ct = new CancellationToken();
         var yearLevels1 = new List<YearLevel> { YearLevel.Reception, YearLevel.Year1 };
         var yearLevels2 = new List<YearLevel> { YearLevel.Year2, YearLevel.Year3 };
-        var subject = new Subject([], "Mathematics");
-        var resource1 = await resourceService.CreateResource(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
+        var subject = _subjects.First(s => s.Name == "Mathematics");
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
 
-        var filteredResources = resourceService.FilterResources(subject, [YearLevel.Reception]);
+        var filteredResources = resourceService.FilterResources(subject, [YearLevel.Year2]);
 
-        var flattenedResources = filteredResources.Values;
+        List<Resource> flattenedResources = filteredResources.SelectMany(k => k.Value).ToList();
         Assert.Single(flattenedResources);
-        Assert.Contains(resource1, flattenedResources);
-        Assert.DoesNotContain(resource2, flattenedResources);
+        Assert.Contains(resource2, flattenedResources);
+        Assert.DoesNotContain(resource1, flattenedResources);
     }
 
     [Fact]
     public async Task FilterResources_WhenNoResourcesInCacheExistForSpecifiedYearLevel_ReturnEmptyList()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
         var ct = new CancellationToken();
         var yearLevels1 = new List<YearLevel> { YearLevel.Reception, YearLevel.Year1 };
         var yearLevels2 = new List<YearLevel> { YearLevel.Year2, YearLevel.Year3 };
-        var subject = new Subject([], "Mathematics");
-        var resource1 = await resourceService.CreateResource(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
+        var subject = _subjects.First(s => s.Name == "Mathematics");
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
 
         var filteredResources = resourceService.FilterResources(subject, [YearLevel.Year5]);
 
@@ -253,18 +302,19 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenMultipleResourcesInCacheExistForSpecifiedYearLevel_ReturnThoseResources()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
         var ct = new CancellationToken();
         var yearLevels1 = new List<YearLevel> { YearLevel.Reception, YearLevel.Year1 };
         var yearLevels2 = new List<YearLevel> { YearLevel.Year1, YearLevel.Year2 };
-        var subject = new Subject([], "Mathematics");
-        var resource1 = await resourceService.CreateResource(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
-        var resource3 = await resourceService.CreateResource(file.Object, "Resource 3", [subject], [YearLevel.Year3], ResourceType.Video, [], ct);
+        var subject = _subjects.First();
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
+        var resource3 = await resourceService.UploadResourceAsync(file.Object, "Resource 3", [subject], [YearLevel.Year3], ResourceType.Video, [], ct);
         var filteredResources = resourceService.FilterResources(subject, [YearLevel.Year1]);
 
-        var flattenedResources = filteredResources.Values;
+        List<Resource> flattenedResources = filteredResources.SelectMany(k => k.Value).ToList();
         Assert.Equal(2, flattenedResources.Count);
         Assert.Contains(resource1, flattenedResources);
         Assert.Contains(resource2, flattenedResources);
@@ -274,18 +324,19 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenResourcesExistForSpecifiedConceptualOrganisers_ReturnThoseResources()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
         var ct = new CancellationToken();
         var yearLevels1 = new List<YearLevel> { YearLevel.Reception, YearLevel.Year1 };
         var yearLevels2 = new List<YearLevel> { YearLevel.Year1, YearLevel.Year2 };
-        var subject = new Subject([], "Mathematics");
-        var resource1 = await resourceService.CreateResource(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
-        var resource3 = await resourceService.CreateResource(file.Object, "Resource 3", [subject], [YearLevel.Year3], ResourceType.Video, [], ct);
+        var subject = _subjects.First(s => s.Name == "Mathematics");
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
+        var resource3 = await resourceService.UploadResourceAsync(file.Object, "Resource 3", [subject], [YearLevel.Year3], ResourceType.Video, [], ct);
         var filteredResources = resourceService.FilterResources(subject, [YearLevel.Year1]);
 
-        var flattenedResources = filteredResources.Values;
+        var flattenedResources = filteredResources.SelectMany((k) => k.Value).ToList();
         Assert.Equal(2, flattenedResources.Count);
         Assert.Contains(resource1, flattenedResources);
         Assert.Contains(resource2, flattenedResources);
@@ -295,26 +346,20 @@ public class ResourceServiceTests
     [Fact]
     public async Task FilterResources_WhenTeacherTeachesMultipleYearLevelsAndResourcesInCache_ShouldProvidSeparateResultsForEachYearLevel()
     {
-        var resourceService = GetTestResourceService();
+        using var db = GetTestDb();
+        var resourceService = await GetTestResourceService(db);
         var file = new Mock<IBrowserFile>();
         var ct = new CancellationToken();
         var yearLevels1 = new List<YearLevel> { YearLevel.Year1 };
         var yearLevels2 = new List<YearLevel> { YearLevel.Year2 };
         var yearLevels3 = new List<YearLevel> { YearLevel.Year3 };
-        var subject = new Subject([], "Mathematics");
-        var resource1 = await resourceService.CreateResource(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
-        var resource2 = await resourceService.CreateResource(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
-        var resource3 = await resourceService.CreateResource(file.Object, "Resource 3", [subject], yearLevels3, ResourceType.Video, [], ct);
+        var subject = _subjects.First(s => s.Name == "Mathematics");
+        var resource1 = await resourceService.UploadResourceAsync(file.Object, "Resource 1", [subject], yearLevels1, ResourceType.Video, [], ct);
+        var resource2 = await resourceService.UploadResourceAsync(file.Object, "Resource 2", [subject], yearLevels2, ResourceType.Video, [], ct);
+        var resource3 = await resourceService.UploadResourceAsync(file.Object, "Resource 3", [subject], yearLevels3, ResourceType.Video, [], ct);
 
-        var user = _db.Users.First();
-        var accountSetupState = new AccountSetupState(user.Id);
-        accountSetupState.SetCalendarYear(TestYear);
-        user.AccountSetupState = accountSetupState;
-        user.CompleteAccountSetup();
-        var yearPlan = new YearPlan(user.Id, accountSetupState, [subject]);
-        yearPlan.AddYearLevelsTaught([YearLevel.Year1, YearLevel.Year2]);
-        user.AddYearPlan(yearPlan);
-        _db.SaveChanges();
+        var user = db.Users.First();
+        db.SaveChanges();
 
         var filteredResources = resourceService.FilterResources(subject);
         Assert.True(filteredResources.ContainsKey(YearLevel.Year1));
@@ -324,33 +369,71 @@ public class ResourceServiceTests
 
     private ApplicationDbContext GetTestDb()
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: _dbName)
-            .Options;
-        var db = new ApplicationDbContext(options);
-        var subject = new Subject([], "Mathematics");
+        var db = CreateContext();
+        var subject = _subjects.First();
+
         var yearLevel = new CurriculumYearLevel(YearLevel.Year1, "Learning Standard");
         subject.AddYearLevel(yearLevel);
         db.Subjects.Add(subject);
+
+        var accountSetupState = new AccountSetupState(_user.Id);
+        accountSetupState.SetCalendarYear(TestYear);
+        db.WeekPlannerTemplates.Add(accountSetupState.WeekPlannerTemplate);
+
+        _user.AccountSetupState = accountSetupState;
+        _user.SetLastSelectedYear(TestYear);
+        _user.CompleteAccountSetup();
+
+        var yearPlan = new YearPlan(_user.Id, accountSetupState, [subject]);
+        yearPlan.AddYearLevelsTaught([YearLevel.Year1, YearLevel.Year2]);
+
+        _user.AddYearPlan(yearPlan);
+
         db.Users.Add(_user);
         db.SaveChanges();
 
         return db;
     }
 
-    private ResourceService GetTestResourceService()
+    private ApplicationDbContext CreateContext()
     {
-        var storageManager = new TestStorageManager(_db, _user.Id);
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseSqlite(_connection)
+            .Options;
+        var db = new ApplicationDbContext(options);
+        db.Database.EnsureCreated();
+
+        return db;
+    }
+
+    private async Task<ResourceService> GetTestResourceService(ApplicationDbContext db)
+    {
+        var storageManager = new TestStorageManager(db, _user.Id);
 
         var dbContextFactory = new Mock<IDbContextFactory<ApplicationDbContext>>();
-        dbContextFactory.Setup(f => f.CreateDbContext()).Returns(_db);
+        dbContextFactory.Setup(f => f.CreateDbContext()).Returns(() => CreateContext());
+
+        dbContextFactory.Setup(f => f.CreateDbContextAsync(It.IsAny<CancellationToken>())).ReturnsAsync(() => CreateContext());
+
         var ambient = new Mock<IAmbientDbContextAccessor<ApplicationDbContext>>();
-        ambient.Setup(a => a.Current).Returns(_db);
+        ambient.Setup(a => a.Current).Returns(() => CreateContext());
         var uowFactory = new UnitOfWorkFactory<ApplicationDbContext>(dbContextFactory.Object, ambient.Object);
         var userRepository = new UserRepository(dbContextFactory.Object, ambient.Object);
 
-        var resourceService = new ResourceService(storageManager, userRepository, uowFactory, _user);
+        return new ResourceService(storageManager, userRepository, uowFactory, CreateAppState());
+    }
 
-        return resourceService;
+    private AppState CreateAppState()
+    {
+        var logger = new Mock<ILogger<AppState>>().Object;
+        var authStateProvider = new Mock<AuthenticationStateProvider>().Object;
+        var userRepo = new Mock<IUserRepository>().Object;
+        var termDatesService = new Mock<ITermDatesService>().Object;
+        var appState = new AppState(authStateProvider, userRepo, logger, termDatesService);
+        appState.User = _user;
+
+        return appState;
     }
 }
+
+

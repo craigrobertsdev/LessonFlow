@@ -22,5 +22,15 @@ public interface IUserRepository
     Task<List<Subject>> GetSubjectsTaughtByUserWithElaborations(Guid userId, CancellationToken ct);
     Task<YearPlan?> GetYearPlanByYear(Guid userId, int calendarYear, CancellationToken ct);
     void Delete(User user);
-    Task AddResource(Guid userId, Resource resource, CancellationToken ct);
+    Task AddResourceAsync(User user, Resource resource, CancellationToken ct);
+    Task SoftDeleteResourceAsync(Resource resource, CancellationToken ct);
+    Task<List<Resource>> GetSoftDeletedResourcesAsync(Guid userId, CancellationToken ct);
+
+    /// <summary>
+    /// Gets the resources pending deletion across all users.
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    Task<List<Resource>> GetResourcesDueForDeletionAsync(CancellationToken ct);
+    Task HardDeleteResourcesAsync(IEnumerable<ResourceId> resourceIds, CancellationToken ct);
 }

@@ -11,9 +11,11 @@ public class User : IdentityUser<Guid>
     public AccountSetupState? AccountSetupState { get; set; }
     public int LastSelectedYear { get; set; }
     public DateOnly LastSelectedWeekStart { get; set; }
-    public List<YearPlan> YearPlans { get; private set; } = [];
+    public List<YearPlan> YearPlans { get; set; } = [];
     public YearPlan? CurrentYearPlan => YearPlans.FirstOrDefault(y => y.CalendarYear == LastSelectedYear);
     public List<Resource> Resources { get; private set; } = [];
+    public long StorageUsed { get; set; }
+    public long StorageLimit { get; set; }
 
     public YearPlan? GetYearPlan(int year)
     {
@@ -71,5 +73,10 @@ public class User : IdentityUser<Guid>
         {
             AddResource(resource);
         }
+    }
+
+    public User()
+    {
+        StorageLimit = (long)1024 * 1024 * 1024 * 2;
     }
 }

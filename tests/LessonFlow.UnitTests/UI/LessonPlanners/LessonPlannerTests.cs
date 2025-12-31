@@ -21,6 +21,7 @@ using LessonFlow.Components.Shared;
 using LessonFlow.Domain.Resources;
 
 namespace LessonFlow.UnitTests.UI.LessonPlanners;
+
 public class LessonPlannerTests : BunitContext
 {
     private readonly AppState _appState;
@@ -267,7 +268,7 @@ public class LessonPlannerTests : BunitContext
         var subject = new Subject("English", [], "");
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), It.IsAny<DateOnly>(), startPeriod, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, "", 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
-           [new Resource(appState.User!.Id, "test-file.pdf", "Test", 1024, "application/pdf", "file-link", ResourceType.Video, [subject])]));
+           [new Resource(appState.User!.Id, "test-file.pdf", "Test", 1024, "file-link", ResourceType.Video, [subject])]));
         Services.AddScoped(sp => lessonPlanRepository.Object);
 
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, startPeriod);
@@ -439,7 +440,7 @@ public class LessonPlannerTests : BunitContext
 
         lessonPlanRepository.Setup(r => r.GetLessonPlan(It.IsAny<DayPlanId>(), new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), 1, default))
            .ReturnsAsync(new LessonPlan(It.IsAny<DayPlanId>(), subject, PeriodType.Lesson, LessonPlanText, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool),
-           [new Resource(appState.User.Id, "test-file.pdf", "Test", 1024, "application/pdf", "file-link", ResourceType.Video, [subject])]));
+           [new Resource(appState.User.Id, "test-file.pdf", "Test", 1024, "file-link", ResourceType.Video, [subject])]));
         lessonPlanRepository.Setup(r => r.GetConflictingLessonPlans(It.IsAny<DayPlanId>(), It.IsAny<LessonPlan>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<LessonPlan>());
 

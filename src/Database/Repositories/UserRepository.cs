@@ -164,7 +164,9 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
         await using var context = await factory.CreateDbContextAsync(ct);
         return await context.Users
             .Where(u => u.Id == userId)
-            .Include(t => t.Resources)
+            .Include(u => u.Resources)
+            .ThenInclude(r => r.Subjects)
+            .Include(u => u.YearPlans)
             .AsNoTracking()
             .FirstOrDefaultAsync(ct);
     }
@@ -226,14 +228,62 @@ public class UserRepository(IDbContextFactory<ApplicationDbContext> factory, IAm
             .ToListAsync(ct);
     }
 
-    public async Task AddResource(Guid userId, Resource resource, CancellationToken ct)
+    public async Task AddResourceAsync(User user, Resource resource, CancellationToken ct)
     {
         var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(CompleteAccountSetup)} must be called with a UnitOfWork");
-        var user = await context.Users
-            .Where(u => u.Id == userId)
+        var dbUser = await context.Users
+            .Where(u => u.Id == user.Id)
             .Include(u => u.Resources)
             .FirstOrDefaultAsync(ct) ?? throw new UserNotFoundException();
 
-        user.Resources.Add(resource);
+        var subjects = context.Subjects.Where(s => resource.Subjects.Contains(s))
+            .ToList();
+
+        resource.Subjects.Clear();
+        resource.Subjects.AddRange(subjects);
+        dbUser.StorageUsed = user.StorageUsed;
+
+        context.Resources.Add(resource);
+    }
+
+    public async Task SoftDeleteResourceAsync(Resource resource, CancellationToken ct)
+    {
+        var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(SoftDeleteResourceAsync)} must be called with a UnitOfWork");
+        var dbResource = await context.Resources
+            .Where(r => r.Id == resource.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (dbResource is null)
+        {
+            throw new ResourceNotFoundException(resource.Id);
+        }
+
+        dbResource.MarkAsDeleted();
+    }
+
+    public async Task<List<Resource>> GetSoftDeletedResourcesAsync(Guid userId, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.Resources
+            .Where(r => r.UserId == userId && r.IsSoftDeleted && r.DeletionDate >= DateTime.UtcNow)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<Resource>> GetResourcesDueForDeletionAsync(CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return await context.Resources
+            .Where(r => r.IsSoftDeleted && r.DeletionDate <= DateTime.UtcNow)
+            .ToListAsync(ct);
+    }
+
+    public async Task HardDeleteResourcesAsync(IEnumerable<ResourceId> resourceIds, CancellationToken ct)
+    {
+        var context = ambient.Current ?? throw new InvalidOperationException($"{nameof(HardDeleteResourcesAsync)} must be called with a UnitOfWork");
+        var resourcesToDelete = await context.Resources
+            .Where(r => resourceIds.Contains(r.Id))
+            .ToListAsync(ct);
+
+        context.Resources.RemoveRange(resourcesToDelete);
     }
 }

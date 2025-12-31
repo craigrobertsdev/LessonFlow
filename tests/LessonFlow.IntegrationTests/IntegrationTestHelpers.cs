@@ -18,6 +18,7 @@ internal static class IntegrationTestHelpers
     internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
     internal const string TestUserEmail = "test@test.com";
     internal const string TestUserNoAccountEmail = "accountsetupnotcomplete@test.com";
+    internal static string TestStorageDirectory = Path.Combine(Environment.CurrentDirectory, "TestStorage");
 
     internal static WeekPlannerTemplate GenerateWeekPlannerTemplate(Guid userId)
     {
@@ -82,7 +83,7 @@ internal static class IntegrationTestHelpers
 
             user = dbContext.Users.First(u => u.Email == email);
 
-            var weekPlannerTemplate = IntegrationTestHelpers.GenerateWeekPlannerTemplate(user.Id);
+            var weekPlannerTemplate = GenerateWeekPlannerTemplate(user.Id);
             var yearPlan = new YearPlan(user.Id, weekPlannerTemplate, "Test School", TestYear);
             var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
             var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
