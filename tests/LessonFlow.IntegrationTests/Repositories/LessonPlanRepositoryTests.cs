@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.Repositories;
+[Collection("Non-Parallel")]
 public class LessonPlanRepositoryTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly CustomWebApplicationFactory _factory;

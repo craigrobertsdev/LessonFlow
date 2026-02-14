@@ -12,6 +12,7 @@ using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
+using LessonFlow.Services.FileStorage;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -45,6 +46,7 @@ public class ApplicationDbContext : IdentityDbContext<User, IdentityRole<Guid>, 
     public virtual DbSet<Calendar> Calendar { get; set; } = null!;
     public virtual DbSet<YearPlan> YearPlans { get; set; } = null!;
     public virtual DbSet<SchoolTerm> TermDates { get; set; } = null!;
+    public virtual DbSet<FileSystem> FileSystems { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
