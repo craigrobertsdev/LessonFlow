@@ -4,6 +4,7 @@ using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.LessonPlans;
 using LessonFlow.Domain.StronglyTypedIds;
+using LessonFlow.Services.FileStorage;
 using LessonFlow.Shared;
 
 namespace LessonFlow.Domain.Resources;
@@ -13,6 +14,7 @@ public sealed class Resource : Entity<ResourceId>
     public Guid UserId { get; private set; }
     public string FileName { get; private set; }
     public string DisplayName { get; private set; }
+    public FileSystemDirectory Directory { get; set; }
     public long FileSize { get; init; }
     public string Link { get; private set; }
     public ResourceType Type { get; set; }

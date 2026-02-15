@@ -37,6 +37,11 @@ public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
 
         builder.HasMany(r => r.LessonPlans)
             .WithMany(lp => lp.Resources);
+        
+        builder.HasOne(r => r.Directory)
+            .WithMany(d => d.Resources)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Cascade);
 
 #pragma warning disable CS8600, CS8603, CS8604 // Converting null literal or possible null value to non-nullable type.
         builder.Property(r => r.YearLevels)

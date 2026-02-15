@@ -11,7 +11,7 @@ public class FileSystemTests
     [Fact]
     public void Initialise_ShouldHaveEmptyDirectoriesList()
     {
-        var resourceRepository = new Mock<IResourceRepository>();
+        var resourceRepository = new Mock<IFileSystemRepository>();
         var fsId = new FileSystemId(Guid.NewGuid());
 
         // Act
@@ -24,12 +24,12 @@ public class FileSystemTests
     [Fact]
     public async Task Initialise_ShouldLoadDirectories()
     {
-        var resourceRepository = new Mock<IResourceRepository>();
-        var top = new ResourceDirectory("Top", null);
-        List<ResourceDirectory> directories = [top];
-            top.Children.Add(new("Nested", top));
+        var resourceRepository = new Mock<IFileSystemRepository>();
         var fsId = new FileSystemId(Guid.NewGuid());
         var fs = new FileSystem(fsId, resourceRepository.Object);
+        var top = new FileSystemDirectory("Top", fs, null);
+        List<FileSystemDirectory> directories = [top];
+            top.Children.Add(new("Nested", fs, top));
         typeof(FileSystem).GetField("_directories", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(fs, directories);
 
         resourceRepository.Setup(repo => repo.GetDirectories(fsId))
@@ -44,4 +44,20 @@ public class FileSystemTests
         Assert.Equal(fs.Directories[0], fileSystem.Directories[0]);
         Assert.Equal(fs.Directories[0].Children[0], fileSystem.Directories[0].Children[0]);
     }
+    
+    [Fact]
+    public async Task Initialise_WhenNoChildrenExists_ShouldNotLoadDirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        resourceRepository.Setup(repo => repo.GetDirectories(It.IsAny<FileSystemId>()))
+            .ReturnsAsync(new List<FileSystemDirectory>());
+        var fileSystem = new FileSystem(new FileSystemId(Guid.NewGuid()), resourceRepository.Object);
+        
+        // Act
+        await fileSystem.Initialise();
+        
+        // Assert
+        Assert.Empty(fileSystem.Directories);
+   }
 }
