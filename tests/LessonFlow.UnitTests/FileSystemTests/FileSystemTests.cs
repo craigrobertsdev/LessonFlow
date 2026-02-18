@@ -1,4 +1,6 @@
 using System.Reflection;
+using LessonFlow.Domain.Enums;
+using LessonFlow.Domain.Resources;
 using LessonFlow.Domain.StronglyTypedIds;
 using LessonFlow.Services.FileStorage;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -29,22 +31,23 @@ public class FileSystemTests
         var fs = new FileSystem(fsId, resourceRepository.Object);
         var top = new FileSystemDirectory("Top", fs, null);
         List<FileSystemDirectory> directories = [top];
-            top.Children.Add(new("Nested", fs, top));
-        typeof(FileSystem).GetField("_directories", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(fs, directories);
+        top.Children.Add(new("Nested", fs, top));
+        typeof(FileSystem).GetField("_directories", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(fs,
+            directories);
 
         resourceRepository.Setup(repo => repo.GetDirectories(fsId))
             .ReturnsAsync(directories);
         var fileSystem = new FileSystem(fsId, resourceRepository.Object);
-        
+
         // Act
-        await fileSystem.Initialise();
-        
+        await fileSystem.InitialiseAsync();
+
         // Assert
         Assert.Equal(fs.Directories.Count, fileSystem.Directories.Count);
         Assert.Equal(fs.Directories[0], fileSystem.Directories[0]);
         Assert.Equal(fs.Directories[0].Children[0], fileSystem.Directories[0].Children[0]);
     }
-    
+
     [Fact]
     public async Task Initialise_WhenNoChildrenExists_ShouldNotLoadDirectories()
     {
@@ -53,11 +56,209 @@ public class FileSystemTests
         resourceRepository.Setup(repo => repo.GetDirectories(It.IsAny<FileSystemId>()))
             .ReturnsAsync(new List<FileSystemDirectory>());
         var fileSystem = new FileSystem(new FileSystemId(Guid.NewGuid()), resourceRepository.Object);
-        
+
         // Act
-        await fileSystem.Initialise();
-        
+        await fileSystem.InitialiseAsync();
+
         // Assert
         Assert.Empty(fileSystem.Directories);
-   }
+    }
+
+    [Fact]
+    public void SelectDirectory_WhenCalled_ShouldAddDirectoryToSelectedDirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = new FileSystemDirectory("Test Directory", fileSystem, null);
+
+        // Act
+        fileSystem.SelectDirectory(directory);
+
+        // Assert
+        Assert.Equal(DirectorySelectionMode.Single, fileSystem.DirectorySelectionMode);
+        Assert.True(directory.IsSelected);
+        Assert.Contains(directory, fileSystem.SelectedDirectories);
+    }
+
+    [Fact]
+    public void SelectDirectory_WhenCalledTwiceOnSameDirectory_ShouldRemoveDirectoryFromSelectedDirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = new FileSystemDirectory("Test Directory", fileSystem, null);
+
+        // Act
+        fileSystem.SelectDirectory(directory);
+        fileSystem.SelectDirectory(directory);
+
+        // Assert
+        Assert.Equal(DirectorySelectionMode.Single, fileSystem.DirectorySelectionMode);
+        Assert.False(directory.IsSelected);
+        Assert.Empty(fileSystem.SelectedDirectories);
+    }
+
+    [Fact]
+    public void SelectDirectory_WhenCalledAndDirectorySelectionModeIsSingle_ShouldDeselectOtherDirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory1 = new FileSystemDirectory("Directory 1", fileSystem, null);
+        var directory2 = new FileSystemDirectory("Directory 2", fileSystem, null);
+
+        // Act
+        fileSystem.SelectDirectory(directory1);
+        fileSystem.SelectDirectory(directory2);
+
+        // Assert
+        Assert.Equal(DirectorySelectionMode.Single, fileSystem.DirectorySelectionMode);
+        Assert.False(directory1.IsSelected);
+        Assert.True(directory2.IsSelected);
+        Assert.DoesNotContain(directory1, fileSystem.SelectedDirectories);
+        Assert.Contains(directory2, fileSystem.SelectedDirectories);
+    }
+
+    [Fact]
+    public void SelectDirectory_WhenCalledAndDirectorySelectionModeIsMultiple_ShouldAllowMultipleSelectedDirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object)
+        {
+            DirectorySelectionMode = DirectorySelectionMode.Multiple
+        };
+        var directory1 = new FileSystemDirectory("Directory 1", fileSystem, null);
+        var directory2 = new FileSystemDirectory("Directory 2", fileSystem, null);
+
+        // Act
+        fileSystem.SelectDirectory(directory1);
+        fileSystem.SelectDirectory(directory2);
+
+        // Assert
+        Assert.Equal(DirectorySelectionMode.Multiple, fileSystem.DirectorySelectionMode);
+        Assert.True(directory1.IsSelected);
+        Assert.True(directory2.IsSelected);
+        Assert.Contains(directory1, fileSystem.SelectedDirectories);
+        Assert.Contains(directory2, fileSystem.SelectedDirectories);
+    }
+
+    [Fact]
+    public void SelectDirectory_WhenCalledAndDirectorySelectionModeIsMultiple_ShouldDeselectDirectoryWhenSelectedAgain()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object)
+        {
+            DirectorySelectionMode = DirectorySelectionMode.Multiple
+        };
+        var directory1 = new FileSystemDirectory("Directory 1", fileSystem, null);
+        var directory2 = new FileSystemDirectory("Directory 2", fileSystem, null);
+
+        // Act
+        fileSystem.SelectDirectory(directory1);
+        fileSystem.SelectDirectory(directory2);
+        fileSystem.SelectDirectory(directory1); // Deselect directory1
+
+        // Assert
+        Assert.Equal(DirectorySelectionMode.Multiple, fileSystem.DirectorySelectionMode);
+        Assert.False(directory1.IsSelected);
+        Assert.True(directory2.IsSelected);
+        Assert.DoesNotContain(directory1, fileSystem.SelectedDirectories);
+        Assert.Contains(directory2, fileSystem.SelectedDirectories);
+    }
+    
+    [Fact]
+    public async Task CreateDirectory_WhenCalled_ShouldCreateDirectoryAndAddToFileSystem()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+
+        // Act
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Assert
+        Assert.NotNull(directory);
+        Assert.Equal("Test Directory", directory.Name);
+        Assert.Contains(directory, fileSystem.Directories);
+    }
+    
+    [Fact]
+    public async Task CreateDirectory_WhenCalledWithInvalidName_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var invalidName = "Invalid/Directory\\Name";
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.CreateDirectory(invalidName));
+    }
+    
+    [Fact]
+    public async Task CreateDirectory_WhenCalledWithDuplicateName_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directoryName = "Test Directory";
+        await fileSystem.CreateDirectory(directoryName);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.CreateDirectory(directoryName));
+    }
+
+    [Fact]
+    public async Task CreateDirectory_WhenCalled_ShouldUpdateDatabaseWithDirectory()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+
+        // Act
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Assert
+        resourceRepository.Verify(repo => repo.UpdateDirectory(directory), Times.Once);
+    }
+
+    [Fact]
+    public void GetTotalDirectoryFileSize_WhenCalled_ShouldReturnTotalSizeOfAllFilesInDirectoryAndSubdirectories()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var dir = fileSystem.CreateDirectory("Test Directory");
+        var directory = new FileSystemDirectory("Test Directory", fileSystem, null);
+        var subDirectory = new FileSystemDirectory("Sub Directory", fileSystem, directory);
+
+        var resource1 = new Resource(Guid.NewGuid(), "Resource 1", "https://example.com/resource1", 1000, null,
+            ResourceType.Video);
+        var resource2 = new Resource(Guid.NewGuid(), "Resource 3", "https://example.com/resource2", 2000, null,
+            ResourceType.Article);
+        var resource3 = new Resource(Guid.NewGuid(), "Resource 3", "https://example.com/resource3", 3000, null,
+            ResourceType.Assessment);
+
+        directory.Resources.Add(resource1);
+        subDirectory.Resources.Add(resource2);
+        subDirectory.Resources.Add(resource3);
+
+        // Act
+        var totalSize = fileSystem.GetTotalDirectoryFileSize();
+
+        // Assert
+        Assert.Equal(6000, totalSize);
+    }
 }
