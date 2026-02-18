@@ -51,9 +51,9 @@ public sealed class CurriculumService : ICurriculumService
         {
             var yearLevels = CurriculumSubjects.First(s => s.Id == subjectId).YearLevels
                 .Where(yl => yearLevelValues.Contains(yl.YearLevelValue));
-            
+
             var subject = CurriculumSubjects.First(s => s.Id == subjectId);
-            
+
             filteredSubjects.Add(new Subject(subject.Name, yearLevels.ToList(), subject.Description));
         }
 

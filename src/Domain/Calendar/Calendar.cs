@@ -13,20 +13,13 @@ namespace LessonFlow.Domain.Calendar;
 
 public sealed class Calendar : Entity<CalendarId>, IAggregateRoot
 {
-    public int TermNumber { get; private set; }
-    public DateTime TermStart { get; private set; }
-    public DateTime TermEnd { get; private set; }
-    public List<SchoolEvent> SchoolEvents { get; private set; } = [];
-    public DateTime CreatedDateTime { get; private set; }
-    public DateTime UpdatedDateTime { get; private set; }
-
     public Calendar(
         List<SchoolEvent>? schoolEvents,
         int termNumber,
         DateTime termStart,
         DateTime termEnd,
         DateTime createdDateTime,
-        DateTime updatedDateTime) 
+        DateTime updatedDateTime)
     {
         if (schoolEvents is not null)
         {
@@ -40,6 +33,13 @@ public sealed class Calendar : Entity<CalendarId>, IAggregateRoot
         CreatedDateTime = createdDateTime;
         UpdatedDateTime = updatedDateTime;
     }
+
+    public int TermNumber { get; private set; }
+    public DateTime TermStart { get; private set; }
+    public DateTime TermEnd { get; private set; }
+    public List<SchoolEvent> SchoolEvents { get; private set; } = [];
+    public DateTime CreatedDateTime { get; private set; }
+    public DateTime UpdatedDateTime { get; private set; }
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
     private Calendar()

@@ -37,7 +37,7 @@ public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
 
         builder.HasMany(r => r.LessonPlans)
             .WithMany(lp => lp.Resources);
-        
+
         builder.HasOne(r => r.Directory)
             .WithMany(d => d.Resources)
             .IsRequired()

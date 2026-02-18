@@ -173,7 +173,7 @@ public class FileSystemTests
         Assert.DoesNotContain(directory1, fileSystem.SelectedDirectories);
         Assert.Contains(directory2, fileSystem.SelectedDirectories);
     }
-    
+
     [Fact]
     public async Task CreateDirectory_WhenCalled_ShouldCreateDirectoryAndAddToFileSystem()
     {
@@ -190,7 +190,7 @@ public class FileSystemTests
         Assert.Equal("Test Directory", directory.Name);
         Assert.Contains(directory, fileSystem.Directories);
     }
-    
+
     [Fact]
     public async Task CreateDirectory_WhenCalledWithInvalidName_ShouldThrowArgumentException()
     {
@@ -203,7 +203,7 @@ public class FileSystemTests
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.CreateDirectory(invalidName));
     }
-    
+
     [Fact]
     public async Task CreateDirectory_WhenCalledWithDuplicateName_ShouldThrowArgumentException()
     {

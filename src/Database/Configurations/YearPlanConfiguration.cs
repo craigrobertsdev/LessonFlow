@@ -1,7 +1,6 @@
 using System.Text.Json;
 using LessonFlow.Database.Converters;
 using LessonFlow.Domain.Enums;
-using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.TermPlanners;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.YearPlans;
@@ -39,7 +38,7 @@ public class YearPlanConfiguration : IEntityTypeConfiguration<YearPlan>
         builder.HasOne(yp => yp.WeekPlannerTemplate)
             .WithOne()
             .HasForeignKey<YearPlan>(yp => yp.WeekPlannerTemplateId);
-            //.HasForeignKey<WeekPlannerTemplate>("YearPlanId");
+        //.HasForeignKey<WeekPlannerTemplate>("YearPlanId");
 
         builder.HasMany(yp => yp.SubjectsTaught)
             .WithMany();

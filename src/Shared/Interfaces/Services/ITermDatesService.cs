@@ -24,7 +24,7 @@ public interface ITermDatesService
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException">Throws if there are no future weeks stored in the app's database</exception>
     DateOnly GetNextWeek(DateOnly date);
-    
+
     /// <summary>
     /// Gets the start date of the next school week.
     /// </summary>
@@ -54,7 +54,7 @@ public interface ITermDatesService
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>"
     DateOnly GetWeekInNextTerm(int year, int termNumber, int weekNumber);
-    
+
     /// <summary>
     /// Gets the start date of the same week number in the previous term. If the week number exceeds the number of weeks in the next term, it returns the start date of the last week of that term.
     /// </summary>
@@ -64,6 +64,7 @@ public interface ITermDatesService
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException">Throws if there are no term dates for the requested calendar year or if the requested term number is out of range (ie. term 5)</exception>"
     DateOnly GetWeekInPreviousTerm(int year, int termNumber, int weekNumber);
+
     DateOnly GetLastWeekOfTerm(int year, int termNumber);
     bool IsSchoolHoliday(DateTime date);
 }

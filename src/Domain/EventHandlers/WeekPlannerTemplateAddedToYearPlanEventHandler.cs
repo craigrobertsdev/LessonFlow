@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LessonFlow.Domain.EventHandlers;
 
 public class WeekPlannerTemplateAddedToYearPlanEventHandler(
-        IUnitOfWorkFactory factory,
+    IUnitOfWorkFactory factory,
     IAmbientDbContextAccessor<ApplicationDbContext> ambient,
     ITermDatesService termDatesService)
     : INotificationHandler<WeekPlannerTemplateAddedToYearPlanEvent>
@@ -17,9 +17,10 @@ public class WeekPlannerTemplateAddedToYearPlanEventHandler(
     public async Task Handle(WeekPlannerTemplateAddedToYearPlanEvent notification, CancellationToken ct)
     {
         await using var uow = factory.Create();
-        ApplicationDbContext context = ambient.Current!; 
+        ApplicationDbContext context = ambient.Current!;
         var yearPlan = await context.YearPlans
-            .Where(yd => yd.WeekPlannerTemplate != null && yd.WeekPlannerTemplate.Id == notification.WeekPlannerTemplateId)
+            .Where(yd =>
+                yd.WeekPlannerTemplate != null && yd.WeekPlannerTemplate.Id == notification.WeekPlannerTemplateId)
             .Include(yd => yd.WeekPlanners)
             .FirstAsync(ct);
 

@@ -6,18 +6,17 @@ using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.Users;
 using LessonFlow.Domain.ValueObjects;
 using LessonFlow.Domain.YearPlans;
-using Radzen;
-using System.Data;
 
 namespace LessonFlow.IntegrationTests;
+
 internal static class IntegrationTestHelpers
 {
+    internal const string TestUserEmail = "test@test.com";
+    internal const string TestUserNoAccountEmail = "accountsetupnotcomplete@test.com";
     internal readonly static int TestYear = 2025;
     internal readonly static int FirstMonthOfSchool = 1;
     internal readonly static int FirstDayOfSchool = 27;
     internal readonly static DateOnly FirstDateOfSchool = new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool);
-    internal const string TestUserEmail = "test@test.com";
-    internal const string TestUserNoAccountEmail = "accountsetupnotcomplete@test.com";
     internal static string TestStorageDirectory = Path.Combine(Environment.CurrentDirectory, "TestStorage");
 
     internal static WeekPlannerTemplate GenerateWeekPlannerTemplate(Guid userId)
@@ -30,8 +29,8 @@ internal static class IntegrationTestHelpers
             new TemplatePeriod(PeriodType.Lesson, 4, "Lesson 3", new TimeOnly(11, 20, 0), new TimeOnly(12, 10, 0)),
             new TemplatePeriod(PeriodType.Lesson, 5, "Lesson 4", new TimeOnly(12, 10, 0), new TimeOnly(13, 00, 0)),
             new TemplatePeriod(PeriodType.Break, 6, "Lunch", new TimeOnly(13, 0, 0), new TimeOnly(13, 30, 0)),
-            new TemplatePeriod(PeriodType.Lesson,7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
-            new TemplatePeriod(PeriodType.Lesson, 8,"Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
+            new TemplatePeriod(PeriodType.Lesson, 7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
+            new TemplatePeriod(PeriodType.Lesson, 8, "Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
         };
         var dayTemplates = new List<DayTemplate>();
         foreach (var day in Enum.GetValues<DayOfWeek>().Where(d => d != DayOfWeek.Saturday && d != DayOfWeek.Sunday))
@@ -48,6 +47,7 @@ internal static class IntegrationTestHelpers
                 }
             }).ToList(), day, DayType.Working));
         }
+
         var template = new WeekPlannerTemplate(userId, periods, dayTemplates);
         return template;
     }
@@ -60,7 +60,6 @@ internal static class IntegrationTestHelpers
         List<(string, bool)> userDetails = [(TestUserNoAccountEmail, false), (TestUserEmail, true)];
         foreach (var (email, accountSetupComplete) in userDetails)
         {
-
             var user = new User
             {
                 Email = email,
@@ -86,7 +85,8 @@ internal static class IntegrationTestHelpers
             var weekPlannerTemplate = GenerateWeekPlannerTemplate(user.Id);
             var yearPlan = new YearPlan(user.Id, weekPlannerTemplate, "Test School", TestYear);
             var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
-            var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [], []);
+            var dayPlan = new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool), [],
+                []);
             weekPlanner.UpdateDayPlan(dayPlan);
             var todoList = new List<TodoItem>()
             {
@@ -119,26 +119,26 @@ internal static class IntegrationTestHelpers
         }
 
         var termDatesByYear = new Dictionary<int, List<SchoolTerm>>()
+        {
             {
-                {
-                    2025,
-                    [
-                        new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4,11)),
-                        new SchoolTerm(2, new DateOnly(2025, 4, 28), new DateOnly(2025, 7, 4)),
-                        new SchoolTerm(3, new DateOnly(2025, 7, 21), new DateOnly(2025, 9, 26)),
-                        new SchoolTerm(4, new DateOnly(2025, 10, 13), new DateOnly(2025, 12, 12))
-                    ]
-                },
-                {
-                    2026,
-                    [
-                        new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4,10)),
-                        new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
-                        new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
-                        new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
-                    ]
-                }
-            };
+                2025,
+                [
+                    new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4, 11)),
+                    new SchoolTerm(2, new DateOnly(2025, 4, 28), new DateOnly(2025, 7, 4)),
+                    new SchoolTerm(3, new DateOnly(2025, 7, 21), new DateOnly(2025, 9, 26)),
+                    new SchoolTerm(4, new DateOnly(2025, 10, 13), new DateOnly(2025, 12, 12))
+                ]
+            },
+            {
+                2026,
+                [
+                    new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4, 10)),
+                    new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
+                    new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
+                    new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
+                ]
+            }
+        };
 
         foreach (var (year, terms) in termDatesByYear)
         {

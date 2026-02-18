@@ -2,6 +2,7 @@
 using LessonFlow.Domain.ValueObjects;
 
 namespace LessonFlow.UnitTests.Domain.WeekPlannerTemplates;
+
 public class WeekPlannerTemplateTests
 {
     [Fact]
@@ -28,16 +29,17 @@ public class WeekPlannerTemplateTests
     {
         // Arrange
         var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
-        var periodToRemove = weekPlannerTemplate.Periods[2]; 
+        var periodToRemove = weekPlannerTemplate.Periods[2];
 
         // Act
         weekPlannerTemplate.RemovePeriod(periodToRemove);
-        
+
         // Assert
         foreach (var dayTemplate in weekPlannerTemplate.DayTemplates)
         {
             Assert.DoesNotContain(dayTemplate.Periods, p => p.StartPeriod == periodToRemove.StartPeriod);
         }
+
         Assert.DoesNotContain(weekPlannerTemplate.Periods, p => p == periodToRemove);
     }
 }

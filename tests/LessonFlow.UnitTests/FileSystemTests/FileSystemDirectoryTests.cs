@@ -203,7 +203,7 @@ public class FileSystemDirectoryTests
         var fsId = new FileSystemId(Guid.NewGuid());
         var fileSystem = new FileSystem(fsId, mockRepo.Object);
         var parentDirectory = new FileSystemDirectory("Parent", fileSystem, null);
-        
+
         var act = async () => await parentDirectory.CreateSubDirectoryAsync(invalidName);
 
         await Assert.ThrowsAsync<ArgumentException>(act);

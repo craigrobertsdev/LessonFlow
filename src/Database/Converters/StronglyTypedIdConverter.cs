@@ -37,7 +37,7 @@ public static class StronglyTypedIdConverter
 
     public class YearPlanIdConverter()
         : ValueConverter<YearPlanId, Guid>(id => id.Value, value => new YearPlanId(value));
-    
+
     public class FileSystemIdConverter()
         : ValueConverter<FileSystemId, Guid>(id => id.Value, value => new FileSystemId(value));
 }

@@ -1,4 +1,5 @@
 ﻿namespace LessonFlow.UnitTests.UI.AccountSetup;
+
 public class GridCellTests
 {
     [Fact]
@@ -54,5 +55,5 @@ public class GridCellTests
             (3, 4)
         };
         Assert.Equal(expected, selectedCell.RowSpans);
-    } 
-} 
+    }
+}

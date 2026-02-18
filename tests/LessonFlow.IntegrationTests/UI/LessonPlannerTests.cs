@@ -1,4 +1,5 @@
-﻿using Bunit;
+﻿using System.Security.Claims;
+using Bunit;
 using LessonFlow.Components.Pages;
 using LessonFlow.Database;
 using LessonFlow.Domain.Enums;
@@ -11,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
-using System.Security.Claims;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.UI;
@@ -48,6 +48,14 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
             .SetClaims(new Claim(ClaimTypes.Name, TestUserEmail));
     }
 
+    public new void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _dbContext?.Dispose();
+        _scope?.Dispose();
+        base.Dispose();
+    }
+
     [Fact]
     public async Task SaveLessonPlan_WhenNoPreExistingLessonPlan_ShouldPersistNewLessonPlan()
     {
@@ -66,7 +74,7 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
         component.WaitForAssertion(() =>
         {
             var dbFactory = _factory.Services.CreateScope()
-                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+                .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
             var dbContext = dbFactory.CreateDbContext();
             var savedLessonPlan = dbContext.LessonPlans
                 .Include(lp => lp.Subject)
@@ -83,19 +91,20 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
     {
         var dayPlan = _dbContext.Users.First(u => u.Email == TestUserEmail)
             .YearPlans.First(yd => yd.CalendarYear == TestYear)
-                .WeekPlanners.First().DayPlans.First();
+            .WeekPlanners.First().DayPlans.First();
         var subject = _dbContext.Subjects.First(s => s.Name == "English");
 
         var startPeriod = 4;
 
-        var lessonPlan = new LessonPlan(dayPlan.Id, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool, []);
+        var lessonPlan = new LessonPlan(dayPlan.Id, subject, PeriodType.Lesson, "", 1, startPeriod, FirstDateOfSchool,
+            []);
         dayPlan.AddLessonPlan(lessonPlan);
         _dbContext.LessonPlans.Add(lessonPlan);
         _dbContext.SaveChanges();
 
         var weekPlanner = _dbContext.WeekPlanners
             .Include(wp => wp.DayPlans)
-                .ThenInclude(dp => dp.LessonPlans)
+            .ThenInclude(dp => dp.LessonPlans)
             .First(wp => wp.Id == dayPlan.WeekPlannerId);
         weekPlanner.UpdateDayPlan(dayPlan);
         _dbContext.WeekPlanners.Update(weekPlanner);
@@ -118,7 +127,7 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
         component.WaitForAssertion(() =>
         {
             var dbFactory = _factory.Services.CreateScope()
-                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+                .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
             using var dbContext = dbFactory.CreateDbContext();
             var savedLessonPlan = dbContext.LessonPlans
                 .Include(lp => lp.Subject)
@@ -134,7 +143,7 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
 
     [Fact]
     public async Task SaveChanges_OnSuccess_UpdatesAppState()
-    {        
+    {
         var appState = await CreateAppState();
         var component = RenderLessonPlanner(appState, TestYear, FirstMonthOfSchool, FirstDayOfSchool, 1);
 
@@ -150,7 +159,7 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
         component.WaitForAssertion(() =>
         {
             var dbFactory = _factory.Services.CreateScope()
-                 .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+                .ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
             var dbContext = dbFactory.CreateDbContext();
             var savedLessonPlan = dbContext.LessonPlans
                 .Include(lp => lp.Subject)
@@ -162,7 +171,8 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
         });
     }
 
-    private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day, int startPeriod)
+    private IRenderedComponent<LessonPlanner> RenderLessonPlanner(AppState appState, int year, int month, int day,
+        int startPeriod)
     {
         return Render<LessonPlanner>(parameters => parameters
             .Add(p => p.Year, year)
@@ -183,13 +193,5 @@ public class LessonPlannerTests : BunitContext, IClassFixture<CustomWebApplicati
         await appState.InitialiseAsync();
 
         return appState;
-    }
-
-    public new void Dispose()
-    {
-        GC.SuppressFinalize(this);
-        _dbContext?.Dispose();
-        _scope?.Dispose();
-        base.Dispose();
     }
 }

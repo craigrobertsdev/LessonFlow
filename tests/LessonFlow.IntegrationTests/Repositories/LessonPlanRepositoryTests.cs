@@ -8,11 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
 namespace LessonFlow.IntegrationTests.Repositories;
+
 [Collection("Non-Parallel")]
 public class LessonPlanRepositoryTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly CustomWebApplicationFactory _factory;
     private readonly ApplicationDbContext _dbContext;
+    private readonly CustomWebApplicationFactory _factory;
+
     public LessonPlanRepositoryTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
@@ -44,7 +46,8 @@ public class LessonPlanRepositoryTests : IClassFixture<CustomWebApplicationFacto
     }
 
     [Fact]
-    public async Task GetConflictingLessonPlans_WhenNoConflictAndLessonsPlannedOutsideOfConflictRange_ShouldReturnEmptyList()
+    public async Task
+        GetConflictingLessonPlans_WhenNoConflictAndLessonsPlannedOutsideOfConflictRange_ShouldReturnEmptyList()
     {
         var scope = _factory.Services.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<ILessonPlanRepository>();

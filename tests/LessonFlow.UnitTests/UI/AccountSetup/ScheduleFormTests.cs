@@ -3,6 +3,7 @@ using LessonFlow.Components.AccountSetup;
 using LessonFlow.Components.AccountSetup.State;
 
 namespace LessonFlow.UnitTests.UI.AccountSetup;
+
 public class ScheduleFormTests : BunitContext
 {
     [Fact]
@@ -93,8 +94,10 @@ public class ScheduleFormTests : BunitContext
         {
             Assert.Equal(i + 1, day.Periods[i].StartPeriod);
         }
+
         Assert.Equal(8, day.Periods.Count);
     }
+
     [Fact]
     public void HandleLessonDurationChange_CorrectlyUpdatesColumnCells_1_3_1_3()
     {
@@ -195,8 +198,8 @@ public class ScheduleFormTests : BunitContext
         Assert.Equal(2, col.Cells[0].RowSpans.Count);
         Assert.Equal((3, 5), col.Cells[0].RowSpans[0]);
         Assert.Equal((6, 8), col.Cells[0].RowSpans[1]);
-        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]); 
-        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]); 
+        Assert.Equal((9, 10), col.Cells[3].RowSpans[0]);
+        Assert.Equal((10, 11), col.Cells[4].RowSpans[0]);
 
         var day = weekPlanner.DayTemplates.First(d => d.DayOfWeek == DayOfWeek.Monday);
         Assert.Equal(1, day.Periods[0].StartPeriod);
@@ -347,7 +350,7 @@ public class ScheduleFormTests : BunitContext
 
     [Fact]
     public void HandleLessonDurationChange_Lesson3_1To4To1()
-    { 
+    {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
         var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
@@ -382,7 +385,7 @@ public class ScheduleFormTests : BunitContext
 
     [Fact]
     public void HandleLessonDurationChange_Lesson3_1To4_Lesson1_1To4()
-    { 
+    {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
         var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));
@@ -414,7 +417,7 @@ public class ScheduleFormTests : BunitContext
 
     [Fact]
     public void HandleLessonDurationChange_Lesson3_1To2_Lesson5_1To2_Lesson1_1To5()
-    { 
+    {
         var weekPlanner = UnitTestHelpers.GenerateWeekPlannerTemplate();
         var accountSetupState = new AccountSetupState(Guid.NewGuid()) { WeekPlannerTemplate = weekPlanner };
         var component = Render<ScheduleForm>(parameters => parameters.Add(p => p.State, accountSetupState));

@@ -1,11 +1,12 @@
-﻿using LessonFlow.Database;
+﻿using System.Security.Claims;
+using System.Text.Encodings.Web;
+using LessonFlow.Database;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Security.Claims;
-using System.Text.Encodings.Web;
 
 namespace LessonFlow.IntegrationTests;
+
 internal class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     public const string AuthScheme = "TestScheme";
@@ -21,7 +22,8 @@ internal class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptio
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         var user = _dbContext.Users.First();
-        var claims = new[] {
+        var claims = new[]
+        {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Email!),
             new Claim(ClaimTypes.Email, user.Email!)

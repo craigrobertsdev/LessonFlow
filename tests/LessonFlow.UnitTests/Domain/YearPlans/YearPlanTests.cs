@@ -6,6 +6,7 @@ using LessonFlow.Domain.YearPlans;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests.Domain.YearPlans;
+
 public class YearPlanTests
 {
     [Fact]
@@ -28,19 +29,22 @@ public class YearPlanTests
     }
 
     [Fact]
-    public void AddWeekPlanner_WhenWeekPlannerStartDateAlreadyInList_ShouldUpdateExistingValuesAndRetainSameWeekPlanner()
+    public void
+        AddWeekPlanner_WhenWeekPlannerStartDateAlreadyInList_ShouldUpdateExistingValuesAndRetainSameWeekPlanner()
     {
         var userId = Guid.NewGuid();
         var yearPlan = new YearPlan(userId, new WeekPlannerTemplate(userId), "Test", TestYear);
         var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
-        var lessonPlan1 = new LessonPlan(weekPlanner.DayPlans[0].Id, new Subject("", [], ""), PeriodType.Lesson, "", 1, 1, FirstDateOfSchool, []);
+        var lessonPlan1 = new LessonPlan(weekPlanner.DayPlans[0].Id, new Subject("", [], ""), PeriodType.Lesson, "", 1,
+            1, FirstDateOfSchool, []);
         weekPlanner.DayPlans[0].LessonPlans.Add(lessonPlan1);
         yearPlan.AddWeekPlanner(weekPlanner);
 
         var weekPlanner2 = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, FirstDateOfSchool);
         weekPlanner2.DayPlans[0].BeforeSchoolDuty = "Updated Duty";
         weekPlanner2.DayPlans[4].AfterSchoolDuty = "Updated Duty";
-        var lessonPlan2 = new LessonPlan(weekPlanner2.DayPlans[0].Id, new Subject("", [], ""), PeriodType.Lesson, "", 1, 2, FirstDateOfSchool, []);
+        var lessonPlan2 = new LessonPlan(weekPlanner2.DayPlans[0].Id, new Subject("", [], ""), PeriodType.Lesson, "", 1,
+            2, FirstDateOfSchool, []);
         weekPlanner2.DayPlans[0].LessonPlans.Add(lessonPlan2);
         yearPlan.AddWeekPlanner(weekPlanner2);
 

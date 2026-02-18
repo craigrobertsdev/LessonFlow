@@ -20,6 +20,7 @@ using Moq;
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests.UI.WeekPlanners;
+
 public class WeekPlannerPageTests : BunitContext
 {
     private readonly AppState _appState;
@@ -181,8 +182,10 @@ public class WeekPlannerPageTests : BunitContext
     public void InitialiseGrid_WhenNonWorkingDay_ShouldNotRenderCells(DayOfWeek nonWorkingDay)
     {
         var appState = CreateAppStateWithLessonsPlanned();
-        var idx = appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
-        appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates[idx] = new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
+        var idx =
+            appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates.FindIndex(d => d.DayOfWeek == nonWorkingDay);
+        appState.CurrentYearPlan!.WeekPlannerTemplate.DayTemplates[idx] =
+            new DayTemplate([], DayOfWeek.Monday, DayType.NonWorking);
         appState.CurrentYear = 2025;
         appState.CurrentTerm = 1;
         appState.CurrentWeek = 1;
@@ -195,7 +198,8 @@ public class WeekPlannerPageTests : BunitContext
     public void SetRowSpans_WithMultiPeriodLessonAfterFirstBreak_ShouldSetCorrectly()
     {
         var yearPlan = _appState.CurrentYearPlan!;
-        yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, CreateWeekPlannerTemplateWithMultiPeriodLessons());
+        yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan,
+            CreateWeekPlannerTemplateWithMultiPeriodLessons());
         var component = RenderWeekPlannerPage(_appState);
 
         var col = component.Instance.GridCols[0];
@@ -229,7 +233,8 @@ public class WeekPlannerPageTests : BunitContext
 
     [Theory]
     [MemberData(nameof(NavigateToNextWeekAfterHolidaysGenerator))]
-    public void NavigateToNextWeek_WhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    public void NavigateToNextWeek_WhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term,
+        int week, int expectedYear, int expectedTerm, int expectedWeek)
     {
         var component = RenderWeekPlannerPage(_appState);
         component.Instance.AppState.CurrentYear = year;
@@ -244,7 +249,8 @@ public class WeekPlannerPageTests : BunitContext
 
     [Theory]
     [MemberData(nameof(NavigateToNextWeekAfterHolidaysGenerator))]
-    public void NavigateToNextWeek_NavigateFirstThenWhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    public void NavigateToNextWeek_NavigateFirstThenWhenNextWeekAfterSchoolHoliday_LoadsFirstWeekPlannerOfNextTerm(
+        int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
     {
         var component = RenderWeekPlannerPage(_appState);
         component.Instance.AppState.CurrentYear = year;
@@ -281,7 +287,8 @@ public class WeekPlannerPageTests : BunitContext
     [Theory]
     [InlineData(2026, 4, 8, true)]
     [InlineData(2025, 4, 8, false)]
-    public void NavigateToNextWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
+    public void NavigateToNextWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber,
+        bool isDisabled)
     {
         var appState = CreateAppState(year);
         appState.CurrentTerm = termNumber;
@@ -310,7 +317,8 @@ public class WeekPlannerPageTests : BunitContext
 
     [Theory]
     [MemberData(nameof(NavigateToLastWeekBeforeHolidaysGenerator))]
-    public void NavigateToPreviousWeek_WhenPreviousWeekBeforeSchoolHolidays_LoadsLastWeekOfPreviousTerm(int year, int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
+    public void NavigateToPreviousWeek_WhenPreviousWeekBeforeSchoolHolidays_LoadsLastWeekOfPreviousTerm(int year,
+        int term, int week, int expectedYear, int expectedTerm, int expectedWeek)
     {
         var appState = CreateAppState(year);
         appState.CurrentTerm = term;
@@ -344,7 +352,8 @@ public class WeekPlannerPageTests : BunitContext
     }
 
     [Fact]
-    public void NavigateToPreviousWeekAfterNavigatingToNextWeek_PreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearPlan()
+    public void
+        NavigateToPreviousWeekAfterNavigatingToNextWeek_PreviousWeekIsPreviousYear_LoadsPreviousWeekPlannerWithPreviousYearPlan()
     {
         var appState = CreateAppState(2025);
         appState.CurrentTerm = 4;
@@ -366,7 +375,8 @@ public class WeekPlannerPageTests : BunitContext
     [Theory]
     [InlineData(2026, 1, 2, false)]
     [InlineData(2025, 1, 2, true)]
-    public void NavigateToPreviousWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber, bool isDisabled)
+    public void NavigateToPreviousWeek_WhenOutOfRange_ButtonCannotBeClicked(int year, int termNumber, int weekNumber,
+        bool isDisabled)
     {
         var appState = CreateAppState(year);
         appState.CurrentTerm = termNumber;
@@ -381,7 +391,8 @@ public class WeekPlannerPageTests : BunitContext
 
     [Theory]
     [MemberData(nameof(GoToSelectedWeekDatesGenerator))]
-    public void GoToSelectedWeek_WhenInTermTimeAndWeekPlannerExists_NavigatesToCorrectWeek(int year, int termNumber, int weekNumber)
+    public void GoToSelectedWeek_WhenInTermTimeAndWeekPlannerExists_NavigatesToCorrectWeek(int year, int termNumber,
+        int weekNumber)
     {
         var component = RenderWeekPlannerPage(_appState);
         component.Instance.SelectedYear = year;
@@ -786,7 +797,7 @@ public class WeekPlannerPageTests : BunitContext
         var yearPlanRepository = new Mock<IYearPlanRepository>();
         var logger = new Mock<ILogger<AppState>>();
         var unitOfWorkFactory = new Mock<IUnitOfWorkFactory>();
-        var termDatesService = UnitTestHelpers.CreateTermDatesService();
+        var termDatesService = CreateTermDatesService();
 
         var appState = new AppState(authStateProvider.Object, userRepository.Object, logger.Object, termDatesService);
         appState.CurrentYear = calendarYear;
@@ -795,7 +806,7 @@ public class WeekPlannerPageTests : BunitContext
         accountSetupState.SetCalendarYear(calendarYear);
 
         var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
-        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = GenerateWeekPlannerTemplate();
 
         yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, weekPlannerTemplate);
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
@@ -811,10 +822,16 @@ public class WeekPlannerPageTests : BunitContext
             new TodoItem(weekPlanner.Id, "Item 3")
         ];
         weekPlanner.UpdateTodos(items);
-        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result).Returns(weekPlanner);
-        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result).Returns(week2Term3WeekPlanner);
-        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result).Returns(week2Term3WeekPlanner);
-        yearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(yearPlan.Id, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
+        yearPlanRepository
+            .Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result)
+            .Returns(weekPlanner);
+        yearPlanRepository.Setup(yd => yd.GetWeekPlanner(yearPlan.Id, week2Term3, new CancellationToken()).Result)
+            .Returns(week2Term3WeekPlanner);
+        yearPlanRepository
+            .Setup(yd => yd.GetWeekPlanner(yearPlan.Id, FirstDateOfSchool, new CancellationToken()).Result)
+            .Returns(week2Term3WeekPlanner);
+        yearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(yearPlan.Id, It.IsAny<int>(), It.IsAny<int>(),
+                It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
             .Returns(weekPlanner);
 
         unitOfWorkFactory.Setup(u => u.Create()).Returns(new Mock<IUnitOfWork>().Object);
@@ -834,19 +851,25 @@ public class WeekPlannerPageTests : BunitContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(TestYear);
         var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
-        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = GenerateWeekPlannerTemplate();
 
         yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, weekPlannerTemplate);
         appState.YearPlanByYear.Clear();
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
 
-        var serviceDescriptor = Services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(IYearPlanRepository));
+        var serviceDescriptor =
+            Services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(IYearPlanRepository));
         if (serviceDescriptor is not null) Services.Remove(serviceDescriptor);
         var mockYearPlanRepository = new Mock<IYearPlanRepository>();
         var weekPlanner = CreateWeekPlanner(appState.CurrentYearPlan!);
-        weekPlanner.DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
-        mockYearPlanRepository.Setup(yd => yd.GetWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), new CancellationToken()).Result).Returns(weekPlanner);
-        mockYearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
+        weekPlanner.DayPlans[0].SchoolEvents =
+            CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
+        mockYearPlanRepository
+            .Setup(yd =>
+                yd.GetWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), new CancellationToken()).Result)
+            .Returns(weekPlanner);
+        mockYearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
             .Returns(weekPlanner);
 
         Services.AddScoped(sp => mockYearPlanRepository.Object);
@@ -856,10 +879,12 @@ public class WeekPlannerPageTests : BunitContext
 
     private static WeekPlanner CreateWeekPlanner(YearPlan yearPlan)
     {
-        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1,
+            new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
         yearPlan.AddWeekPlanner(weekPlanner);
         var dayPlans = Enumerable.Range(0, 5)
-            .Select(i => new DayPlan(weekPlanner.Id, FirstDateOfSchool.AddDays(i), CreateLessonPlans(FirstDateOfSchool.AddDays(i), yearPlan), [])).ToList();
+            .Select(i => new DayPlan(weekPlanner.Id, FirstDateOfSchool.AddDays(i),
+                CreateLessonPlans(FirstDateOfSchool.AddDays(i), yearPlan), [])).ToList();
 
         foreach (var dayPlan in dayPlans)
         {
@@ -875,38 +900,49 @@ public class WeekPlannerPageTests : BunitContext
         var accountSetupState = new AccountSetupState(Guid.NewGuid());
         accountSetupState.SetCalendarYear(TestYear);
         var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
-        var weekPlannerTemplate = UnitTestHelpers.GenerateWeekPlannerTemplate();
+        var weekPlannerTemplate = GenerateWeekPlannerTemplate();
 
         yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, weekPlannerTemplate);
         appState.YearPlanByYear.Clear();
         appState.YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);
 
-        var serviceDescriptor = Services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(IYearPlanRepository));
+        var serviceDescriptor =
+            Services.FirstOrDefault(descriptor => descriptor.ServiceType == typeof(IYearPlanRepository));
         if (serviceDescriptor is not null) Services.Remove(serviceDescriptor);
         var mockYearPlanRepository = new Mock<IYearPlanRepository>();
         var weekPlanner = CreateWeekPlannerWithMultiPeriodLessons(appState.CurrentYearPlan!);
-        weekPlanner.DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
-        mockYearPlanRepository.Setup(yd => yd.GetWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result).Returns(weekPlanner);
-        mockYearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
+        weekPlanner.DayPlans[0].SchoolEvents =
+            CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
+        mockYearPlanRepository
+            .Setup(yd => yd.GetWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>())
+                .Result).Returns(weekPlanner);
+        mockYearPlanRepository.Setup(yd => yd.GetOrCreateWeekPlanner(It.IsAny<YearPlanId>(), It.IsAny<int>(),
+                It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>(), It.IsAny<CancellationToken>()).Result)
             .Returns(weekPlanner);
 
         Services.AddScoped(sp => mockYearPlanRepository.Object);
 
         appState.CurrentYearPlan!.AddWeekPlanner(weekPlanner);
-        appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].SchoolEvents = CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
+        appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].SchoolEvents =
+            CreateSchoolEvents(appState.CurrentYearPlan!.WeekPlanners[0].DayPlans[0].Date);
         return appState;
     }
 
     private static WeekPlanner CreateWeekPlannerWithMultiPeriodLessons(YearPlan yearPlan)
     {
-        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
+        var weekPlanner = new WeekPlanner(yearPlan.Id, TestYear, 1, 1,
+            new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool));
         yearPlan.AddWeekPlanner(weekPlanner);
         var dayPlans = Enumerable.Range(0, 5)
-            .Select(i => new DayPlan(weekPlanner.Id, new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), CreateMultiPeriodLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i), yearPlan), [])).ToList();
+            .Select(i => new DayPlan(weekPlanner.Id,
+                new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i),
+                CreateMultiPeriodLessonPlans(new DateOnly(TestYear, FirstMonthOfSchool, FirstDayOfSchool).AddDays(i),
+                    yearPlan), [])).ToList();
         foreach (var dayPlan in dayPlans)
         {
             weekPlanner.UpdateDayPlan(dayPlan);
         }
+
         return weekPlanner;
 
         static List<LessonPlan> CreateMultiPeriodLessonPlans(DateOnly date, YearPlan yearPlan)
@@ -914,7 +950,7 @@ public class WeekPlannerPageTests : BunitContext
             var dayPlan = yearPlan.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
             return
             [
-                new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
+                new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date, []),
                 new LessonPlan(dayPlan.Id, new Subject([], "Mathematics"), PeriodType.Lesson, "", 2, 2, date, []),
                 new LessonPlan(dayPlan.Id, new Subject([], "HASS"), PeriodType.Lesson, "", 2, 5, date, []),
                 new LessonPlan(dayPlan.Id, new Subject([], "Japanese"), PeriodType.Lesson, "", 1, 8, date, [])
@@ -927,7 +963,7 @@ public class WeekPlannerPageTests : BunitContext
         var dayPlan = yearPlan.WeekPlanners.First().DayPlans.First(dp => dp.Date == date);
         return
         [
-            new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date,[]),
+            new LessonPlan(dayPlan.Id, new Subject([], "English"), PeriodType.Lesson, "", 1, 1, date, []),
             new LessonPlan(dayPlan.Id, new Subject([], "Mathematics"), PeriodType.Lesson, "", 1, 2, date, []),
             new LessonPlan(dayPlan.Id, new Subject([], "Health and PE"), PeriodType.Lesson, "", 1, 4, date, []),
             new LessonPlan(dayPlan.Id, new Subject([], "HASS"), PeriodType.Lesson, "", 1, 5, date, []),
@@ -940,8 +976,10 @@ public class WeekPlannerPageTests : BunitContext
     {
         return
         [
-            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("123", "Fake", "DisneyLand"), "Swimming", true, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
-            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("456", "Main St", "FakeLand"), "Athletics", false, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
+            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("123", "Fake", "DisneyLand"), "Swimming",
+                true, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
+            new SchoolEvent(new SchoolEventId(Guid.NewGuid()), new Location("456", "Main St", "FakeLand"), "Athletics",
+                false, new DateTime(date, new TimeOnly()), new DateTime(date, new TimeOnly())),
         ];
     }
 
@@ -955,8 +993,8 @@ public class WeekPlannerPageTests : BunitContext
             new TemplatePeriod(PeriodType.Lesson, 4, "Lesson 3", new TimeOnly(11, 20, 0), new TimeOnly(12, 10, 0)),
             new TemplatePeriod(PeriodType.Lesson, 5, "Lesson 4", new TimeOnly(12, 10, 0), new TimeOnly(13, 00, 0)),
             new TemplatePeriod(PeriodType.Break, 6, "Lunch", new TimeOnly(13, 0, 0), new TimeOnly(13, 30, 0)),
-            new TemplatePeriod(PeriodType.Lesson,7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
-            new TemplatePeriod(PeriodType.Lesson, 8,"Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
+            new TemplatePeriod(PeriodType.Lesson, 7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
+            new TemplatePeriod(PeriodType.Lesson, 8, "Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
         };
 
         var dayTemplates = new List<DayTemplate>();

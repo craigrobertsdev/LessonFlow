@@ -1,4 +1,5 @@
-﻿using Bunit;
+﻿using System.Security.Claims;
+using Bunit;
 using LessonFlow.Database;
 using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
@@ -7,7 +8,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Radzen;
-using System.Security.Claims;
 using TestComponents;
 using static LessonFlow.IntegrationTests.IntegrationTestHelpers;
 
@@ -16,7 +16,6 @@ namespace LessonFlow.IntegrationTests;
 [Collection("Non-ParallelTests")]
 public class AppStateTests : BunitContext, IClassFixture<CustomWebApplicationFactory>
 {
-        
     private readonly ApplicationDbContext _dbContext;
     private readonly CustomWebApplicationFactory _factory;
     private readonly IServiceScope _scope;
@@ -65,5 +64,4 @@ public class AppStateTests : BunitContext, IClassFixture<CustomWebApplicationFac
         Assert.NotNull(yearPlan);
         Assert.NotEmpty(yearPlan.SubjectsTaught);
     }
-
 }

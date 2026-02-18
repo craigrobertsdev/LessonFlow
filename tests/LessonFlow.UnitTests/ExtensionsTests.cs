@@ -1,16 +1,9 @@
 ﻿using LessonFlow.Shared.Extensions;
 
 namespace LessonFlow.UnitTests;
+
 public class ExtensionsTests
 {
-    [Theory]
-    [MemberData(nameof(DateOnlyGetWeekStartData))]
-    public void DateOnly_GetWeekStart_ReturnsCorrectDate(DateOnly date, DateOnly expected)
-    {
-        var weekStart = date.GetWeekStart();
-        Assert.Equal(expected, weekStart);
-    }
-
     public static TheoryData<DateOnly, DateOnly> DateOnlyGetWeekStartData =>
         new()
         {
@@ -22,4 +15,12 @@ public class ExtensionsTests
             { new DateOnly(2025, 2, 1), new DateOnly(2025, 1, 27) }, // Saturday
             { new DateOnly(2025, 2, 2), new DateOnly(2025, 1, 27) }, // Sunday
         };
+
+    [Theory]
+    [MemberData(nameof(DateOnlyGetWeekStartData))]
+    public void DateOnly_GetWeekStart_ReturnsCorrectDate(DateOnly date, DateOnly expected)
+    {
+        var weekStart = date.GetWeekStart();
+        Assert.Equal(expected, weekStart);
+    }
 }

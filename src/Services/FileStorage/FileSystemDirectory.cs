@@ -1,6 +1,4 @@
-using System.Text.RegularExpressions;
 using LessonFlow.Domain.Curriculum;
-using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.Resources;
 
 namespace LessonFlow.Services.FileStorage;
@@ -10,14 +8,34 @@ namespace LessonFlow.Services.FileStorage;
 /// </summary>
 public partial class FileSystemDirectory
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public FileSystem ContainingFileSystem { get; }
-    public Subject? Subject { get; set; }
-
     /// <summary>
     /// Gets the child directories contained within this directory
     /// </summary>
     public List<FileSystemDirectory> Children = [];
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="FileSystemDirectory"/> class. If a parent directory is provided, the new directory will automatically be added to the parent's children.
+    /// </summary>
+    /// <param name="name">The name of the directory</param>
+    /// <param name="containingFileSystem"></param>
+    /// <param name="parent">The parent directory, or null if this is a root directory</param>
+    /// <param name="subject">The subject the directory is related to. </param>
+    public FileSystemDirectory(string? name, FileSystem containingFileSystem, FileSystemDirectory? parent,
+        Subject? subject = null)
+    {
+        Name = name;
+        ContainingFileSystem = containingFileSystem;
+        Subject = subject;
+        if (parent is not null)
+        {
+            ParentDirectory = parent;
+            parent.Children.Add(this);
+        }
+    }
+
+    public Guid Id { get; } = Guid.NewGuid();
+    public FileSystem ContainingFileSystem { get; }
+    public Subject? Subject { get; set; }
 
     /// <summary>
     /// Gets the name of the directory
@@ -131,7 +149,7 @@ public partial class FileSystemDirectory
     {
         var size = 0L;
         size += Resources.Sum(r => r.FileSize);
-        
+
         if (Children.Count == 0)
         {
             return size;
@@ -143,26 +161,6 @@ public partial class FileSystemDirectory
         }
 
         return size;
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="FileSystemDirectory"/> class. If a parent directory is provided, the new directory will automatically be added to the parent's children.
-    /// </summary>
-    /// <param name="name">The name of the directory</param>
-    /// <param name="containingFileSystem"></param>
-    /// <param name="parent">The parent directory, or null if this is a root directory</param>
-    /// <param name="subject">The subject the directory is related to. </param>
-    public FileSystemDirectory(string? name, FileSystem containingFileSystem, FileSystemDirectory? parent,
-        Subject? subject = null)
-    {
-        Name = name;
-        ContainingFileSystem = containingFileSystem;
-        Subject = subject;
-        if (parent is not null)
-        {
-            ParentDirectory = parent;
-            parent.Children.Add(this);
-        }
     }
 
 #pragma warning disable CS8618

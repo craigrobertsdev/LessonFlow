@@ -2,6 +2,7 @@
 using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests.Domain.YearPlans;
+
 public class WeekPlannerTests
 {
     [Fact]

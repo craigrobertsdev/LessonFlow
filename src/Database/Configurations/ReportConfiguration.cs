@@ -33,7 +33,8 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
             .HasConversion<string>()
             .HasMaxLength(15);
 
-        builder.OwnsMany(r => r.ReportComments, cb => {
+        builder.OwnsMany(r => r.ReportComments, cb =>
+        {
             cb.ToTable("ReportComments");
             cb.WithOwner().HasForeignKey("ReportId");
             cb.Property<Guid>("Id");

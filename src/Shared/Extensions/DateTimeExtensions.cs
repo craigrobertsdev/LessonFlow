@@ -9,7 +9,8 @@ public static class DateTimeExtensions
 
     public static DateOnly GetWeekStart(this DateOnly date)
     {
-        if (date.DayOfWeek == DayOfWeek.Sunday)         {
+        if (date.DayOfWeek == DayOfWeek.Sunday)
+        {
             return date.AddDays(-6);
         }
 

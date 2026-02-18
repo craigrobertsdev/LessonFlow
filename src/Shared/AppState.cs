@@ -10,11 +10,22 @@ namespace LessonFlow.Shared;
 public class AppState
 {
     private readonly AuthenticationStateProvider _authStateProvider;
-    private readonly IUserRepository _userRepository;
     private readonly ILogger<AppState> _logger;
     private readonly ITermDatesService _termDatesService;
+    private readonly IUserRepository _userRepository;
 
-    public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository, ILogger<AppState> logger, ITermDatesService termDatesService)
+    private int _currentTerm = 1;
+
+    private int _currentWeek = 1;
+
+    private int _currentYear = DateTime.Now.Year;
+
+    private User? _user;
+
+    private Dictionary<int, YearPlan> _yearPlanByYear = [];
+
+    public AppState(AuthenticationStateProvider authStateProvider, IUserRepository userRepository,
+        ILogger<AppState> logger, ITermDatesService termDatesService)
     {
         _authStateProvider = authStateProvider;
         _userRepository = userRepository;
@@ -25,7 +36,6 @@ public class AppState
     public bool IsInitialised { get; private set; }
     public bool Initialising { get; private set; }
 
-    private User? _user;
     public User? User
     {
         get => _user;
@@ -36,7 +46,6 @@ public class AppState
         }
     }
 
-    private Dictionary<int, YearPlan> _yearPlanByYear = [];
     public Dictionary<int, YearPlan> YearPlanByYear
     {
         get => _yearPlanByYear;
@@ -47,7 +56,6 @@ public class AppState
         }
     }
 
-    private int _currentYear = DateTime.Now.Year;
     public int CurrentYear
     {
         get => _currentYear;
@@ -58,8 +66,8 @@ public class AppState
         }
     }
 
-    private int _currentTerm = 1;
-    public int CurrentTerm {
+    public int CurrentTerm
+    {
         get => _currentTerm;
         set
         {
@@ -68,8 +76,8 @@ public class AppState
         }
     }
 
-    private int _currentWeek = 1;
-    public int CurrentWeek {
+    public int CurrentWeek
+    {
         get => _currentWeek;
         set
         {
@@ -104,7 +112,8 @@ public class AppState
                 User = user;
                 if (user.AccountSetupComplete)
                 {
-                    var yearPlan = await _userRepository.GetYearPlanByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
+                    var yearPlan =
+                        await _userRepository.GetYearPlanByYear(user.Id, user.LastSelectedYear, CancellationToken.None)
                         ?? throw new YearPlanNotFoundException();
                     yearPlan.WeekPlannerTemplate.SortPeriods();
                     YearPlanByYear.Add(yearPlan.CalendarYear, yearPlan);

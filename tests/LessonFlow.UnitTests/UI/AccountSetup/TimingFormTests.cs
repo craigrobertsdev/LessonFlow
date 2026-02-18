@@ -5,6 +5,7 @@ using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 
 namespace LessonFlow.UnitTests.UI.AccountSetup;
+
 public class TimingFormTests : BunitContext
 {
     [Fact]

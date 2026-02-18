@@ -9,14 +9,6 @@ namespace LessonFlow.Domain.Reports;
 
 public sealed class Report : Entity<ReportId>, IAggregateRoot
 {
-    public Guid UserId { get; init; }
-    public Student Student { get; init; }
-    public Subject Subject { get; init; }
-    public YearLevel YearLevel { get; private set; }
-    public List<ReportComment> ReportComments { get; private set; } = [];
-    public DateTime CreatedDateTime { get; private set; }
-    public DateTime UpdatedDateTime { get; private set; }
-
     public Report(
         List<ReportComment> reportComments,
         Guid userId,
@@ -26,7 +18,7 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
         DateTime createdDateTime,
         DateTime updatedDateTime)
     {
-         Id = new ReportId(Guid.NewGuid());
+        Id = new ReportId(Guid.NewGuid());
         ReportComments = reportComments;
         UserId = userId;
         Student = student;
@@ -35,6 +27,14 @@ public sealed class Report : Entity<ReportId>, IAggregateRoot
         CreatedDateTime = createdDateTime;
         UpdatedDateTime = updatedDateTime;
     }
+
+    public Guid UserId { get; init; }
+    public Student Student { get; init; }
+    public Subject Subject { get; init; }
+    public YearLevel YearLevel { get; private set; }
+    public List<ReportComment> ReportComments { get; private set; } = [];
+    public DateTime CreatedDateTime { get; private set; }
+    public DateTime UpdatedDateTime { get; private set; }
 
 
     public void AddReportComment(ReportComment reportComment)

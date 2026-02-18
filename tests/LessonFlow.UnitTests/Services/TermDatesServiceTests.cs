@@ -2,8 +2,31 @@
 using LessonFlow.Shared.Interfaces.Services;
 
 namespace LessonFlow.UnitTests.Services;
+
 public class TermDatesServiceTests
 {
+    public static Dictionary<int, List<SchoolHoliday>> SchoolHolidaysByYear = new()
+    {
+        {
+            2025,
+            [
+                new SchoolHoliday(1, new DateOnly(2025, 4, 12), new DateOnly(2025, 4, 27)),
+                new SchoolHoliday(2, new DateOnly(2025, 7, 5), new DateOnly(2025, 7, 20)),
+                new SchoolHoliday(3, new DateOnly(2025, 9, 27), new DateOnly(2025, 10, 12)),
+                new SchoolHoliday(4, new DateOnly(2025, 12, 13), new DateOnly(2026, 1, 25))
+            ]
+        },
+        {
+            2026,
+            [
+                new SchoolHoliday(1, new DateOnly(2026, 4, 11), new DateOnly(2026, 4, 26)),
+                new SchoolHoliday(2, new DateOnly(2026, 7, 4), new DateOnly(2026, 7, 19)),
+                new SchoolHoliday(3, new DateOnly(2026, 9, 26), new DateOnly(2026, 10, 11)),
+                new SchoolHoliday(4, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 31))
+            ]
+        }
+    };
+
     private readonly ITermDatesService _termDatesService;
 
     public TermDatesServiceTests()
@@ -92,7 +115,8 @@ public class TermDatesServiceTests
         var termNumber = 1;
         var weekNumber = 12;
 
-        Assert.Throws<ArgumentOutOfRangeException>(() => _termDatesService.GetFirstDayOfWeek(year, termNumber, weekNumber));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            _termDatesService.GetFirstDayOfWeek(year, termNumber, weekNumber));
     }
 
     [Theory]
@@ -121,7 +145,8 @@ public class TermDatesServiceTests
 
     [Theory]
     [MemberData(nameof(NextWeekDataExceptionGenerator))]
-    public void GetNextWeek_WhenCalledWithBadData_ShouldThrowException(int year, int term, int week, ArgumentOutOfRangeException expected)
+    public void GetNextWeek_WhenCalledWithBadData_ShouldThrowException(int year, int term, int week,
+        ArgumentOutOfRangeException expected)
     {
         var exception = Record.Exception(() => _termDatesService.GetNextWeek(year, term, week));
 
@@ -141,7 +166,8 @@ public class TermDatesServiceTests
 
     [Theory]
     [MemberData(nameof(PreviousWeekDataExceptionGenerator))]
-    public void GetPreviousWeek_WhenCalledWithBadData_ShouldThrowException(int year, int term, int week, ArgumentOutOfRangeException expected)
+    public void GetPreviousWeek_WhenCalledWithBadData_ShouldThrowException(int year, int term, int week,
+        ArgumentOutOfRangeException expected)
     {
         var exception = Record.Exception(() => _termDatesService.GetPreviousWeek(year, term, week));
 
@@ -196,7 +222,8 @@ public class TermDatesServiceTests
 
     [Theory]
     [MemberData(nameof(ValidPreviousTermDataGenerator))]
-    public void GetWeekInPreviousTerm_PreviousTermExists_ReturnsPreviousTerm(int year, int term, int week, DateOnly termStart)
+    public void GetWeekInPreviousTerm_PreviousTermExists_ReturnsPreviousTerm(int year, int term, int week,
+        DateOnly termStart)
     {
         var previousTerm = _termDatesService.GetWeekInPreviousTerm(year, term, week);
         Assert.Equal(termStart, previousTerm);
@@ -239,7 +266,7 @@ public class TermDatesServiceTests
         data.Add(2025, 2, 1, new DateOnly(2025, 4, 7));
         data.Add(2025, 3, 5, new DateOnly(2025, 8, 11));
         data.Add(2026, 1, 1, new DateOnly(2025, 12, 8));
-        data.Add(2025, 1, 5, new DateOnly(2025,  2, 17));
+        data.Add(2025, 1, 5, new DateOnly(2025, 2, 17));
         return data;
     }
 
@@ -252,28 +279,6 @@ public class TermDatesServiceTests
         data.Add(2025, 1, 1, new ArgumentOutOfRangeException("There is no previous week available"));
         return data;
     }
-
-    public static Dictionary<int, List<SchoolHoliday>> SchoolHolidaysByYear = new()
-    {
-        {
-            2025,
-            [
-                new SchoolHoliday(1, new DateOnly(2025, 4, 12), new DateOnly(2025, 4, 27)),
-                new SchoolHoliday(2, new DateOnly(2025, 7, 5), new DateOnly(2025, 7, 20)),
-                new SchoolHoliday(3, new DateOnly(2025, 9, 27), new DateOnly(2025, 10, 12)),
-                new SchoolHoliday(4, new DateOnly(2025, 12, 13), new DateOnly(2026, 1, 25))
-            ]
-        },
-        {
-            2026,
-            [
-                new SchoolHoliday(1, new DateOnly(2026, 4, 11), new DateOnly(2026, 4, 26)),
-                new SchoolHoliday(2, new DateOnly(2026, 7, 4), new DateOnly(2026, 7, 19)),
-                new SchoolHoliday(3, new DateOnly(2026, 9, 26), new DateOnly(2026, 10, 11)),
-                new SchoolHoliday(4, new DateOnly(2026, 12, 12), new DateOnly(2026, 12, 31))
-            ]
-        }
-    };
 
     public static TheoryData<DateTime> SchoolHolidayDateGenerator()
     {

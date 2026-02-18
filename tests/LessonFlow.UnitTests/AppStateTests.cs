@@ -1,16 +1,17 @@
-﻿using LessonFlow.Shared;
+﻿using System.Security.Claims;
+using LessonFlow.Components.AccountSetup.State;
+using LessonFlow.Domain.Users;
+using LessonFlow.Domain.YearPlans;
+using LessonFlow.Shared;
 using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
-using static LessonFlow.UnitTests.UnitTestHelpers;
 using Moq;
-using LessonFlow.Components.AccountSetup.State;
-using LessonFlow.Domain.YearPlans;
-using LessonFlow.Domain.Users;
-using LessonFlow.Shared.Interfaces.Services;
-using System.Security.Claims;
+using static LessonFlow.UnitTests.UnitTestHelpers;
 
 namespace LessonFlow.UnitTests;
+
 public class AppStateTests
 {
     [Theory]
@@ -36,7 +37,7 @@ public class AppStateTests
         var appState = CreateAppState(1, weekNumber);
 
         await appState.InitialiseAsync();
-        
+
         Assert.Equal(weekNumber, appState.CurrentWeek);
     }
 
@@ -62,11 +63,13 @@ public class AppStateTests
         user.AccountSetupState = accountSetupState;
         user.CompleteAccountSetup();
         userRepository.Setup(ur => ur.GetByEmail(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(user);
-        userRepository.Setup(ur => ur.GetYearPlanByYear(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+        userRepository.Setup(ur =>
+                ur.GetYearPlanByYear(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
                 var yearPlan = new YearPlan(Guid.NewGuid(), accountSetupState, []);
-                yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan, accountSetupState.WeekPlannerTemplate);
+                yearPlan.GetType().GetProperty("WeekPlannerTemplate")!.SetValue(yearPlan,
+                    accountSetupState.WeekPlannerTemplate);
                 return yearPlan;
             });
 
@@ -93,7 +96,5 @@ public class AppStateTests
             var user = new ClaimsPrincipal(identity);
             return Task.FromResult(new AuthenticationState(user));
         }
-
-
     }
 }

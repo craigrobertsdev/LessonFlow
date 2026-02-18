@@ -1,16 +1,17 @@
-﻿using LessonFlow.Services;
-using LessonFlow.Components.AccountSetup;
+﻿using LessonFlow.Components.AccountSetup;
 using LessonFlow.Database;
+using LessonFlow.Domain.Curriculum;
 using LessonFlow.Domain.Enums;
 using LessonFlow.Domain.PlannerTemplates;
 using LessonFlow.Domain.ValueObjects;
+using LessonFlow.Services;
 using LessonFlow.Shared.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
-using LessonFlow.Domain.Curriculum;
 
 namespace LessonFlow.UnitTests;
+
 public class UnitTestHelpers
 {
     internal readonly static int TestYear = 2025;
@@ -58,8 +59,8 @@ public class UnitTestHelpers
             new TemplatePeriod(PeriodType.Lesson, 4, "Lesson 3", new TimeOnly(11, 20, 0), new TimeOnly(12, 10, 0)),
             new TemplatePeriod(PeriodType.Lesson, 5, "Lesson 4", new TimeOnly(12, 10, 0), new TimeOnly(13, 00, 0)),
             new TemplatePeriod(PeriodType.Break, 6, "Lunch", new TimeOnly(13, 0, 0), new TimeOnly(13, 30, 0)),
-            new TemplatePeriod(PeriodType.Lesson,7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
-            new TemplatePeriod(PeriodType.Lesson, 8,"Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
+            new TemplatePeriod(PeriodType.Lesson, 7, "Lesson 5", new TimeOnly(13, 30, 0), new TimeOnly(14, 20, 0)),
+            new TemplatePeriod(PeriodType.Lesson, 8, "Lesson 6", new TimeOnly(14, 20, 0), new TimeOnly(15, 10, 0))
         };
         var dayTemplates = new List<DayTemplate>();
         foreach (var day in Enum.GetValues<DayOfWeek>().Where(d => d != DayOfWeek.Saturday && d != DayOfWeek.Sunday))
@@ -76,19 +77,19 @@ public class UnitTestHelpers
                 }
             }).ToList(), day, DayType.Working));
         }
+
         var template = new WeekPlannerTemplate(Guid.NewGuid(), periods, dayTemplates);
         return template;
     }
 
     public static ITermDatesService CreateTermDatesService()
     {
-
         var termDatesByYear = new Dictionary<int, List<SchoolTerm>>()
         {
             {
                 2025,
                 [
-                    new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4,11)),
+                    new SchoolTerm(1, new DateOnly(2025, 1, 27), new DateOnly(2025, 4, 11)),
                     new SchoolTerm(2, new DateOnly(2025, 4, 28), new DateOnly(2025, 7, 4)),
                     new SchoolTerm(3, new DateOnly(2025, 7, 21), new DateOnly(2025, 9, 26)),
                     new SchoolTerm(4, new DateOnly(2025, 10, 13), new DateOnly(2025, 12, 12))
@@ -97,7 +98,7 @@ public class UnitTestHelpers
             {
                 2026,
                 [
-                    new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4,10)),
+                    new SchoolTerm(1, new DateOnly(2026, 1, 26), new DateOnly(2026, 4, 10)),
                     new SchoolTerm(2, new DateOnly(2026, 4, 27), new DateOnly(2026, 7, 3)),
                     new SchoolTerm(3, new DateOnly(2026, 7, 20), new DateOnly(2026, 9, 25)),
                     new SchoolTerm(4, new DateOnly(2026, 10, 12), new DateOnly(2026, 12, 11))
@@ -113,7 +114,8 @@ public class UnitTestHelpers
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.Provider).Returns(allYears.AsQueryable().Provider);
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.Expression).Returns(allYears.AsQueryable().Expression);
         mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.ElementType).Returns(allYears.AsQueryable().ElementType);
-        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.GetEnumerator()).Returns(allYears.AsQueryable().GetEnumerator());
+        mockDbSet.As<IQueryable<SchoolTerm>>().Setup(m => m.GetEnumerator())
+            .Returns(allYears.AsQueryable().GetEnumerator());
 
         dbContext.Setup(db => db.TermDates).Returns(mockDbSet.Object);
 
@@ -144,6 +146,7 @@ public class UnitTestHelpers
         {
             service.SetTermDates(year, terms);
         }
+
         return service;
     }
 

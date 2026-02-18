@@ -1,10 +1,10 @@
 using System.Text.Json.Serialization;
 using LessonFlow.Api.Contracts;
 using LessonFlow.Domain.Common.Interfaces;
-using LessonFlow.Services.FileStorage;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace LessonFlow.Domain.StronglyTypedIds;
+
 [JsonConverter(typeof(StronglyTypedIdJsonConverter<FileSystemId>))]
 public record FileSystemId(Guid Value) : IStronglyTypedId
 {

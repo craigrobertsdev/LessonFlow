@@ -19,11 +19,12 @@ public class UserIdToStringTypeConverter : TypeConverter
 
         throw new NotSupportedException();
     }
-    
+
     public override bool CanConvertTo(ITypeDescriptorContext? context, Type? destinationType) =>
         destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
-    public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value, Type destinationType)
+    public override object? ConvertTo(ITypeDescriptorContext? context, CultureInfo? culture, object? value,
+        Type destinationType)
     {
         if (value is Guid userId && destinationType == typeof(string))
             return userId.ToString();
@@ -31,4 +32,3 @@ public class UserIdToStringTypeConverter : TypeConverter
         return base.ConvertTo(context, culture, value, destinationType);
     }
 }
-

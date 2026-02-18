@@ -1,16 +1,17 @@
 using System.Text.Json;
-using LessonFlow.Shared.Interfaces.Services;
+using Azure.Identity;
 using LessonFlow.Components.Account;
-using LessonFlow.Domain.Users;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using LessonFlow.Database;
 using LessonFlow.Database.Repositories;
+using LessonFlow.Domain.Users;
 using LessonFlow.Services;
-using LessonFlow.Shared.Interfaces.Persistence;
 using LessonFlow.Services.FileStorage;
+using LessonFlow.Shared.Interfaces.Persistence;
+using LessonFlow.Shared.Interfaces.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
-using Azure.Identity;
+
 //using LessonFlow.Services.CurriculumParser.SACurriculum;
 
 
@@ -45,7 +46,7 @@ public static class Infrastructure
             .EnableSensitiveDataLogging()
             .EnableDetailedErrors());
 
-        services.AddScoped(sp => 
+        services.AddScoped(sp =>
             sp.GetRequiredService<IDbContextFactory<ApplicationDbContext>>()
                 .CreateDbContext());
 
@@ -55,10 +56,12 @@ public static class Infrastructure
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
-        
+
         services.AddSingleton<IEmailSender<User>, IdentityNoOpEmailSender>();
 
-        services.AddSingleton<IAmbientDbContextAccessor<ApplicationDbContext>, AmbientDbContextAccessor<ApplicationDbContext>>();
+        services
+            .AddSingleton<IAmbientDbContextAccessor<ApplicationDbContext>,
+                AmbientDbContextAccessor<ApplicationDbContext>>();
         services.AddScoped<IUnitOfWorkFactory, UnitOfWorkFactory<ApplicationDbContext>>();
 
         services.AddScoped<IAssessmentRepository, AssessmentRepository>();
@@ -103,6 +106,17 @@ public static class Infrastructure
         });
     }
 
+    private static IServiceCollection AddCurriculumParser(this IServiceCollection services)
+    {
+        //services.AddScoped<ICurriculumParser, SACurriculumParser>();
+        return services;
+    }
+
+    public static void ConfigureIdentity(IServiceCollection services)
+    {
+        services.Configure<IdentityOptions>(options => { options.Password.RequiredLength = 14; });
+    }
+
     /// <summary>
     ///     Used to manage retrieving secrets when published in a Docker Container.
     /// </summary>
@@ -114,17 +128,6 @@ public static class Infrastructure
             return JsonSerializer.Deserialize<DbConfig>(text,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
         }
-    }
-
-    private static IServiceCollection AddCurriculumParser(this IServiceCollection services)
-    {
-        //services.AddScoped<ICurriculumParser, SACurriculumParser>();
-        return services;
-    }
-
-    public static void ConfigureIdentity(IServiceCollection services)
-    {
-        services.Configure<IdentityOptions>(options => { options.Password.RequiredLength = 14; });
     }
 
     private class DbConfig

@@ -1,6 +1,5 @@
-﻿using LessonFlow.Services.FileStorage;
+﻿namespace LessonFlow.UnitTests.Services;
 
-namespace LessonFlow.UnitTests.Services;
 public class StorageManagerTests
 {
     [Fact]
