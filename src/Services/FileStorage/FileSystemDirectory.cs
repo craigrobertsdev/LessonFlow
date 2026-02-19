@@ -6,12 +6,12 @@ namespace LessonFlow.Services.FileStorage;
 /// <summary>
 /// Represents a directory in the resource file system
 /// </summary>
-public partial class FileSystemDirectory
+public class FileSystemDirectory
 {
     /// <summary>
     /// Gets the child directories contained within this directory
     /// </summary>
-    public List<FileSystemDirectory> Children = [];
+    public List<FileSystemDirectory> SubDirectories = [];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileSystemDirectory"/> class. If a parent directory is provided, the new directory will automatically be added to the parent's children.
@@ -29,13 +29,14 @@ public partial class FileSystemDirectory
         if (parent is not null)
         {
             ParentDirectory = parent;
-            parent.Children.Add(this);
+            parent.SubDirectories.Add(this);
         }
     }
 
     public Guid Id { get; } = Guid.NewGuid();
     public FileSystem ContainingFileSystem { get; }
     public Subject? Subject { get; set; }
+    public bool IsSoftDeleted { get; private set; }
 
     /// <summary>
     /// Gets the name of the directory
@@ -60,7 +61,7 @@ public partial class FileSystemDirectory
             var getResourcesTask = ContainingFileSystem.GetResourcesAsync(this);
 
             List<Task> childInitialisationTasks = [];
-            foreach (var child in Children)
+            foreach (var child in SubDirectories)
             {
                 var t = child.InitialiseAsync();
                 childInitialisationTasks.Add(t);
@@ -132,6 +133,7 @@ public partial class FileSystemDirectory
 
     public async Task CreateSubDirectoryAsync(string name)
     {
+        CheckNameValid(name);
         var subDirectory = new FileSystemDirectory(name, ContainingFileSystem, this);
         try
         {
@@ -139,7 +141,7 @@ public partial class FileSystemDirectory
         }
         catch (Exception e)
         {
-            Children.Remove(subDirectory);
+            SubDirectories.Remove(subDirectory);
             Console.WriteLine(e.Message);
             throw;
         }
@@ -150,17 +152,62 @@ public partial class FileSystemDirectory
         var size = 0L;
         size += Resources.Sum(r => r.FileSize);
 
-        if (Children.Count == 0)
+        if (SubDirectories.Count == 0)
         {
             return size;
         }
 
-        foreach (var child in Children)
+        foreach (var child in SubDirectories)
         {
             size += child.GetSizeRecursive();
         }
 
         return size;
+    }
+
+    public void MarkAsDeleted()
+    {
+        IsSoftDeleted = true;
+        ContainingFileSystem.DeselectDirectory(this);
+
+        foreach (var resource in Resources)
+        {
+            resource.MarkAsDeleted();
+        }
+
+        foreach (var child in SubDirectories)
+        {
+            child.MarkAsDeleted();
+        }
+    }
+
+    public async Task Restore()
+    {
+        try
+        {
+            UnmarkAsDeleted();
+            foreach (var dir in SubDirectories)
+            {
+                UnmarkAsDeleted();
+            }
+
+            await ContainingFileSystem.UpdateDirectoryAsync(this);
+        }
+        catch (Exception e)
+        {
+            MarkAsDeleted();
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    private void UnmarkAsDeleted()
+    {
+        IsSoftDeleted = false;
+        foreach (var resource in Resources)
+        {
+            resource.UnmarkAsDeleted();
+        }
     }
 
 #pragma warning disable CS8618

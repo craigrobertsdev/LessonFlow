@@ -7,6 +7,7 @@ namespace LessonFlow.Services.FileStorage;
 
 public class FileSystem
 {
+    private readonly List<FileSystemDirectory> _directoriesPendingDeletion = [];
     private readonly IFileSystemRepository _fileSystemRepository;
     private readonly SubjectId? _initialSubjectId;
     private readonly List<FileSystemDirectory> _selectedDirectories = [];
@@ -58,9 +59,53 @@ public class FileSystem
         }
 
         var directory = new FileSystemDirectory(name, this, null);
+        CheckDirectoryNameConflict(directory, name);
+
+        try
+        {
+            await _fileSystemRepository.AddDirectory(directory);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
 
         _directories.Add(directory);
         return directory;
+    }
+
+    /// <summary>
+    /// Searches the file system for a directory matching the provided selector function.
+    /// The search is performed using a breadth-first approach, starting from the root
+    /// directories and traversing down the hierarchy.
+    /// If a matching directory is found, it is returned; otherwise, null is returned.
+    /// </summary>
+    /// <param name="selector"></param>
+    /// <returns></returns>
+    private FileSystemDirectory? FindDirectory(Func<FileSystemDirectory, bool> selector)
+    {
+        var queue = new Queue<FileSystemDirectory>(_directories);
+        foreach (var directory in _directories)
+        {
+            queue.Enqueue(directory);
+        }
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (selector(current))
+            {
+                return current;
+            }
+
+            foreach (var subDir in current.SubDirectories)
+            {
+                queue.Enqueue(subDir);
+            }
+        }
+
+        return null;
     }
 
     public async Task<List<Resource>> GetResourcesAsync(FileSystemDirectory directory)
@@ -111,14 +156,19 @@ public class FileSystem
 
         if (directory.IsSelected)
         {
-            directory.IsSelected = false;
-            _selectedDirectories.Remove(directory);
+            DeselectDirectory(directory);
         }
         else
         {
             directory.IsSelected = true;
             _selectedDirectories.Add(directory);
         }
+    }
+
+    public void DeselectDirectory(FileSystemDirectory directory)
+    {
+        directory.IsSelected = false;
+        _selectedDirectories.Remove(directory);
     }
 
     public long GetTotalDirectoryFileSize()
@@ -130,6 +180,52 @@ public class FileSystem
         }
 
         return totalSize;
+    }
+
+    public async Task RenameDirectoryAsync(FileSystemDirectory directory, string newName)
+    {
+        CheckDirectoryNameConflict(directory, newName);
+
+        await directory.RenameAsync(newName);
+    }
+
+    private void CheckDirectoryNameConflict(FileSystemDirectory directory, string? name)
+    {
+        if (string.IsNullOrEmpty(name)) return;
+
+        var conflict =
+            FindDirectory(d => d.Name is not null && d.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (conflict is not null)
+        {
+            throw new ArgumentException($"A directory with the name '{name}' already exists.");
+        }
+    }
+
+    public async Task DeleteDirectoryAsync(FileSystemDirectory directory)
+    {
+        try
+        {
+            directory.MarkAsDeleted();
+            await _fileSystemRepository.UpdateDirectory(directory);
+
+            _directories.Remove(directory);
+            _selectedDirectories.Remove(directory);
+
+            _directoriesPendingDeletion.Add(directory);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            throw;
+        }
+    }
+
+    public async Task RestoreDirectoryAsync(FileSystemDirectory directory)
+    {
+        await directory.Restore();
+
+        _directories.Add(directory);
+        _directoriesPendingDeletion.Remove(directory);
     }
 
 #pragma warning disable CS8618

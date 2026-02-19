@@ -176,16 +176,16 @@ public class FileSystemDirectoryTests
         var fileSystem = new FileSystem(fsId, mockRepo.Object);
         var parentDirectory = new FileSystemDirectory("Parent", fileSystem, null);
 
-        Assert.Empty(parentDirectory.Children);
+        Assert.Empty(parentDirectory.SubDirectories);
 
         // Act
         await parentDirectory.CreateSubDirectoryAsync("SubDirectory");
 
         // Assert
         mockRepo.Verify(r => r.UpdateDirectory(parentDirectory), Times.Once);
-        Assert.Single(parentDirectory.Children);
-        Assert.Equal("SubDirectory", parentDirectory.Children[0].Name);
-        Assert.Equal(parentDirectory, parentDirectory.Children[0].ParentDirectory);
+        Assert.Single(parentDirectory.SubDirectories);
+        Assert.Equal("SubDirectory", parentDirectory.SubDirectories[0].Name);
+        Assert.Equal(parentDirectory, parentDirectory.SubDirectories[0].ParentDirectory);
     }
 
     [Theory]

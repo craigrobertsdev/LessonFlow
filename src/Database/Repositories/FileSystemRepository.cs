@@ -21,4 +21,9 @@ public class FileSystemRepository : IFileSystemRepository
     {
         throw new NotImplementedException();
     }
+
+    public async Task AddDirectory(FileSystemDirectory directory)
+    {
+        throw new NotImplementedException();
+    }
 }

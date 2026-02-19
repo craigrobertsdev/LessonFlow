@@ -31,7 +31,7 @@ public class FileSystemTests
         var fs = new FileSystem(fsId, resourceRepository.Object);
         var top = new FileSystemDirectory("Top", fs, null);
         List<FileSystemDirectory> directories = [top];
-        top.Children.Add(new("Nested", fs, top));
+        top.SubDirectories.Add(new("Nested", fs, top));
         typeof(FileSystem).GetField("_directories", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(fs,
             directories);
 
@@ -45,7 +45,7 @@ public class FileSystemTests
         // Assert
         Assert.Equal(fs.Directories.Count, fileSystem.Directories.Count);
         Assert.Equal(fs.Directories[0], fileSystem.Directories[0]);
-        Assert.Equal(fs.Directories[0].Children[0], fileSystem.Directories[0].Children[0]);
+        Assert.Equal(fs.Directories[0].SubDirectories[0], fileSystem.Directories[0].SubDirectories[0]);
     }
 
     [Fact]
@@ -218,6 +218,25 @@ public class FileSystemTests
         await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.CreateDirectory(directoryName));
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    [InlineData("Name")]
+    public async Task CreateDirectory_WhenCalledWithDirectoriesThatHaveEmptyNames_ShouldCreateDirectory(string? newName)
+    {
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        await fileSystem.CreateDirectory(string.Empty);
+
+        // Act
+        var newDirectory = await fileSystem.CreateDirectory(newName);
+
+        // Assert
+        Assert.NotNull(newDirectory);
+        Assert.Equal(newName, newDirectory.Name);
+    }
+
     [Fact]
     public async Task CreateDirectory_WhenCalled_ShouldUpdateDatabaseWithDirectory()
     {
@@ -230,28 +249,44 @@ public class FileSystemTests
         var directory = await fileSystem.CreateDirectory("Test Directory");
 
         // Assert
-        resourceRepository.Verify(repo => repo.UpdateDirectory(directory), Times.Once);
+        resourceRepository.Verify(repo => repo.AddDirectory(directory), Times.Once);
     }
 
     [Fact]
-    public void GetTotalDirectoryFileSize_WhenCalled_ShouldReturnTotalSizeOfAllFilesInDirectoryAndSubdirectories()
+    public async Task CreateDirectory_WhenCalledAndDatabaseThrowsException_ShouldNotAddDirectoryToFileSystem()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        resourceRepository.Setup(repo => repo.AddDirectory(It.IsAny<FileSystemDirectory>()))
+            .ThrowsAsync(new Exception("Database error"));
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+
+        // Act
+        await Assert.ThrowsAsync<Exception>(() => fileSystem.CreateDirectory("Test Directory"));
+
+        // Assert
+        Assert.Empty(fileSystem.Directories);
+    }
+
+    [Fact]
+    public async Task GetTotalDirectoryFileSize_WhenCalled_ShouldReturnTotalSizeOfAllFilesInDirectoryAndSubdirectories()
     {
         // Arrange
         var resourceRepository = new Mock<IFileSystemRepository>();
         var fsId = new FileSystemId(Guid.NewGuid());
         var fileSystem = new FileSystem(fsId, resourceRepository.Object);
-        var dir = fileSystem.CreateDirectory("Test Directory");
-        var directory = new FileSystemDirectory("Test Directory", fileSystem, null);
-        var subDirectory = new FileSystemDirectory("Sub Directory", fileSystem, directory);
+        var dir = await fileSystem.CreateDirectory("Test Directory");
+        var subDirectory = new FileSystemDirectory("Sub Directory", fileSystem, dir);
 
-        var resource1 = new Resource(Guid.NewGuid(), "Resource 1", "https://example.com/resource1", 1000, null,
+        var resource1 = new Resource(Guid.NewGuid(), "Resource 1", "Resource 1", 1000, string.Empty,
             ResourceType.Video);
-        var resource2 = new Resource(Guid.NewGuid(), "Resource 3", "https://example.com/resource2", 2000, null,
+        var resource2 = new Resource(Guid.NewGuid(), "Resource 3", "Resource 2", 2000, string.Empty,
             ResourceType.Article);
-        var resource3 = new Resource(Guid.NewGuid(), "Resource 3", "https://example.com/resource3", 3000, null,
+        var resource3 = new Resource(Guid.NewGuid(), "Resource 3", "Resource 3", 3000, string.Empty,
             ResourceType.Assessment);
 
-        directory.Resources.Add(resource1);
+        dir.Resources.Add(resource1);
         subDirectory.Resources.Add(resource2);
         subDirectory.Resources.Add(resource3);
 
@@ -260,5 +295,274 @@ public class FileSystemTests
 
         // Assert
         Assert.Equal(6000, totalSize);
+    }
+
+    [Fact]
+    public async Task RenameDirectory_WhenCalled_ShouldUpdateDirectoryName()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Old Name");
+
+        // Act
+        await fileSystem.RenameDirectoryAsync(directory, "New Name");
+
+        // Assert
+        Assert.Equal("New Name", directory.Name);
+    }
+
+    [Fact]
+    public async Task RenameDirectory_WhenCalled_ShouldUpdateDirectoryInDatabase()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Old Name");
+
+        // Act
+        await fileSystem.RenameDirectoryAsync(directory, "New Name");
+
+        // Assert
+        resourceRepository.Verify(repo => repo.UpdateDirectory(directory), Times.Once);
+    }
+
+    [Fact]
+    public async Task RenameDirectory_WhenCalledAndDatabaseThrowsException_ShouldNotUpdateDirectoryName()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        resourceRepository.Setup(repo => repo.UpdateDirectory(It.IsAny<FileSystemDirectory>()))
+            .ThrowsAsync(new Exception("Database error"));
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Old Name");
+
+        // Act
+        await Assert.ThrowsAsync<Exception>(() => fileSystem.RenameDirectoryAsync(directory, "New Name"));
+
+        // Assert
+        Assert.Equal("Old Name", directory.Name);
+    }
+
+    [Theory]
+    [InlineData("Invalid/Name")]
+    [InlineData("Invalid\\Name")]
+    [InlineData("Invalid/Name/")]
+    [InlineData(".")]
+    [InlineData(",")]
+    [InlineData(".Invalid")]
+    [InlineData("Invalid.")]
+    [InlineData("Inv..alid")]
+    public async Task RenameDirectory_WhenCalledWithInvalidName_ShouldThrowArgumentException(string invalidName)
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Old Name");
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.RenameDirectoryAsync(directory, invalidName));
+    }
+
+    [Fact]
+    public async Task RenameDirectory_WhenCalledWithDuplicateName_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory1 = await fileSystem.CreateDirectory("Directory 1");
+        var directory2 = await fileSystem.CreateDirectory("Directory 2");
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => fileSystem.RenameDirectoryAsync(directory2, "Directory 1"));
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalled_ShouldRemoveDirectoryFromFileSystem()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Act
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Assert
+        Assert.DoesNotContain(directory, fileSystem.Directories);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalled_ShouldUpdateDirectoryInDatabase()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Act
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Assert
+        resourceRepository.Verify(
+            repo => repo.UpdateDirectory(It.Is<FileSystemDirectory>(d => d.Id == directory.Id && d.IsSoftDeleted)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalledAndDatabaseThrowsException_ShouldNotRemoveDirectoryFromFileSystem()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        resourceRepository.Setup(repo => repo.UpdateDirectory(It.IsAny<FileSystemDirectory>()))
+            .ThrowsAsync(new Exception("Database error"));
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Act
+        await Assert.ThrowsAsync<Exception>(() => fileSystem.DeleteDirectoryAsync(directory));
+
+        // Assert
+        Assert.Contains(directory, fileSystem.Directories);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalled_ShouldSoftDeleteDirectory()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+
+        // Act
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Assert
+        Assert.True(directory.IsSoftDeleted);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalled_ShouldMarkChildrenForDeletion()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var parentDirectory = await fileSystem.CreateDirectory("Parent Directory");
+        var childDirectory = new FileSystemDirectory("Child Directory", fileSystem, parentDirectory);
+        parentDirectory.SubDirectories.Add(childDirectory);
+
+        // Act
+        await fileSystem.DeleteDirectoryAsync(parentDirectory);
+
+        // Assert
+        Assert.True(parentDirectory.IsSoftDeleted);
+        Assert.True(childDirectory.IsSoftDeleted);
+    }
+
+    [Fact]
+    public async Task DeleteDirectory_WhenCalled_ShouldDeselectDeletedDirectoryAndChildren()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+        var childDirectory = new FileSystemDirectory("Child Directory", fileSystem, directory);
+        fileSystem.SelectDirectory(directory);
+        fileSystem.SelectDirectory(childDirectory);
+
+        // Act
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Assert
+        Assert.False(directory.IsSelected);
+        Assert.False(childDirectory.IsSelected);
+        Assert.DoesNotContain(directory, fileSystem.SelectedDirectories);
+    }
+
+    [Fact]
+    public async Task RestoreDirectory_WhenCalled_ShouldUnmarkDirectoryAsDeleted()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Act
+        await fileSystem.RestoreDirectoryAsync(directory);
+
+        // Assert
+        Assert.False(directory.IsSoftDeleted);
+    }
+
+    [Fact]
+    public async Task RestoreDirectory_WhenCalled_ShouldUpdateDirectoryInDatabase()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+        await fileSystem.DeleteDirectoryAsync(directory);
+
+        // Act
+        await fileSystem.RestoreDirectoryAsync(directory);
+
+        // Assert
+        resourceRepository.Verify(
+            repo => repo.UpdateDirectory(It.Is<FileSystemDirectory>(d => d.Id == directory.Id && !d.IsSoftDeleted)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RestoreDirectory_WhenCalledAndDatabaseThrowsException_ShouldNotUnmarkDirectoryAsDeleted()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        resourceRepository.Setup(repo => repo.UpdateDirectory(It.IsAny<FileSystemDirectory>()))
+            .ThrowsAsync(new Exception("Database error"));
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var directory = await fileSystem.CreateDirectory("Test Directory");
+        directory.GetType().GetProperty("IsSoftDeleted")!.SetValue(directory, true);
+
+        // Act
+        await Assert.ThrowsAsync<Exception>(() => fileSystem.RestoreDirectoryAsync(directory));
+
+        // Assert
+        Assert.True(directory.IsSoftDeleted);
+    }
+
+    [Fact]
+    public async Task RestoreDirectory_WhenCalled_ShouldUnmarkSubDirectoriesAsDeleted()
+    {
+        // Arrange
+        var resourceRepository = new Mock<IFileSystemRepository>();
+        var fsId = new FileSystemId(Guid.NewGuid());
+        var fileSystem = new FileSystem(fsId, resourceRepository.Object);
+        var parentDirectory = await fileSystem.CreateDirectory("Parent Directory");
+        var childDirectory = new FileSystemDirectory("Child Directory", fileSystem, parentDirectory);
+        parentDirectory.SubDirectories.Add(childDirectory);
+        await fileSystem.DeleteDirectoryAsync(parentDirectory);
+
+        // Act
+        await fileSystem.RestoreDirectoryAsync(parentDirectory);
+
+        // Assert
+        Assert.False(parentDirectory.IsSoftDeleted);
+        Assert.False(childDirectory.IsSoftDeleted);
     }
 }

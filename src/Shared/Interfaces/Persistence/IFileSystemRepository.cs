@@ -9,4 +9,5 @@ public interface IFileSystemRepository
     Task<List<FileSystemDirectory>> GetDirectories(FileSystemId fileSystemId);
     Task UpdateDirectory(FileSystemDirectory directory);
     Task<List<Resource>> GetResources(FileSystemDirectory directory);
+    Task AddDirectory(FileSystemDirectory directory);
 }

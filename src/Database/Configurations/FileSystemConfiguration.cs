@@ -30,7 +30,7 @@ public class FileSystemDirectoryConfiguration : IEntityTypeConfiguration<FileSys
         builder.HasKey(d => d.Id);
 
         builder.HasOne(d => d.ParentDirectory)
-            .WithMany(d => d.Children)
+            .WithMany(d => d.SubDirectories)
             .HasForeignKey(d => d.Id)
             .OnDelete(DeleteBehavior.Cascade);
     }

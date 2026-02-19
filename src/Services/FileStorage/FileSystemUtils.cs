@@ -4,6 +4,6 @@ namespace LessonFlow.Services.FileStorage;
 
 public partial class FileSystemUtils
 {
-    [GeneratedRegex("^[a-zA-Z0-9]+([._-][a-zA-Z0-9]+)*$", RegexOptions.Compiled)]
+    [GeneratedRegex(@"^[a-zA-Z0-9]+([\s._-][a-zA-Z0-9]+)*$", RegexOptions.Compiled)]
     public static partial Regex ValidNameRegex { get; }
 }
