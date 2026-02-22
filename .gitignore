@@ -12,5 +12,4 @@ bin
 *.db-wal
 *.DS_Store
 
-Api
-# docs
+src/Api/CurriculumFiles/
